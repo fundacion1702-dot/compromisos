@@ -1,0 +1,900 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Compromisos</title>
+  <meta name="theme-color" content="#6b5bff"/>
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <style>
+    :root{
+      --bg:#0b0c12;
+      --surface:#121427;
+      --surface2:#171a33;
+      --text:#e9ecff;
+      --muted:#aab0d6;
+      --primary:#6b5bff;
+      --primary2:#8a7dff;
+      --good:#36d399;
+      --bad:#ff5c7a;
+      --warn:#ffcc66;
+      --stroke:rgba(255,255,255,.10);
+      --shadow: 0 14px 40px rgba(0,0,0,.35);
+      --r:18px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      /* Añadimos fallback de emojis para evitar los “rombos” en algunos visores */
+      font-family:
+        system-ui, -apple-system, Segoe UI, Roboto, Arial,
+        "Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji",
+        "Noto Emoji", sans-serif;
+      background: radial-gradient(1000px 600px at 20% -10%, rgba(107,91,255,.35), transparent 60%),
+                  radial-gradient(800px 600px at 90% 0%, rgba(255,204,102,.15), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      padding-bottom:96px;
+    }
+    .wrap{ max-width:520px; margin:0 auto; padding:16px 14px 0; }
+    header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:6px; }
+    .brand{ display:flex; align-items:center; gap:10px; min-width:0; }
+    .logo{
+      width:42px;height:42px;border-radius:14px; display:grid;place-items:center;
+      background: linear-gradient(135deg, rgba(107,91,255,.95), rgba(138,125,255,.70));
+      box-shadow: 0 12px 30px rgba(107,91,255,.25);
+      border:1px solid rgba(255,255,255,.14);
+      flex:0 0 auto; font-weight:900; letter-spacing:.5px;
+    }
+    .brand h1{ margin:0; font-size:18px; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .brand p{ margin:2px 0 0; font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+    .iconbtn{
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      border-radius: 14px;
+      padding: 10px 12px;
+      cursor:pointer;
+      box-shadow: 0 10px 24px rgba(0,0,0,.18);
+      transition: transform .08s ease, background .15s ease;
+      display:flex; align-items:center; gap:8px;
+      font-weight:800;
+    }
+    .iconbtn:active{ transform: scale(.98); }
+    .iconbtn small{ color:var(--muted); font-weight:700; }
+
+    .hero{
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: var(--r);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--stroke);
+      box-shadow: var(--shadow);
+    }
+    .hero .row{ display:flex; gap:10px; align-items:flex-start; flex-wrap:wrap; }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(107,91,255,.14);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 750;
+      white-space:nowrap;
+    }
+    .hero h2{ margin: 10px 0 4px; font-size: 16px; line-height:1.25; }
+    .hero p{ margin: 0; color: var(--muted); font-size: 13px; line-height:1.4; }
+
+    .banner{
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: var(--r);
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      box-shadow: 0 12px 30px rgba(0,0,0,.18);
+      display:none;
+    }
+    .banner.show{ display:block; }
+    .banner .title{ font-weight:900; margin:0 0 6px; }
+    .banner .txt{ margin:0; color:var(--muted); font-size:13px; line-height:1.35; }
+    .banner .row{ display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
+
+    .btn{
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 10px 12px;
+      cursor:pointer;
+      font-weight: 900;
+      transition: transform .08s ease, background .15s ease;
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      flex:1;
+    }
+    .btn:active{ transform: scale(.99); }
+    .btn.primary{
+      background: linear-gradient(135deg, rgba(107,91,255,.95), rgba(138,125,255,.55));
+      border-color: rgba(255,255,255,.16);
+    }
+    .btn.good{
+      background: linear-gradient(135deg, rgba(54,211,153,.95), rgba(54,211,153,.55));
+      border-color: rgba(255,255,255,.16);
+      color:#06150f;
+    }
+    .btn.danger{
+      background: rgba(255,92,122,.12);
+      border-color: rgba(255,92,122,.35);
+    }
+
+    .tabs{
+      margin-top: 14px;
+      display:flex; gap:10px; padding: 6px;
+      border-radius: 16px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.05);
+      box-shadow: 0 10px 25px rgba(0,0,0,.15);
+    }
+    .tab{
+      flex:1;
+      border:1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      padding: 10px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      font-weight: 900;
+      display:flex; align-items:center; justify-content:center; gap:8px;
+    }
+    .tab.active{
+      color: var(--text);
+      background: linear-gradient(135deg, rgba(107,91,255,.85), rgba(138,125,255,.55));
+      border-color: rgba(255,255,255,.16);
+      box-shadow: 0 12px 30px rgba(107,91,255,.22);
+    }
+    .badge{
+      display:inline-grid; place-items:center;
+      min-width: 22px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(255,255,255,.14);
+      color: var(--text);
+    }
+
+    .list{ margin-top: 14px; display:flex; flex-direction:column; gap: 10px; }
+    .card{
+      border-radius: var(--r);
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      border:1px solid var(--stroke);
+      padding: 12px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.22);
+    }
+    .cardTop{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+    .who{ min-width:0; }
+    .who .name{
+      margin:0; font-size: 14px; font-weight: 950; letter-spacing:.2px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .who .meta{ margin: 2px 0 0; font-size: 12px; color: var(--muted); display:flex; gap:8px; flex-wrap:wrap; }
+    .chip{
+      display:inline-flex; align-items:center; gap:6px;
+      padding: 3px 8px; border-radius: 999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      color: var(--muted);
+      font-weight: 850;
+      font-size: 11px;
+    }
+    .due{
+      font-size: 12px;
+      font-weight: 950;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,204,102,.12);
+      color: var(--text);
+      white-space:nowrap;
+    }
+    .due.bad{ background: rgba(255,92,122,.14); }
+
+    .desc{ margin: 10px 0 0; font-size: 13px; line-height:1.35; color: var(--text); opacity: .95; word-break: break-word; }
+
+    .actions{ margin-top: 10px; display:flex; gap: 10px; }
+    .empty{
+      padding: 18px 14px;
+      border-radius: var(--r);
+      border: 1px dashed rgba(255,255,255,.18);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      text-align:center;
+      line-height:1.35;
+      display:none;
+    }
+
+    .fab{
+      position: fixed;
+      right: 16px;
+      bottom: 18px;
+      width: 60px;
+      height: 60px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: linear-gradient(135deg, rgba(107,91,255,.95), rgba(138,125,255,.55));
+      box-shadow: 0 18px 45px rgba(107,91,255,.25), 0 14px 40px rgba(0,0,0,.35);
+      color: white;
+      font-size: 26px;
+      font-weight: 950;
+      cursor:pointer;
+      display:grid;
+      place-items:center;
+      user-select:none;
+    }
+    .fab:active{ transform: scale(.98); }
+
+    /* Modal / Bottom Sheet */
+    .backdrop{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:flex-end;
+      justify-content:center;
+      padding: 14px;
+      z-index: 999;
+    }
+    .backdrop.show{ display:flex; }
+    .sheet{
+      width: min(520px, 100%);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(23,26,51,.98), rgba(18,20,39,.98));
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: 0 22px 60px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .sheetHead{
+      padding: 12px 14px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+    }
+    .sheetHead h3{ margin:0; font-size: 15px; font-weight: 950; letter-spacing:.2px; }
+    .close{
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 8px 10px;
+      cursor:pointer;
+      font-weight: 950;
+    }
+    .sheetBody{ padding: 14px; display:flex; flex-direction:column; gap: 10px; }
+    .field label{ display:block; font-size: 12px; font-weight: 950; color: var(--muted); margin-bottom: 6px; }
+    .field input, .field textarea{
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      outline: none;
+      font-size: 14px;
+    }
+    .field textarea{ min-height: 84px; resize: vertical; }
+    .hint{ font-size: 12px; color: var(--muted); margin-top: 6px; line-height:1.35; }
+    .sheetFoot{ padding: 12px 14px 14px; display:flex; gap: 10px; }
+
+    .toast{
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 90px;
+      background: rgba(0,0,0,.65);
+      border: 1px solid rgba(255,255,255,.18);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 14px;
+      box-shadow: 0 18px 40px rgba(0,0,0,.45);
+      font-weight: 850;
+      font-size: 13px;
+      display:none;
+      z-index: 1000;
+      max-width: calc(100% - 28px);
+      text-align:center;
+    }
+    .toast.show{ display:block; }
+
+    .mono{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:12px;
+      color:var(--muted);
+      word-break: break-all;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.10);
+      padding:10px;
+      border-radius:14px;
+      margin-top:10px;
+      display:none;
+    }
+    .mono.show{ display:block; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo">C</div>
+        <div style="min-width:0">
+          <h1>Compromisos</h1>
+          <p>Paquetes entre móviles · sin base de datos</p>
+        </div>
+      </div>
+
+      <button class="iconbtn" id="btnInstall" style="display:none">⬇️ <small>Instalar</small></button>
+    </header>
+
+    <section class="hero">
+      <div class="row">
+        <div class="pill">📦 Paquetes</div>
+        <div class="pill">📲 Local</div>
+        <div class="pill">🔗 Link compartible</div>
+      </div>
+      <h2>Comparte cambios como un enlace por WhatsApp/Telegram.</h2>
+      <p>La otra persona abre el enlace y el compromiso se importa automáticamente (si no está instalada, se abre en navegador y puede instalarla).</p>
+      <div class="mono" id="lastLink"></div>
+    </section>
+
+    <section class="banner" id="installBanner">
+      <p class="title">Instálala para que se abra como app</p>
+      <p class="txt" id="installText">
+        En Android: menú <b>⋮</b> de Chrome → <b>Añadir a pantalla de inicio</b> (o <b>Instalar app</b>).
+      </p>
+      <div class="row">
+        <button class="btn primary" id="btnShowHow">📌 Ver pasos</button>
+        <button class="btn" id="btnHideBanner">Ocultar</button>
+      </div>
+    </section>
+
+    <nav class="tabs" aria-label="Pestañas">
+      <button class="tab active" id="tabPending">Pendientes <span class="badge" id="bPending">0</span></button>
+      <button class="tab" id="tabDone">Hechos <span class="badge" id="bDone">0</span></button>
+    </nav>
+
+    <div class="list" id="list"></div>
+    <div class="empty" id="empty">No tienes compromisos aquí. Pulsa <b>+</b> para crear uno nuevo.</div>
+  </div>
+
+  <button class="fab" id="fab" aria-label="Nuevo compromiso">+</button>
+
+  <!-- Modal Nuevo compromiso -->
+  <div class="backdrop" id="backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="sheet">
+      <div class="sheetHead">
+        <h3>Nuevo compromiso</h3>
+        <button class="close" id="btnClose">✕</button>
+      </div>
+
+      <div class="sheetBody">
+        <div class="field">
+          <label for="fWho">¿Con quién?</label>
+          <input id="fWho" type="text" placeholder="Ej: Laura / Mamá / Juan (del trabajo)" autocomplete="off"/>
+        </div>
+
+        <div class="field">
+          <label for="fWhat">¿Qué se acordó?</label>
+          <textarea id="fWhat" placeholder="Ej: Te paso el PDF / Te devuelvo 20€ / Quedamos el jueves…"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="fWhen">¿Para cuándo?</label>
+          <input id="fWhen" type="datetime-local" />
+          <div class="hint">Lo importante: que haya fecha (o “sin fecha”).</div>
+        </div>
+
+        <div class="hint">
+          Al guardar, podrás <b>Compartir paquete</b>. La otra persona abre el enlace y se importa.
+        </div>
+      </div>
+
+      <div class="sheetFoot">
+        <button class="btn danger" id="btnCancel">Cancelar</button>
+        <button class="btn good" id="btnSave">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal “Cómo instalar” -->
+  <div class="backdrop" id="helpBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="sheet">
+      <div class="sheetHead">
+        <h3>Cómo instalar en Android</h3>
+        <button class="close" id="helpClose">✕</button>
+      </div>
+      <div class="sheetBody">
+        <div class="hint" style="font-size:13px;color:var(--text);opacity:.95">
+          <b>1)</b> Abre en <b>Chrome</b><br/>
+          <b>2)</b> Menú <b>⋮</b><br/>
+          <b>3)</b> Pulsa <b>Instalar app</b> o <b>Añadir a pantalla de inicio</b><br/>
+          <b>4)</b> Abre desde el icono (modo app)<br/><br/>
+          <span style="color:var(--muted)">
+            Para que aparezca “Instalar”, la app debe estar en <b>https://</b> (no vale <b>content://</b> o <b>file://</b>).
+          </span>
+        </div>
+      </div>
+      <div class="sheetFoot">
+        <button class="btn primary" id="helpOk">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function(){
+      "use strict";
+
+      const $ = (id) => document.getElementById(id);
+      const KEY = "compromisos_local_v2";
+      const EVENTS_KEY = "compromisos_events_v2";
+
+      function uid(){
+        return "c_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+      }
+      function pad2(n){ return String(n).padStart(2,"0"); }
+      function fmtDate(dt){
+        if(!dt) return "Sin fecha";
+        const d = new Date(dt);
+        if(Number.isNaN(d.getTime())) return "Sin fecha";
+        const now = new Date();
+        const sameYear = d.getFullYear() === now.getFullYear();
+        const day = pad2(d.getDate());
+        const mon = pad2(d.getMonth()+1);
+        const hh = pad2(d.getHours());
+        const mm = pad2(d.getMinutes());
+        return (sameYear ? `${day}/${mon}` : `${day}/${mon}/${d.getFullYear()}`) + ` ${hh}:${mm}`;
+      }
+      function isOverdue(dt){
+        if(!dt) return false;
+        const d = new Date(dt);
+        if(Number.isNaN(d.getTime())) return false;
+        return d.getTime() < Date.now();
+      }
+      function toast(msg){
+        const t = $("toast");
+        t.textContent = msg;
+        t.classList.add("show");
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(()=> t.classList.remove("show"), 2400);
+      }
+      function escapeHtml(s){
+        return String(s ?? "")
+          .replaceAll("&","&amp;")
+          .replaceAll("<","&lt;")
+          .replaceAll(">","&gt;")
+          .replaceAll('"',"&quot;")
+          .replaceAll("'","&#039;");
+      }
+
+      // Base64URL
+      function b64urlEncode(str){
+        const b64 = btoa(unescape(encodeURIComponent(str)));
+        return b64.replaceAll("+","-").replaceAll("/","_").replaceAll("=","");
+      }
+      function b64urlDecode(b64url){
+        let b64 = b64url.replaceAll("-","+").replaceAll("_","/");
+        while(b64.length % 4) b64 += "=";
+        return decodeURIComponent(escape(atob(b64)));
+      }
+
+      function load(){
+        try{
+          const raw = localStorage.getItem(KEY);
+          const arr = raw ? JSON.parse(raw) : [];
+          return Array.isArray(arr) ? arr : [];
+        }catch(e){ return []; }
+      }
+      function save(arr){ localStorage.setItem(KEY, JSON.stringify(arr)); }
+
+      function loadEvents(){
+        try{
+          const raw = localStorage.getItem(EVENTS_KEY);
+          const arr = raw ? JSON.parse(raw) : [];
+          return Array.isArray(arr) ? arr : [];
+        }catch(e){ return []; }
+      }
+      function saveEvents(arr){ localStorage.setItem(EVENTS_KEY, JSON.stringify(arr)); }
+
+      let data = load();
+      let events = loadEvents();
+      let view = "pending";
+
+      // --------- FIX: crear evento sin meterlo antes en events ----------
+      function makeEvent(type, payload){
+        return { id: uid(), type, at: new Date().toISOString(), payload };
+      }
+
+      function applyEvent(ev){
+        if(!ev || !ev.type) return false;
+
+        // Evitar duplicados (importaciones repetidas)
+        if(events.some(x => x.id === ev.id)) return false;
+
+        let changed = false;
+
+        if(ev.type === "CREATE"){
+          const item = ev.payload;
+          if(item && item.id && !data.some(x => x.id === item.id)){
+            data.push(item);
+            changed = true;
+          }
+        } else if(ev.type === "DONE"){
+          const { itemId } = ev.payload || {};
+          const it = data.find(x => x.id === itemId);
+          if(it && !it.done){
+            it.done = true;
+            it.doneAt = ev.at;
+            changed = true;
+          }
+        } else if(ev.type === "REOPEN"){
+          const { itemId } = ev.payload || {};
+          const it = data.find(x => x.id === itemId);
+          if(it && it.done){
+            it.done = false;
+            it.doneAt = null;
+            changed = true;
+          }
+        } else if(ev.type === "DELETE"){
+          const { itemId } = ev.payload || {};
+          const before = data.length;
+          data = data.filter(x => x.id !== itemId);
+          changed = (data.length !== before);
+        }
+
+        // Guardamos SIEMPRE el evento en el log para no reimportarlo
+        events.push(ev);
+        saveEvents(events);
+        save(data);
+
+        return changed;
+      }
+
+      function makePackage(ev){
+        return b64urlEncode(JSON.stringify({ v:1, ev }));
+      }
+      function parsePackage(p){
+        const json = b64urlDecode(p);
+        const pack = JSON.parse(json);
+        if(!pack || pack.v !== 1 || !pack.ev) return null;
+        return pack;
+      }
+      function makeLinkFromPackage(p){
+        const base = location.origin + location.pathname;
+        return base + "#p=" + p;
+      }
+
+      // --------- Render ----------
+      function render(){
+        const list = $("list");
+        list.innerHTML = "";
+
+        const pending = data.filter(x => !x.done);
+        const done = data.filter(x => x.done);
+
+        $("bPending").textContent = String(pending.length);
+        $("bDone").textContent = String(done.length);
+
+        const items = (view === "pending") ? pending : done;
+
+        $("empty").style.display = items.length ? "none" : "block";
+
+        items
+          .sort((a,b) => {
+            const ta = a.when ? new Date(a.when).getTime() : (view==="pending" ? Number.POSITIVE_INFINITY : 0);
+            const tb = b.when ? new Date(b.when).getTime() : (view==="pending" ? Number.POSITIVE_INFINITY : 0);
+            if(view === "pending") return ta - tb;
+            return (b.doneAt||0) - (a.doneAt||0);
+          })
+          .forEach(item => list.appendChild(renderCard(item)));
+      }
+
+      function renderCard(item){
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const dueText = item.when ? fmtDate(item.when) : "Sin fecha";
+        const overdue = !item.done && isOverdue(item.when);
+        const dueClass = overdue ? "due bad" : "due";
+
+        const meta = [
+          `<span class="chip">📝 ${escapeHtml(fmtDate(item.createdAt))}</span>`,
+          item.done ? `<span class="chip">✅ ${escapeHtml(fmtDate(item.doneAt))}</span>` : ""
+        ].filter(Boolean).join("");
+
+        card.innerHTML = `
+          <div class="cardTop">
+            <div class="who">
+              <p class="name">${escapeHtml(item.who || "Sin nombre")}</p>
+              <p class="meta">${meta}</p>
+            </div>
+            <div class="${dueClass}">⏰ ${escapeHtml(dueText)}${overdue ? " · Vencido" : ""}</div>
+          </div>
+          <div class="desc">${escapeHtml(item.what || "—")}</div>
+          <div class="actions"></div>
+        `;
+
+        const actions = card.querySelector(".actions");
+
+        if(!item.done){
+          actions.appendChild(mkBtn("✅ Hecho", "btn good", () => markDone(item.id)));
+          actions.appendChild(mkBtn("📦 Compartir", "btn primary", () => shareItemPackage(item.id)));
+          actions.appendChild(mkBtn("🗑️", "btn danger", () => deleteItem(item.id), true));
+        }else{
+          actions.appendChild(mkBtn("↩️ Reabrir", "btn", () => reopen(item.id)));
+          actions.appendChild(mkBtn("📦 Compartir", "btn primary", () => shareItemPackage(item.id)));
+          actions.appendChild(mkBtn("🗑️", "btn danger", () => deleteItem(item.id), true));
+        }
+
+        return card;
+      }
+
+      function mkBtn(text, cls, onClick, small){
+        const b = document.createElement("button");
+        b.className = cls;
+        b.textContent = text;
+        b.style.flex = small ? "0 0 auto" : "1";
+        if(small){
+          b.style.paddingLeft = "12px";
+          b.style.paddingRight = "12px";
+          b.style.minWidth = "56px";
+        }
+        b.addEventListener("click", onClick);
+        return b;
+      }
+
+      // --------- Modales ----------
+      function openModal(){
+        $("backdrop").classList.add("show");
+        $("backdrop").setAttribute("aria-hidden","false");
+        $("fWho").focus();
+      }
+      function closeModal(){
+        $("backdrop").classList.remove("show");
+        $("backdrop").setAttribute("aria-hidden","true");
+      }
+      function clearForm(){
+        $("fWho").value = "";
+        $("fWhat").value = "";
+        $("fWhen").value = "";
+      }
+
+      function openHelp(){
+        $("helpBackdrop").classList.add("show");
+        $("helpBackdrop").setAttribute("aria-hidden","false");
+      }
+      function closeHelp(){
+        $("helpBackdrop").classList.remove("show");
+        $("helpBackdrop").setAttribute("aria-hidden","true");
+      }
+
+      // --------- Acciones ----------
+      function createCommitment(){
+        const who = $("fWho").value.trim();
+        const what = $("fWhat").value.trim();
+        const whenISO = $("fWhen").value ? new Date($("fWhen").value).toISOString() : null;
+
+        if(!who){ toast("Pon con quién es el compromiso"); $("fWho").focus(); return null; }
+        if(!what){ toast("Escribe qué se acordó"); $("fWhat").focus(); return null; }
+
+        const item = {
+          id: uid(),
+          who, what,
+          when: whenISO,
+          done: false,
+          createdAt: new Date().toISOString(),
+          doneAt: null
+        };
+
+        const ev = makeEvent("CREATE", item);
+        const changed = applyEvent(ev);
+        if(!changed){
+          toast("No se pudo guardar (duplicado)");
+          return null;
+        }
+        return item;
+      }
+
+      async function shareText(text){
+        try{
+          if(navigator.share){
+            await navigator.share({ text });
+            return true;
+          }
+        }catch(e){}
+        try{
+          await navigator.clipboard.writeText(text);
+          toast("Enlace copiado al portapapeles");
+          return true;
+        }catch(e){
+          prompt("Copia este enlace:", text);
+          return true;
+        }
+      }
+
+      async function shareItemPackage(itemId){
+        const it = data.find(x => x.id === itemId);
+        if(!it){ toast("No encontrado"); return; }
+
+        // Paquete: CREATE con item completo (MVP)
+        const ev = { id: uid(), type: "CREATE", at: new Date().toISOString(), payload: it };
+        const p = makePackage(ev);
+        const link = makeLinkFromPackage(p);
+
+        $("lastLink").textContent = "Último enlace generado:\n" + link;
+        $("lastLink").classList.add("show");
+
+        // En content:// o file:// avisa
+        if(location.protocol === "file:" || location.protocol === "content:"){
+          toast("Ojo: para que el enlace funcione en otro móvil necesitas https:// (GitHub Pages)");
+        }
+
+        await shareText(link);
+      }
+
+      function markDone(itemId){
+        const ev = makeEvent("DONE", { itemId });
+        const changed = applyEvent(ev);
+        render();
+        toast(changed ? "Marcado como hecho ✅" : "Sin cambios");
+      }
+
+      function reopen(itemId){
+        const ev = makeEvent("REOPEN", { itemId });
+        const changed = applyEvent(ev);
+        render();
+        toast(changed ? "Reabierto" : "Sin cambios");
+      }
+
+      function deleteItem(itemId){
+        const ev = makeEvent("DELETE", { itemId });
+        const changed = applyEvent(ev);
+        render();
+        toast(changed ? "Eliminado" : "Sin cambios");
+      }
+
+      function tryImportFromUrl(){
+        const h = location.hash || "";
+        const m = h.match(/#p=([A-Za-z0-9\-_]+)/);
+        if(!m) return false;
+
+        const p = m[1];
+        try{
+          const pack = parsePackage(p);
+          if(!pack || !pack.ev) throw new Error("Paquete inválido");
+
+          const applied = applyEvent(pack.ev);
+          render();
+
+          // limpiar hash
+          if(location.protocol !== "file:" && location.protocol !== "content:"){
+            history.replaceState(null, "", location.origin + location.pathname);
+          }else{
+            location.hash = "";
+          }
+
+          toast(applied ? "Paquete importado ✅" : "Paquete ya aplicado (o sin cambios)");
+          return true;
+        }catch(e){
+          if(location.protocol !== "file:" && location.protocol !== "content:"){
+            history.replaceState(null, "", location.origin + location.pathname);
+          }else{
+            location.hash = "";
+          }
+          toast("No se pudo importar el paquete");
+          return false;
+        }
+      }
+
+      // --------- Install UX ----------
+      let deferredPrompt = null;
+      window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        $("btnInstall").style.display = "flex";
+        $("installBanner").classList.add("show");
+      });
+
+      $("btnInstall").addEventListener("click", async () => {
+        if(!deferredPrompt){
+          $("installBanner").classList.add("show");
+          toast("Instala desde el menú ⋮ de Chrome");
+          return;
+        }
+        deferredPrompt.prompt();
+        try{ await deferredPrompt.userChoice; } catch(e){}
+        deferredPrompt = null;
+        $("btnInstall").style.display = "none";
+      });
+
+      $("btnShowHow").addEventListener("click", openHelp);
+      $("btnHideBanner").addEventListener("click", () => $("installBanner").classList.remove("show"));
+      $("helpClose").addEventListener("click", closeHelp);
+      $("helpOk").addEventListener("click", closeHelp);
+      $("helpBackdrop").addEventListener("click", (e)=>{ if(e.target === $("helpBackdrop")) closeHelp(); });
+
+      // --------- Tabs/UI ----------
+      $("tabPending").addEventListener("click", () => {
+        view = "pending";
+        $("tabPending").classList.add("active");
+        $("tabDone").classList.remove("active");
+        render();
+      });
+      $("tabDone").addEventListener("click", () => {
+        view = "done";
+        $("tabDone").classList.add("active");
+        $("tabPending").classList.remove("active");
+        render();
+      });
+
+      $("fab").addEventListener("click", () => { clearForm(); openModal(); });
+      $("btnClose").addEventListener("click", closeModal);
+      $("btnCancel").addEventListener("click", closeModal);
+      $("backdrop").addEventListener("click", (e) => { if(e.target === $("backdrop")) closeModal(); });
+
+      $("btnSave").addEventListener("click", () => {
+        const item = createCommitment();
+        if(!item) return;
+        closeModal();
+        render();
+        toast("Guardado. Ahora puedes compartir 📦");
+      });
+
+      // --------- SW ---------
+      (async function registerSW(){
+        if(location.protocol === "file:" || location.protocol === "content:"){
+          $("installBanner").classList.add("show");
+          $("installText").innerHTML =
+            "Estás abriendo la app en <b>" + location.protocol + "//</b>. Para instalar y para que los enlaces funcionen entre móviles necesitas <b>https://</b> (GitHub Pages).";
+          return;
+        }
+        if(!("serviceWorker" in navigator)) return;
+        try{
+          await navigator.serviceWorker.register("./sw.js", { scope: "./" });
+        }catch(e){
+          toast("No se pudo activar el modo offline (SW)");
+        }
+      })();
+
+      // --------- Boot ---------
+      render();
+      tryImportFromUrl();
+
+      if(data.length === 0){
+        const demo = {
+          id: uid(),
+          who: "Ejemplo: Laura",
+          what: "Te paso el PDF del seguro",
+          when: new Date(Date.now() + 3*60*60*1000).toISOString(),
+          done: false,
+          createdAt: new Date().toISOString(),
+          doneAt: null
+        };
+        const ev = makeEvent("CREATE", demo);
+        applyEvent(ev);
+        render();
+      }
+
+      setTimeout(() => {
+        if(location.protocol === "file:" || location.protocol === "content:" || !window.matchMedia("(display-mode: standalone)").matches){
+          $("installBanner").classList.add("show");
+        }
+      }, 250);
+
+    })();
+  </script>
+</body>
+</html>
