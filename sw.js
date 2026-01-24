@@ -2,52 +2,47 @@
 (() => {
   "use strict";
 
-  // Sube esta versión cuando cambies archivos para forzar actualización de caché
-  const VERSION = "compromisos-sw-v1.0.0";
+  // ✅ Sube esta versión cuando cambies archivos para forzar actualización de caché
+  const VERSION = "compromisos-sw-v1.0.1";
   const STATIC_CACHE = `static-${VERSION}`;
   const RUNTIME_CACHE = `runtime-${VERSION}`;
 
-  // Página “principal” para fallback offline (ajústala si tu archivo principal se llama distinto)
+  // Página “principal” para fallback offline
   const APP_SHELL = "./compromisos.html";
 
-  // Archivos base a cachear (añade aquí si tienes más assets)
+  // Archivos base a cachear
   const PRECACHE_URLS = [
     "./",
     APP_SHELL,
     "./manifest.webmanifest",
     "./icon-192.png",
-    "./icon-512.png"
+    "./icon-512.png",
+    "./sw.js"
   ];
 
   self.addEventListener("install", (event) => {
     event.waitUntil((async () => {
       const cache = await caches.open(STATIC_CACHE);
       await cache.addAll(PRECACHE_URLS.map(u => new Request(u, { cache: "reload" })));
-      // Activa el SW nuevo sin esperar (si quieres comportamiento “suave”, comenta)
       self.skipWaiting();
     })());
   });
 
   self.addEventListener("activate", (event) => {
     event.waitUntil((async () => {
-      // Limpia cachés antiguos
       const keys = await caches.keys();
       await Promise.all(
         keys
           .filter(k => (k.startsWith("static-") || k.startsWith("runtime-")) && k !== STATIC_CACHE && k !== RUNTIME_CACHE)
           .map(k => caches.delete(k))
       );
-
-      // Controla inmediatamente las pestañas abiertas
       self.clients.claim();
     })());
   });
 
-  // Permite forzar la actualización desde la app (por si lo usas más adelante)
   self.addEventListener("message", (event) => {
     const msg = event.data;
     if (!msg) return;
-
     if (msg === "SKIP_WAITING" || (msg && msg.type === "SKIP_WAITING")) {
       self.skipWaiting();
     }
@@ -79,7 +74,6 @@
     } catch (e) {
       const cached = await cache.match(request) || await caches.match(request);
       if (cached) return cached;
-      // Fallback a la app principal para que abra aunque no haya red
       return caches.match(APP_SHELL);
     }
   }
@@ -89,17 +83,15 @@
     if (req.method !== "GET") return;
 
     const url = new URL(req.url);
-
-    // Solo interceptamos lo propio (mismo origen)
     if (url.origin !== self.location.origin) return;
 
-    // Para navegaciones (HTML) → Network-first (así se actualiza cuando hay red)
+    // HTML → network-first
     if (isNavigationRequest(req)) {
       event.respondWith(networkFirst(req));
       return;
     }
 
-    // Para assets estáticos típicos → Cache-first
+    // Assets → cache-first
     const isStaticAsset =
       url.pathname.endsWith(".js") ||
       url.pathname.endsWith(".css") ||
@@ -117,7 +109,6 @@
       return;
     }
 
-    // Resto → intenta red y guarda; si falla, usa caché si existe
     event.respondWith(networkFirst(req));
   });
 })();
