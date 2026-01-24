@@ -2,20 +2,20 @@
   "name": "Compromisos",
   "short_name": "Compromisos",
   "description": "Compromisos entre móviles con paquetes compartibles. Sin base de datos.",
-  "start_url": "./compromisos.html",
+  "start_url": "./#",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0b0c12",
   "theme_color": "#6b5bff",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "./icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icon-512.png",
+      "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
