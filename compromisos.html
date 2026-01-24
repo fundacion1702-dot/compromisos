@@ -64,6 +64,8 @@
       display:flex; align-items:center; gap:8px;
       font-weight:900;
       font-size: 14px;
+      flex:0 0 auto;
+      white-space:nowrap;
     }
     .iconbtn:active{ transform: scale(.98); }
     .iconbtn small{ color:var(--muted); font-weight:800; font-size: 12.5px; }
@@ -118,6 +120,7 @@
       display:flex; align-items:center; justify-content:center; gap:8px;
       flex:1;
       min-width: 120px;
+      white-space:nowrap;
     }
     .btn:active{ transform: scale(.99); }
     .btn.primary{ background: linear-gradient(135deg, rgba(107,91,255,.95), rgba(138,125,255,.55)); border-color: rgba(255,255,255,.16); }
@@ -183,6 +186,8 @@
       font-weight: 950;
       font-size: 14.5px;
       display:flex; align-items:center; justify-content:center; gap:8px;
+      min-width:0;
+      white-space:nowrap;
     }
     .subtab.active{
       color: var(--text);
@@ -498,6 +503,7 @@
       cursor:pointer;
       font-weight: 950;
       font-size: 14.5px;
+      white-space:nowrap;
     }
     .seg button.active{
       color: var(--text);
@@ -507,6 +513,16 @@
 
     .twoCol{ display:flex; gap:10px; flex-wrap:wrap; }
     .twoCol > *{ flex:1; min-width: 160px; }
+
+    /* Modal confirm propio */
+    .confirmMsg{ font-size:15px; color:var(--text); opacity:.95; line-height:1.35; }
+    .dangerTxt{ color: rgba(255,92,122,.95); font-weight: 950; }
+
+    /* Botón texto grande */
+    .iconbtn.tgl.on{
+      background: rgba(107,91,255,.20);
+      border-color: rgba(255,255,255,.18);
+    }
   </style>
 </head>
 
@@ -521,7 +537,10 @@
         </div>
       </div>
 
-      <button class="iconbtn" id="btnInstall" style="display:none">⬇️ <small>Instalar</small></button>
+      <div style="display:flex; gap:10px; align-items:center; flex:0 0 auto;">
+        <button class="iconbtn tgl" id="btnA11y" title="Texto grande">👓 <small id="a11yLabel">Texto</small></button>
+        <button class="iconbtn" id="btnInstall" style="display:none">⬇️ <small>Instalar</small></button>
+      </div>
     </header>
 
     <section class="hero">
@@ -540,7 +559,7 @@
     <section class="banner" id="installBanner">
       <p class="title" id="installTitle">Instálala para usarla como app</p>
       <p class="txt" id="installText">
-        Si la abres dentro de WhatsApp/Telegram, toca <b>Abrir en Chrome</b> para poder instalar.
+        Si la abres dentro de WhatsApp/Telegram, toca <b>Abrir en Chrome</b> para poder instalar e importar bien.
       </p>
       <div class="row">
         <button class="btn primary" id="btnInstallBanner" style="display:none">⬇️ Instalar</button>
@@ -865,6 +884,23 @@
     </div>
   </div>
 
+  <!-- Modal Confirm (propio) -->
+  <div class="backdrop" id="confirmBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="sheet">
+      <div class="sheetHead">
+        <h3 id="confirmTitle">Confirmar</h3>
+        <button class="close" id="confirmClose">✕</button>
+      </div>
+      <div class="sheetBody">
+        <div class="confirmMsg" id="confirmMsg"></div>
+      </div>
+      <div class="sheetFoot">
+        <button class="btn" id="confirmNo">Cancelar</button>
+        <button class="btn danger" id="confirmYes">Sí, continuar</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script>
@@ -879,6 +915,13 @@
       const SETTINGS_KEY = "compromisos_settings_v3";
       const REMIND_FIRED_KEY = "compromisos_remind_fired_v2";
       const AFTER_FIRED_KEY = "compromisos_after_fired_v1";
+
+      // ✅ Buzón para importación “desde in-app browser”
+      const INBOX_PACK_KEY = "compromisos_inbox_pack_v1";
+      const INBOX_TS_KEY   = "compromisos_inbox_ts_v1";
+
+      // ✅ Accesibilidad: texto grande
+      const A11Y_KEY = "compromisos_a11y_v1";
 
       // Tipos numéricos para acortar paquetes
       const T = { CREATE:0, DONE:1, REOPEN:2, DELETE:3, EDIT:4 };
@@ -945,6 +988,55 @@
       }
       function save(key, value){
         localStorage.setItem(key, JSON.stringify(value));
+      }
+
+      // --------- Confirm modal (propio) ----------
+      const Confirm = (function(){
+        let resolver = null;
+        let current = null;
+
+        function open({ title, msg, yesText, danger }){
+          current = { title, msg, yesText, danger: !!danger };
+          $("confirmTitle").textContent = title || "Confirmar";
+          $("confirmMsg").innerHTML = msg || "";
+          $("confirmYes").textContent = yesText || "Sí, continuar";
+          $("confirmYes").classList.toggle("danger", !!danger);
+
+          $("confirmBackdrop").classList.add("show");
+          $("confirmBackdrop").setAttribute("aria-hidden","false");
+          return new Promise((resolve)=>{ resolver = resolve; });
+        }
+        function close(val){
+          $("confirmBackdrop").classList.remove("show");
+          $("confirmBackdrop").setAttribute("aria-hidden","true");
+          const r = resolver;
+          resolver = null;
+          if(r) r(!!val);
+        }
+
+        $("confirmClose").addEventListener("click", ()=> close(false));
+        $("confirmNo").addEventListener("click", ()=> close(false));
+        $("confirmYes").addEventListener("click", ()=> close(true));
+        $("confirmBackdrop").addEventListener("click", (e)=>{ if(e.target === $("confirmBackdrop")) close(false); });
+
+        return { open };
+      })();
+
+      // --------- Accesibilidad (texto grande) ----------
+      function setTextScale(on){
+        const isOn = !!on;
+        const root = document.documentElement;
+        root.style.setProperty("--fs-base", isOn ? "18px" : "16px");
+
+        const b = $("btnA11y");
+        b.classList.toggle("on", isOn);
+        $("a11yLabel").textContent = isOn ? "Grande" : "Texto";
+
+        save(A11Y_KEY, { big: isOn });
+      }
+      function toggleTextScale(){
+        const s = load(A11Y_KEY, { big:false });
+        setTextScale(!s.big);
       }
 
       // --------- Ajustes (PIN / notifs) ----------
@@ -1147,7 +1239,6 @@
           const p = ev.payload || {};
           const itemId = p.i || uid();
 
-          // Guardamos "afterMin" (aviso desde ahora) y "afterAt" (momento absoluto)
           const afterMin = Number(p.af || 0);
           const afterAt = p.aa || null;
 
@@ -1262,8 +1353,11 @@
         const folder = path.replace(/\/[^\/]*$/, "/");
         return location.origin + folder;
       }
+      function baseFileUrl(){
+        return location.origin + location.pathname;
+      }
       function makeLinkFromPackage(p){
-        return baseFolderUrl() + "#p=" + p;
+        return baseFolderUrl() + "compromisos.html#p=" + p;
       }
 
       function shortPreview(text, n){
@@ -1881,7 +1975,6 @@
         const whenISO = $("fWhen").value ? new Date($("fWhen").value).toISOString() : null;
         const remindMin = Number($("fRemind").value || 0);
 
-        // Aviso desde ahora
         const afterMin = Number($("fAfter").value || 0);
         const afterAt = afterMin > 0 ? new Date(Date.now() + afterMin*60*1000).toISOString() : null;
 
@@ -1929,7 +2022,6 @@
               s: what,
               n: whenISO || null,
               r: remindMin || 0,
-              // Aviso desde ahora:
               af: afterMin || 0,
               aa: afterAt || null,
               ca: now
@@ -1985,8 +2077,14 @@
       }
 
       async function deleteItem(itemId){
-        const ok = confirm("¿Eliminar este compromiso?");
+        const ok = await Confirm.open({
+          title: "Eliminar compromiso",
+          msg: `¿Seguro que quieres eliminar este compromiso?<br><span class="dangerTxt">Esta acción no se puede deshacer.</span>`,
+          yesText: "Sí, eliminar",
+          danger: true
+        });
         if(!ok) return;
+
         const ev = makeEvent(T.DELETE, { i: itemId });
         const changed = applyEvent(ev);
         renderAll();
@@ -2003,8 +2101,6 @@
         const it = data.find(x => x.id === itemId);
         if(!it){ toast("No encontrado"); return; }
 
-        // Si tiene "afterMin", re-calculamos afterAt desde ahora al compartir
-        // para que el receptor reciba “en X tiempo” desde el momento de importación.
         const af = Number(it.afterMin || 0);
         const aa = af > 0 ? new Date(Date.now() + af*60*1000).toISOString() : null;
 
@@ -2019,10 +2115,8 @@
             s: it.what || "",
             n: it.when || null,
             r: Number(it.remindMin || 0),
-
             af: af || 0,
             aa: aa,
-
             ca: it.createdAt || new Date().toISOString()
           }
         };
@@ -2051,8 +2145,13 @@
         }
       }
 
-      function deleteContact(id){
-        const ok = confirm("¿Eliminar este contacto?");
+      async function deleteContact(id){
+        const ok = await Confirm.open({
+          title: "Eliminar contacto",
+          msg: `¿Eliminar este contacto?<br><span class="dangerTxt">Los compromisos quedarán con el nombre “guardado”.</span>`,
+          yesText: "Sí, eliminar",
+          danger: true
+        });
         if(!ok) return;
 
         data.forEach(it => {
@@ -2070,30 +2169,80 @@
         toast("Contacto eliminado");
       }
 
-      // --------- Import desde URL ----------
-      function tryImportFromUrl(){
+      // --------- Import desde URL (robusto con “buzón”) ----------
+      function readPackFromHash(){
         const h = location.hash || "";
         const m = h.match(/#p=([A-Za-z0-9\-_]+)/);
-        if(!m) return false;
+        return m ? m[1] : null;
+      }
 
-        const p = m[1];
+      function storeInboxPack(p){
+        try{
+          localStorage.setItem(INBOX_PACK_KEY, p);
+          localStorage.setItem(INBOX_TS_KEY, String(Date.now()));
+        }catch(e){}
+      }
+
+      function takeInboxPack(){
+        try{
+          const p = localStorage.getItem(INBOX_PACK_KEY);
+          if(!p) return null;
+          localStorage.removeItem(INBOX_PACK_KEY);
+          localStorage.removeItem(INBOX_TS_KEY);
+          return p;
+        }catch(e){ return null; }
+      }
+
+      function tryApplyPack(p){
         try{
           const pack = parsePackage(p);
           const ev = unpackEvent(pack);
           if(!ev) throw new Error("Paquete inválido");
-
           const applied = applyEvent(ev);
           renderAll();
-
-          history.replaceState(null, "", baseFolderUrl());
-
           toast(applied ? "Paquete importado ✅" : "Paquete ya aplicado (o sin cambios)");
           return true;
         }catch(e){
-          history.replaceState(null, "", baseFolderUrl());
           toast("No se pudo importar el paquete");
           return false;
         }
+      }
+
+      function clearHashToBase(){
+        try{
+          history.replaceState(null, "", baseFileUrl());
+        }catch(e){
+          location.hash = "";
+        }
+      }
+
+      function tryImportFromUrl(){
+        const p = readPackFromHash();
+        if(!p) return false;
+
+        // Si estamos en navegador interno: guardamos y pedimos abrir en Chrome
+        if(isInAppBrowser){
+          storeInboxPack(p);
+          clearHashToBase();
+          showBanner("openchrome_import");
+          toast("Para importar: abre en Chrome");
+          return true;
+        }
+
+        const ok = tryApplyPack(p);
+        clearHashToBase();
+        return ok;
+      }
+
+      function tryImportFromInbox(){
+        // Solo tiene sentido fuera de in-app browser
+        if(isInAppBrowser) return false;
+
+        const p = takeInboxPack();
+        if(!p) return false;
+
+        toast("Importando paquete pendiente…");
+        return tryApplyPack(p);
       }
 
       // --------- PWA banner ----------
@@ -2123,7 +2272,12 @@
         bOpen.style.display = "none";
         bCopy.style.display = "none";
 
-        if(mode === "openchrome"){
+        if(mode === "openchrome_import"){
+          title.textContent = "Importación pendiente";
+          text.innerHTML = "Has abierto el enlace desde un navegador interno. <b>Abre en Chrome</b> para importar el compromiso en la app (y poder instalar).";
+          bOpen.style.display = "flex";
+          bCopy.style.display = "flex";
+        } else if(mode === "openchrome"){
           title.textContent = "Ábrelo en Chrome para instalarla";
           text.innerHTML = "Estás en un navegador interno (WhatsApp/Telegram). Para instalar, toca <b>Abrir en Chrome</b>.";
           bOpen.style.display = "flex";
@@ -2261,11 +2415,16 @@
       });
 
       $("btnLockCopyLink").addEventListener("click", copyCurrentLink);
-      $("btnLockReset").addEventListener("click", () => {
-        const ok = confirm("Esto borrará TODO (compromisos, contactos y PIN). ¿Seguro?");
+      $("btnLockReset").addEventListener("click", async () => {
+        const ok = await Confirm.open({
+          title: "Borrar todo",
+          msg: `Esto borrará <b>TODO</b> (compromisos, contactos y PIN).<br><span class="dangerTxt">No se puede deshacer.</span>`,
+          yesText: "Sí, borrar todo",
+          danger: true
+        });
         if(!ok) return;
         localStorage.clear();
-        location.replace(baseFolderUrl());
+        location.replace(baseFolderUrl() + "compromisos.html");
       });
 
       document.addEventListener("visibilitychange", () => {
@@ -2397,11 +2556,16 @@
         else { openPinModal("enable"); }
       }
 
-      function resetAll(){
-        const ok = confirm("Esto borrará TODO (compromisos, contactos y ajustes). ¿Seguro?");
+      async function resetAll(){
+        const ok = await Confirm.open({
+          title: "Borrar todo",
+          msg: `Esto borrará <b>TODO</b> (compromisos, contactos y ajustes).<br><span class="dangerTxt">No se puede deshacer.</span>`,
+          yesText: "Sí, borrar todo",
+          danger: true
+        });
         if(!ok) return;
         localStorage.clear();
-        location.replace(baseFolderUrl());
+        location.replace(baseFolderUrl() + "compromisos.html");
       }
 
       // --------- Notif switch ----------
@@ -2546,10 +2710,23 @@
 
       $("btnResetAll").addEventListener("click", resetAll);
 
+      // ✅ Texto grande
+      $("btnA11y").addEventListener("click", toggleTextScale);
+
       // --------- Boot ----------
+      // Aplica preferencia de accesibilidad
+      const a11y = load(A11Y_KEY, { big:false });
+      setTextScale(!!a11y.big);
+
       updateSettingsUI();
       renderAll();
+
+      // 1) Import desde hash (si viene con #p=...)
       tryImportFromUrl();
+
+      // 2) Import desde “buzón” (si abriste antes en WhatsApp)
+      tryImportFromInbox();
+
       cleanupFiredMaps();
 
       setTimeout(() => {
