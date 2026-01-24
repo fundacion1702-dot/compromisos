@@ -21,8 +21,21 @@
       --stroke:rgba(255,255,255,.10);
       --shadow: 0 14px 40px rgba(0,0,0,.35);
       --r:18px;
+
+      /* Base */
       --fs-base: 16px;
+
+      /* ✅ Accesibilidad (se controla con <html data-a11y="big">) */
+      --fs-base-big: 18px;
+      --fs-scale: 1;
     }
+
+    /* ✅ Si está activo “texto grande”, escalamos TODO de forma consistente */
+    html[data-a11y="big"]{
+      --fs-base: var(--fs-base-big);
+      --fs-scale: 1.12; /* un poco más para que se note incluso en elementos con px fijos */
+    }
+
     *{ box-sizing:border-box; }
     body{
       margin:0;
@@ -47,10 +60,10 @@
       box-shadow: 0 12px 30px rgba(107,91,255,.25);
       border:1px solid rgba(255,255,255,.14);
       flex:0 0 auto; font-weight:950; letter-spacing:.5px;
-      font-size: 18px;
+      font-size: calc(18px * var(--fs-scale));
     }
-    .brand h1{ margin:0; font-size:20px; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .brand p{ margin:2px 0 0; font-size:13.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .brand h1{ margin:0; font-size: calc(20px * var(--fs-scale)); line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .brand p{ margin:2px 0 0; font-size: calc(13.5px * var(--fs-scale)); color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
     .iconbtn{
       border:1px solid var(--stroke);
@@ -63,12 +76,12 @@
       transition: transform .08s ease, background .15s ease;
       display:flex; align-items:center; gap:8px;
       font-weight:900;
-      font-size: 14px;
+      font-size: calc(14px * var(--fs-scale));
       flex:0 0 auto;
       white-space:nowrap;
     }
     .iconbtn:active{ transform: scale(.98); }
-    .iconbtn small{ color:var(--muted); font-weight:800; font-size: 12.5px; }
+    .iconbtn small{ color:var(--muted); font-weight:800; font-size: calc(12.5px * var(--fs-scale)); }
 
     .hero{
       margin-top: 14px;
@@ -86,12 +99,12 @@
       border: 1px solid rgba(255,255,255,.14);
       background: rgba(107,91,255,.14);
       color: var(--text);
-      font-size: 13px;
+      font-size: calc(13px * var(--fs-scale));
       font-weight: 850;
       white-space:nowrap;
     }
-    .hero h2{ margin: 10px 0 6px; font-size: 18px; line-height:1.25; }
-    .hero p{ margin: 0; color: var(--muted); font-size: 15px; line-height:1.4; }
+    .hero h2{ margin: 10px 0 6px; font-size: calc(18px * var(--fs-scale)); line-height:1.25; }
+    .hero p{ margin: 0; color: var(--muted); font-size: calc(15px * var(--fs-scale)); line-height:1.4; }
 
     .banner{
       margin-top: 12px;
@@ -103,8 +116,8 @@
       display:none;
     }
     .banner.show{ display:block; }
-    .banner .title{ font-weight:950; margin:0 0 6px; font-size: 16px; }
-    .banner .txt{ margin:0; color:var(--muted); font-size:14.5px; line-height:1.35; }
+    .banner .title{ font-weight:950; margin:0 0 6px; font-size: calc(16px * var(--fs-scale)); }
+    .banner .txt{ margin:0; color:var(--muted); font-size: calc(14.5px * var(--fs-scale)); line-height:1.35; }
     .banner .row{ display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
 
     .btn{
@@ -115,7 +128,7 @@
       padding: 11px 12px;
       cursor:pointer;
       font-weight: 950;
-      font-size: 15px;
+      font-size: calc(15px * var(--fs-scale));
       transition: transform .08s ease, background .15s ease;
       display:flex; align-items:center; justify-content:center; gap:8px;
       flex:1;
@@ -145,7 +158,7 @@
       border-radius: 14px;
       cursor:pointer;
       font-weight: 950;
-      font-size: 15px;
+      font-size: calc(15px * var(--fs-scale));
       display:flex; align-items:center; justify-content:center; gap:8px;
       min-width: 0;
       white-space:nowrap;
@@ -161,7 +174,7 @@
       min-width: 24px;
       padding: 2px 9px;
       border-radius: 999px;
-      font-size: 13px;
+      font-size: calc(13px * var(--fs-scale));
       font-weight: 950;
       background: rgba(0,0,0,.25);
       border: 1px solid rgba(255,255,255,.14);
@@ -184,7 +197,7 @@
       border-radius: 14px;
       cursor:pointer;
       font-weight: 950;
-      font-size: 14.5px;
+      font-size: calc(14.5px * var(--fs-scale));
       display:flex; align-items:center; justify-content:center; gap:8px;
       min-width:0;
       white-space:nowrap;
@@ -206,11 +219,11 @@
     .cardTop{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
     .who{ min-width:0; }
     .who .name{
-      margin:0; font-size: 16px; font-weight: 950; letter-spacing:.2px;
+      margin:0; font-size: calc(16px * var(--fs-scale)); font-weight: 950; letter-spacing:.2px;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
     .who .meta{
-      margin: 4px 0 0; font-size: 13px; color: var(--muted);
+      margin: 4px 0 0; font-size: calc(13px * var(--fs-scale)); color: var(--muted);
       display:flex; gap:8px; flex-wrap:wrap;
     }
     .chip{
@@ -220,10 +233,10 @@
       background: rgba(255,255,255,.05);
       color: var(--muted);
       font-weight: 850;
-      font-size: 12.5px;
+      font-size: calc(12.5px * var(--fs-scale));
     }
     .due{
-      font-size: 13.5px;
+      font-size: calc(13.5px * var(--fs-scale));
       font-weight: 950;
       padding: 7px 11px;
       border-radius: 999px;
@@ -235,7 +248,7 @@
     .due.bad{ background: rgba(255,92,122,.14); }
     .desc{
       margin: 10px 0 0;
-      font-size: 15px;
+      font-size: calc(15px * var(--fs-scale));
       line-height:1.35;
       color: var(--text);
       opacity: .95;
@@ -251,7 +264,7 @@
       text-align:center;
       line-height:1.35;
       display:none;
-      font-size: 15px;
+      font-size: calc(15px * var(--fs-scale));
     }
 
     .fab{
@@ -265,7 +278,7 @@
       background: linear-gradient(135deg, rgba(107,91,255,.95), rgba(138,125,255,.55));
       box-shadow: 0 18px 45px rgba(107,91,255,.25), 0 14px 40px rgba(0,0,0,.35);
       color: white;
-      font-size: 30px;
+      font-size: calc(30px * var(--fs-scale));
       font-weight: 950;
       cursor:pointer;
       display:grid;
@@ -300,7 +313,7 @@
       display:flex; align-items:center; justify-content:space-between; gap:12px;
       border-bottom: 1px solid rgba(255,255,255,.10);
     }
-    .sheetHead h3{ margin:0; font-size: 17px; font-weight: 950; letter-spacing:.2px; }
+    .sheetHead h3{ margin:0; font-size: calc(17px * var(--fs-scale)); font-weight: 950; letter-spacing:.2px; }
     .close{
       border:1px solid rgba(255,255,255,.16);
       background: rgba(255,255,255,.06);
@@ -309,12 +322,12 @@
       padding: 9px 11px;
       cursor:pointer;
       font-weight: 950;
-      font-size: 14px;
+      font-size: calc(14px * var(--fs-scale));
     }
     .sheetBody{ padding: 14px; display:flex; flex-direction:column; gap: 10px; }
     .field label{
       display:block;
-      font-size: 13.5px;
+      font-size: calc(13.5px * var(--fs-scale));
       font-weight: 950;
       color: var(--muted);
       margin-bottom: 6px;
@@ -327,12 +340,12 @@
       background: rgba(255,255,255,.06);
       color: var(--text);
       outline: none;
-      font-size: 16px;
+      font-size: calc(16px * var(--fs-scale));
     }
     .field textarea{ min-height: 92px; resize: vertical; }
 
     .hint{
-      font-size: 13.5px;
+      font-size: calc(13.5px * var(--fs-scale));
       color: var(--muted);
       margin-top: 6px;
       line-height:1.35;
@@ -352,7 +365,7 @@
       border-radius: 14px;
       box-shadow: 0 18px 40px rgba(0,0,0,.45);
       font-weight: 850;
-      font-size: 14px;
+      font-size: calc(14px * var(--fs-scale));
       display:none;
       z-index: 1000;
       max-width: calc(100% - 28px);
@@ -362,7 +375,7 @@
 
     .mono{
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size:13px;
+      font-size: calc(13px * var(--fs-scale));
       color:var(--muted);
       word-break: break-all;
       background: rgba(255,255,255,.04);
@@ -375,7 +388,7 @@
     .mono.show{ display:block; }
 
     .kicker{
-      font-size: 13px;
+      font-size: calc(13px * var(--fs-scale));
       color: var(--muted);
       margin: 10px 0 0;
     }
@@ -391,8 +404,8 @@
       background: rgba(255,255,255,.05);
       box-shadow: 0 10px 25px rgba(0,0,0,.12);
     }
-    .rowline .ttl{ font-weight: 950; }
-    .rowline .sub{ font-size: 13.5px; color: var(--muted); margin-top: 3px; line-height:1.25; }
+    .rowline .ttl{ font-weight: 950; font-size: calc(15px * var(--fs-scale)); }
+    .rowline .sub{ font-size: calc(13.5px * var(--fs-scale)); color: var(--muted); margin-top: 3px; line-height:1.25; }
     .stack{ display:flex; flex-direction:column; min-width:0; }
     .right{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
 
@@ -447,8 +460,8 @@
       padding: 14px 14px 10px;
       border-bottom: 1px solid rgba(255,255,255,.10);
     }
-    .lockHead h3{ margin:0; font-size: 18px; font-weight: 950; }
-    .lockHead p{ margin:6px 0 0; color: var(--muted); font-size: 14px; line-height:1.25; }
+    .lockHead h3{ margin:0; font-size: calc(18px * var(--fs-scale)); font-weight: 950; }
+    .lockHead p{ margin:6px 0 0; color: var(--muted); font-size: calc(14px * var(--fs-scale)); line-height:1.25; }
     .lockBody{ padding: 14px; display:flex; flex-direction:column; gap: 12px; }
     .pinDots{ display:flex; justify-content:center; gap:10px; margin-top: 2px; }
     .dot{
@@ -474,7 +487,7 @@
       background: rgba(255,255,255,.06);
       color: var(--text);
       padding: 14px 12px;
-      font-size: 18px;
+      font-size: calc(18px * var(--fs-scale));
       font-weight: 950;
       cursor:pointer;
       transition: transform .08s ease, background .15s ease;
@@ -502,7 +515,7 @@
       padding: 10px 12px;
       cursor:pointer;
       font-weight: 950;
-      font-size: 14.5px;
+      font-size: calc(14.5px * var(--fs-scale));
       white-space:nowrap;
     }
     .seg button.active{
@@ -515,7 +528,7 @@
     .twoCol > *{ flex:1; min-width: 160px; }
 
     /* Modal confirm propio */
-    .confirmMsg{ font-size:15px; color:var(--text); opacity:.95; line-height:1.35; }
+    .confirmMsg{ font-size: calc(15px * var(--fs-scale)); color:var(--text); opacity:.95; line-height:1.35; }
     .dangerTxt{ color: rgba(255,92,122,.95); font-weight: 950; }
 
     /* Botón texto grande */
@@ -552,7 +565,10 @@
       </div>
       <h2>Comparte cambios como un enlace (sin cuentas).</h2>
       <p>Ahora puedes enviar un compromiso con un <b>aviso “desde ahora”</b> (5 min / 1 hora…) que se programa al importar.</p>
-      <div class="mono" id="lastLink"></div>
+
+      <!-- ✅ Eliminado el bloque “Último enlace” que ocupaba mucho -->
+      <!-- <div class="mono" id="lastLink"></div> -->
+
       <div class="kicker" id="statsKicker" style="display:none"></div>
     </section>
 
@@ -993,10 +1009,8 @@
       // --------- Confirm modal (propio) ----------
       const Confirm = (function(){
         let resolver = null;
-        let current = null;
 
         function open({ title, msg, yesText, danger }){
-          current = { title, msg, yesText, danger: !!danger };
           $("confirmTitle").textContent = title || "Confirmar";
           $("confirmMsg").innerHTML = msg || "";
           $("confirmYes").textContent = yesText || "Sí, continuar";
@@ -1022,11 +1036,13 @@
         return { open };
       })();
 
-      // --------- Accesibilidad (texto grande) ----------
+      // --------- ✅ Accesibilidad (texto grande) ----------
       function setTextScale(on){
         const isOn = !!on;
-        const root = document.documentElement;
-        root.style.setProperty("--fs-base", isOn ? "18px" : "16px");
+
+        // ✅ Marcamos el estado en <html> para que el CSS escale todo
+        document.documentElement.toggleAttribute("data-a11y", isOn);
+        if(isOn) document.documentElement.setAttribute("data-a11y","big");
 
         const b = $("btnA11y");
         b.classList.toggle("on", isOn);
@@ -1037,6 +1053,7 @@
       function toggleTextScale(){
         const s = load(A11Y_KEY, { big:false });
         setTextScale(!s.big);
+        toast(!s.big ? "Texto grande activado" : "Texto normal");
       }
 
       // --------- Ajustes (PIN / notifs) ----------
@@ -1457,8 +1474,11 @@
         const p = makePackage(ev);
         const link = makeLinkFromPackage(p);
 
-        $("lastLink").textContent = "Último enlace:\n" + link;
-        $("lastLink").classList.add("show");
+        // ✅ Ya no mostramos “Último enlace” en la home (lo pediste)
+        // if($("lastLink")){
+        //   $("lastLink").textContent = "Último enlace:\n" + link;
+        //   $("lastLink").classList.add("show");
+        // }
 
         const msgs = buildShareMessages(ev, it);
 
