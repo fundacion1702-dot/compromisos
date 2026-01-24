@@ -6,7 +6,6 @@
   <title>Compromisos</title>
   <meta name="theme-color" content="#6b5bff"/>
   <link rel="manifest" href="manifest.webmanifest">
-
   <style>
     :root{
       --bg:#0b0c12;
@@ -22,12 +21,9 @@
       --stroke:rgba(255,255,255,.10);
       --shadow: 0 14px 40px rgba(0,0,0,.35);
       --r:18px;
-
       --fs-base: 16px;
     }
-
     *{ box-sizing:border-box; }
-
     body{
       margin:0;
       font-size: var(--fs-base);
@@ -42,15 +38,9 @@
       min-height:100vh;
       padding-bottom:96px;
     }
-
     .wrap{ max-width:560px; margin:0 auto; padding:16px 14px 0; }
-
-    header{
-      display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:6px;
-    }
-
+    header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:6px; }
     .brand{ display:flex; align-items:center; gap:10px; min-width:0; }
-
     .logo{
       width:44px;height:44px;border-radius:15px; display:grid;place-items:center;
       background: linear-gradient(135deg, rgba(107,91,255,.95), rgba(138,125,255,.70));
@@ -59,13 +49,8 @@
       flex:0 0 auto; font-weight:950; letter-spacing:.5px;
       font-size: 18px;
     }
-
-    .brand h1{
-      margin:0; font-size:20px; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
-    .brand p{
-      margin:2px 0 0; font-size:13.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
+    .brand h1{ margin:0; font-size:20px; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .brand p{ margin:2px 0 0; font-size:13.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
     .iconbtn{
       border:1px solid var(--stroke);
@@ -92,7 +77,6 @@
       box-shadow: var(--shadow);
     }
     .hero .row{ display:flex; gap:10px; align-items:flex-start; flex-wrap:wrap; }
-
     .pill{
       display:inline-flex; align-items:center; gap:8px;
       padding: 8px 10px;
@@ -133,26 +117,13 @@
       transition: transform .08s ease, background .15s ease;
       display:flex; align-items:center; justify-content:center; gap:8px;
       flex:1;
+      min-width: 120px;
     }
     .btn:active{ transform: scale(.99); }
-
-    .btn.primary{
-      background: linear-gradient(135deg, rgba(107,91,255,.95), rgba(138,125,255,.55));
-      border-color: rgba(255,255,255,.16);
-    }
-    .btn.good{
-      background: linear-gradient(135deg, rgba(54,211,153,.95), rgba(54,211,153,.55));
-      border-color: rgba(255,255,255,.16);
-      color:#06150f;
-    }
-    .btn.danger{
-      background: rgba(255,92,122,.12);
-      border-color: rgba(255,92,122,.35);
-    }
-    .btn.ghost{
-      background: rgba(255,255,255,.04);
-      border-color: rgba(255,255,255,.12);
-    }
+    .btn.primary{ background: linear-gradient(135deg, rgba(107,91,255,.95), rgba(138,125,255,.55)); border-color: rgba(255,255,255,.16); }
+    .btn.good{ background: linear-gradient(135deg, rgba(54,211,153,.95), rgba(54,211,153,.55)); border-color: rgba(255,255,255,.16); color:#06150f; }
+    .btn.danger{ background: rgba(255,92,122,.12); border-color: rgba(255,92,122,.35); }
+    .btn.ghost{ background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.12); }
 
     .tabs{
       margin-top: 14px;
@@ -220,7 +191,6 @@
     }
 
     .list{ margin-top: 14px; display:flex; flex-direction:column; gap: 10px; }
-
     .card{
       border-radius: var(--r);
       background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
@@ -258,7 +228,6 @@
       white-space:nowrap;
     }
     .due.bad{ background: rgba(255,92,122,.14); }
-
     .desc{
       margin: 10px 0 0;
       font-size: 15px;
@@ -267,11 +236,7 @@
       opacity: .95;
       word-break: break-word;
     }
-
     .actions{ margin-top: 10px; display:flex; gap: 10px; flex-wrap:wrap; }
-    .actions .btn{ flex: 1; min-width: 120px; }
-    .actions .btn.icon{ flex: 0 0 auto; min-width: 58px; }
-
     .empty{
       padding: 18px 14px;
       border-radius: var(--r);
@@ -305,7 +270,6 @@
     }
     .fab:active{ transform: scale(.98); }
 
-    /* Modal / Bottom Sheet */
     .backdrop{
       position: fixed;
       inset: 0;
@@ -326,14 +290,12 @@
       box-shadow: 0 22px 60px rgba(0,0,0,.55);
       overflow:hidden;
     }
-
     .sheetHead{
       padding: 12px 14px;
       display:flex; align-items:center; justify-content:space-between; gap:12px;
       border-bottom: 1px solid rgba(255,255,255,.10);
     }
     .sheetHead h3{ margin:0; font-size: 17px; font-weight: 950; letter-spacing:.2px; }
-
     .close{
       border:1px solid rgba(255,255,255,.16);
       background: rgba(255,255,255,.06);
@@ -344,9 +306,7 @@
       font-weight: 950;
       font-size: 14px;
     }
-
     .sheetBody{ padding: 14px; display:flex; flex-direction:column; gap: 10px; }
-
     .field label{
       display:block;
       font-size: 13.5px;
@@ -409,23 +369,12 @@
     }
     .mono.show{ display:block; }
 
-    .monoRow{
-      display:flex;
-      gap:10px;
-      align-items:flex-start;
-      margin-top:10px;
-      flex-wrap:wrap;
-    }
-    .monoRow .mono{ flex: 1 1 100%; }
-    .monoRow .btn{ flex: 1 1 160px; }
-
     .kicker{
       font-size: 13px;
       color: var(--muted);
       margin: 10px 0 0;
     }
 
-    /* Ajustes (switch) */
     .rowline{
       display:flex;
       align-items:center;
@@ -468,12 +417,8 @@
       background: rgba(107,91,255,.35);
       border-color: rgba(255,255,255,.22);
     }
-    .switch.on::after{
-      transform: translateX(20px);
-      background: rgba(255,255,255,.96);
-    }
+    .switch.on::after{ transform: translateX(20px); background: rgba(255,255,255,.96); }
 
-    /* Bloqueo (PIN) overlay */
     .lockOverlay{
       position: fixed;
       inset: 0;
@@ -500,12 +445,7 @@
     .lockHead h3{ margin:0; font-size: 18px; font-weight: 950; }
     .lockHead p{ margin:6px 0 0; color: var(--muted); font-size: 14px; line-height:1.25; }
     .lockBody{ padding: 14px; display:flex; flex-direction:column; gap: 12px; }
-    .pinDots{
-      display:flex;
-      justify-content:center;
-      gap:10px;
-      margin-top: 2px;
-    }
+    .pinDots{ display:flex; justify-content:center; gap:10px; margin-top: 2px; }
     .dot{
       width: 14px; height: 14px;
       border-radius: 999px;
@@ -536,22 +476,10 @@
       text-align:center;
     }
     .key:active{ transform: scale(.99); }
-    .key.primary{
-      background: linear-gradient(135deg, rgba(107,91,255,.95), rgba(138,125,255,.55));
-      border-color: rgba(255,255,255,.18);
-    }
-    .key.danger{
-      background: rgba(255,92,122,.12);
-      border-color: rgba(255,92,122,.35);
-    }
-    .lockFoot{
-      padding: 12px 14px 14px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-    }
+    .key.primary{ background: linear-gradient(135deg, rgba(107,91,255,.95), rgba(138,125,255,.55)); border-color: rgba(255,255,255,.18); }
+    .key.danger{ background: rgba(255,92,122,.12); border-color: rgba(255,92,122,.35); }
+    .lockFoot{ padding: 12px 14px 14px; display:flex; gap:10px; flex-wrap:wrap; }
 
-    /* Selector corto/detallado en compartir */
     .seg{
       display:flex;
       gap:10px;
@@ -577,25 +505,8 @@
       border-color: rgba(255,255,255,.12);
     }
 
-    .shareRow{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
-      padding: 10px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.04);
-    }
-    .shareRow .lbl{
-      font-weight: 950;
-      color: var(--text);
-      font-size: 14px;
-      flex: 1 1 100%;
-    }
-    .shareRow select{ flex: 1 1 180px; }
-    .shareRow .btn{ flex: 1 1 160px; }
-
+    .twoCol{ display:flex; gap:10px; flex-wrap:wrap; }
+    .twoCol > *{ flex:1; min-width: 160px; }
   </style>
 </head>
 
@@ -621,17 +532,11 @@
         <div class="pill">🔒 PIN</div>
       </div>
       <h2>Comparte cambios como un enlace (sin cuentas).</h2>
-      <p>Ahora puedes poner recordatorios “por fecha” o “en X horas”.</p>
-
-      <div class="monoRow" id="lastLinkRow" style="display:none">
-        <div class="mono show" id="lastLink"></div>
-        <button class="btn" id="btnCopyLastLink">📎 Copiar enlace</button>
-      </div>
-
+      <p>Ahora puedes enviar un compromiso con un <b>aviso “desde ahora”</b> (5 min / 1 hora…) que se programa al importar.</p>
+      <div class="mono" id="lastLink"></div>
       <div class="kicker" id="statsKicker" style="display:none"></div>
     </section>
 
-    <!-- Banner inteligente (instalar / abrir en Chrome) -->
     <section class="banner" id="installBanner">
       <p class="title" id="installTitle">Instálala para usarla como app</p>
       <p class="txt" id="installText">
@@ -645,14 +550,12 @@
       </div>
     </section>
 
-    <!-- Vista principal -->
     <nav class="tabs" aria-label="Vistas">
       <button class="tab active" id="tabCommitments">📝 Compromisos</button>
       <button class="tab" id="tabContacts">👥 Amigos <span class="badge" id="bContacts">0</span></button>
       <button class="tab" id="tabSettings">⚙️ Ajustes</button>
     </nav>
 
-    <!-- Compromisos -->
     <div id="commitmentsPane">
       <nav class="subtabs" aria-label="Pestañas">
         <button class="subtab active" id="tabPending">Pendientes <span class="badge" id="bPending">0</span></button>
@@ -663,20 +566,18 @@
       <div class="empty" id="empty">No tienes compromisos aquí. Pulsa <b>+</b> para crear uno nuevo.</div>
     </div>
 
-    <!-- Contactos -->
     <div id="contactsPane" style="display:none">
       <div class="list" id="contactsList"></div>
       <div class="empty" id="contactsEmpty">No tienes contactos aún. Pulsa <b>+</b> para crear el primero.</div>
     </div>
 
-    <!-- Ajustes -->
     <div id="settingsPane" style="display:none">
       <div class="list">
 
         <div class="rowline">
           <div class="stack" style="min-width:0">
             <div class="ttl">🔔 Notificaciones</div>
-            <div class="sub">Recordatorios locales (funcionan seguro cuando la app está abierta; en segundo plano depende del móvil).</div>
+            <div class="sub">Recordatorios locales (fiables con la app abierta; en segundo plano depende del móvil). Usa Calendario si quieres 100%.</div>
           </div>
           <div class="right">
             <div class="switch" id="swNotif" role="switch" aria-checked="false" tabindex="0"></div>
@@ -759,12 +660,11 @@
 
       </div>
     </div>
-
   </div>
 
   <button class="fab" id="fab" aria-label="Nuevo">+</button>
 
-  <!-- Modal Compromiso (nuevo/editar) -->
+  <!-- Modal Compromiso -->
   <div class="backdrop" id="backdrop" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="sheet">
       <div class="sheetHead">
@@ -789,38 +689,41 @@
           <textarea id="fWhat" placeholder="Ej: Te paso el PDF / Te devuelvo 20€ / Quedamos el jueves…"></textarea>
         </div>
 
-        <div class="field">
-          <label for="fWhen">¿Para cuándo? (opcional)</label>
-          <input id="fWhen" type="datetime-local" />
-          <div class="hint">Puedes dejarlo sin fecha (sin calendario). Si hay fecha, podrás usar recordatorio por fecha.</div>
+        <div class="twoCol">
+          <div class="field">
+            <label for="fWhen">¿Para cuándo?</label>
+            <input id="fWhen" type="datetime-local" />
+            <div class="hint">Puedes dejarlo sin fecha.</div>
+          </div>
+
+          <div class="field">
+            <label for="fRemind">Recordatorio (por fecha)</label>
+            <select id="fRemind">
+              <option value="0">Ninguno</option>
+              <option value="5">5 min antes</option>
+              <option value="15">15 min antes</option>
+              <option value="60">1 hora antes</option>
+              <option value="1440">1 día antes</option>
+            </select>
+            <div class="hint">Requiere fecha.</div>
+          </div>
         </div>
 
         <div class="field">
-          <label for="fRemindByDate">Recordatorio por fecha</label>
-          <select id="fRemindByDate">
-            <option value="0">Ninguno</option>
-            <option value="5">5 min antes</option>
-            <option value="15">15 min antes</option>
-            <option value="60">1 hora antes</option>
-            <option value="1440">1 día antes</option>
+          <label for="fAfter">Avisar “desde ahora” (viaja en el enlace)</label>
+          <select id="fAfter">
+            <option value="0">No</option>
+            <option value="5">En 5 minutos</option>
+            <option value="15">En 15 minutos</option>
+            <option value="60">En 1 hora</option>
+            <option value="180">En 3 horas</option>
+            <option value="1440">Mañana (24h)</option>
           </select>
-          <div class="hint">Requiere fecha. Para notificar, activa “Notificaciones” en Ajustes.</div>
-        </div>
-
-        <div class="field">
-          <label for="fRemindAfter">Recordatorio en X horas (desde ahora)</label>
-          <select id="fRemindAfter">
-            <option value="0">Ninguno</option>
-            <option value="1">En 1 hora</option>
-            <option value="3">En 3 horas</option>
-            <option value="6">En 6 horas</option>
-            <option value="24">En 24 horas</option>
-          </select>
-          <div class="hint">Funciona aunque no haya fecha. Ideal para “recuérdamelo luego”.</div>
+          <div class="hint">El receptor debe abrir el enlace para que se programe en su móvil.</div>
         </div>
 
         <div class="hint">
-          Al guardar, podrás <b>Compartir</b> el cambio con botón directo para copiar enlace.
+          Al guardar, se abrirá el modal de <b>Compartir</b> (con copiar enlace directo).
         </div>
       </div>
 
@@ -831,7 +734,7 @@
     </div>
   </div>
 
-  <!-- Modal Contacto (nuevo/editar) -->
+  <!-- Modal Contacto -->
   <div class="backdrop" id="cBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="sheet">
       <div class="sheetHead">
@@ -858,7 +761,7 @@
     </div>
   </div>
 
-  <!-- Modal PIN (activar/cambiar/desactivar) -->
+  <!-- Modal PIN -->
   <div class="backdrop" id="pinBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="sheet">
       <div class="sheetHead">
@@ -892,7 +795,7 @@
     </div>
   </div>
 
-  <!-- Modal Compartir (mensaje bonito antes de enviar) -->
+  <!-- Modal Compartir -->
   <div class="backdrop" id="shareBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="sheet">
       <div class="sheetHead">
@@ -908,25 +811,17 @@
         </div>
 
         <div class="mono show" id="shareTextBox"></div>
+
+        <div class="hint" style="margin-top:2px">
+          Enlace (puedes copiarlo directo):
+        </div>
         <div class="mono show" id="shareUrlBox"></div>
 
-        <div class="shareRow">
-          <div class="lbl">⏰ Recordatorio después de compartir (opcional)</div>
-          <select id="shareAfter">
-            <option value="0">Ninguno</option>
-            <option value="1">En 1 hora</option>
-            <option value="3">En 3 horas</option>
-            <option value="6">En 6 horas</option>
-            <option value="24">En 24 horas</option>
-          </select>
-          <button class="btn" id="shareSchedule">Programar</button>
-        </div>
-
-        <div class="hint">Pulsa <b>Compartir</b> para enviarlo. O usa <b>Copiar enlace</b> para pegarlo rápido.</div>
+        <div class="hint">Pulsa <b>Compartir</b> para enviarlo por WhatsApp/Telegram. Si no aparece, usa copiar.</div>
       </div>
       <div class="sheetFoot">
-        <button class="btn" id="shareCopyLink">📎 Copiar enlace</button>
-        <button class="btn" id="shareCopyAll">📋 Copiar todo</button>
+        <button class="btn" id="shareCopyUrl">🔗 Copiar enlace</button>
+        <button class="btn" id="shareCopyAll">📋 Copiar texto+enlace</button>
         <button class="btn primary" id="shareSend">📤 Compartir</button>
         <button class="btn danger" id="shareCancel">Cancelar</button>
       </div>
@@ -981,9 +876,9 @@
       const KEY = "compromisos_local_v5";
       const EVENTS_KEY = "compromisos_events_v5";
       const CONTACTS_KEY = "compromisos_contacts_v5";
-      const SETTINGS_KEY = "compromisos_settings_v2";
-      const REMIND_FIRED_KEY = "compromisos_remind_fired_v1";
-      const REMINDERS_KEY = "compromisos_reminders_v1"; // recordatorios absolutos (en X horas)
+      const SETTINGS_KEY = "compromisos_settings_v3";
+      const REMIND_FIRED_KEY = "compromisos_remind_fired_v2";
+      const AFTER_FIRED_KEY = "compromisos_after_fired_v1";
 
       // Tipos numéricos para acortar paquetes
       const T = { CREATE:0, DONE:1, REOPEN:2, DELETE:3, EDIT:4 };
@@ -1052,7 +947,7 @@
         localStorage.setItem(key, JSON.stringify(value));
       }
 
-      // --------- PRIVACIDAD + NOTIFICACIONES (ajustes) ----------
+      // --------- Ajustes (PIN / notifs) ----------
       const defaultSettings = {
         notifEnabled: false,
         pinEnabled: false,
@@ -1154,7 +1049,6 @@
       function notifPermission(){
         try{ return Notification.permission; }catch(e){ return "unsupported"; }
       }
-
       function notifSupported(){
         return typeof Notification !== "undefined";
       }
@@ -1167,10 +1061,7 @@
         try{
           const p = await Notification.requestPermission();
           updateSettingsUI();
-          if(p === "granted"){
-            toast("Notificaciones permitidas ✅");
-            return true;
-          }
+          if(p === "granted"){ toast("Notificaciones permitidas ✅"); return true; }
           toast("Permiso no concedido");
           return false;
         }catch(e){
@@ -1201,22 +1092,22 @@
           $("btnNotifPerm").style.display = "";
           if(perm === "granted"){
             hint.textContent = settings.notifEnabled
-              ? "✅ Notificaciones activadas. Recibirás recordatorios según la configuración."
+              ? "✅ Notificaciones activadas."
               : "ℹ️ Tienes permiso concedido, pero están desactivadas. Actívalas con el switch.";
           } else if(perm === "denied"){
-            hint.textContent = "🚫 Notificaciones bloqueadas. Debes permitirlas en Ajustes de Android/Chrome (o reinstalar la PWA). Usa “📅 Calendario” como alternativa.";
+            hint.textContent = "🚫 Notificaciones bloqueadas. Permítelas en Ajustes de Android/Chrome o reinstala la PWA. Usa Calendario como alternativa.";
           } else {
-            hint.textContent = "ℹ️ Pulsa “Permitir” para poder recibir recordatorios. Si no, usa “📅 Calendario”.";
+            hint.textContent = "ℹ️ Pulsa “Permitir” para recibir recordatorios. Si no, usa Calendario.";
           }
         }
       }
 
-      // --------- Datos app ----------
+      // --------- Datos ----------
       let data = load(KEY, []);
       let events = load(EVENTS_KEY, []);
       let contacts = load(CONTACTS_KEY, []);
       let firedMap = load(REMIND_FIRED_KEY, {});
-      let reminders = load(REMINDERS_KEY, []); // {id, at, title, body, itemId, kind, createdAt, firedAt}
+      let afterFired = load(AFTER_FIRED_KEY, {});
 
       let view = "pending";
       let pane = "commitments";
@@ -1231,7 +1122,7 @@
         return item.whoName || "Sin nombre";
       }
 
-      function remindLabelByDate(min){
+      function remindLabel(min){
         const m = Number(min||0);
         if(!m) return "";
         if(m === 5) return "🔔 5m";
@@ -1240,49 +1131,8 @@
         if(m === 1440) return "🔔 1d";
         return "🔔";
       }
-      function remindLabelAfter(hours){
-        const h = Number(hours||0);
-        if(!h) return "";
-        if(h === 1) return "⏳ 1h";
-        if(h === 3) return "⏳ 3h";
-        if(h === 6) return "⏳ 6h";
-        if(h === 24) return "⏳ 24h";
-        return "⏳";
-      }
 
-      // --------- Recordatorios absolutos (en X horas) ----------
-      function saveReminders(){
-        // Limpieza simple: mantener últimos 500
-        if(reminders.length > 500) reminders = reminders.slice(reminders.length - 500);
-        save(REMINDERS_KEY, reminders);
-      }
-
-      function scheduleReminderAt(atISO, title, body, itemId, kind){
-        const d = new Date(atISO);
-        if(Number.isNaN(d.getTime())) return null;
-        const r = {
-          id: uid(),
-          at: d.toISOString(),
-          title: String(title||"Recordatorio"),
-          body: String(body||""),
-          itemId: itemId || null,
-          kind: kind || "generic",
-          createdAt: new Date().toISOString(),
-          firedAt: null
-        };
-        reminders.push(r);
-        saveReminders();
-        return r;
-      }
-
-      function scheduleReminderInHours(hours, title, body, itemId, kind){
-        const h = Number(hours||0);
-        if(!h) return null;
-        const at = new Date(Date.now() + h*60*60*1000).toISOString();
-        return scheduleReminderAt(at, title, body, itemId, kind);
-      }
-
-      // --------- Eventos internos + paquetes cortos ----------
+      // --------- Eventos + paquetes cortos ----------
       function makeEvent(type, payload){
         return { id: uid(), type, at: new Date().toISOString(), payload };
       }
@@ -1296,6 +1146,11 @@
         if(ev.type === T.CREATE){
           const p = ev.payload || {};
           const itemId = p.i || uid();
+
+          // Guardamos "afterMin" (aviso desde ahora) y "afterAt" (momento absoluto)
+          const afterMin = Number(p.af || 0);
+          const afterAt = p.aa || null;
+
           if(!data.some(x => x.id === itemId)){
             data.push({
               id: itemId,
@@ -1303,13 +1158,10 @@
               whoName: p.w || "Sin nombre",
               what: p.s || "",
               when: p.n || null,
+              remindMin: Number(p.r || 0),
 
-              // recordatorio por fecha:
-              remindByDateMin: Number(p.rbd || 0),
-
-              // recordatorio en X horas:
-              remindAfterHours: Number(p.rah || 0),
-              remindAfterAt: p.raa || null,
+              afterMin: afterMin,
+              afterAt: afterAt,
 
               done: false,
               createdAt: p.ca || ev.at,
@@ -1325,9 +1177,11 @@
               it.whoName = p.w || it.whoName;
               it.what = p.s ?? it.what;
               it.when = (p.n ?? it.when) || null;
-              it.remindByDateMin = Number(p.rbd ?? it.remindByDateMin ?? 0);
-              it.remindAfterHours = Number(p.rah ?? it.remindAfterHours ?? 0);
-              it.remindAfterAt = (p.raa ?? it.remindAfterAt) || null;
+              it.remindMin = Number(p.r ?? it.remindMin ?? 0);
+
+              if(p.af != null) it.afterMin = afterMin;
+              if(p.aa != null) it.afterAt = afterAt;
+
               it.updatedAt = ev.at;
               changed = (JSON.stringify(it) !== before);
             }
@@ -1368,9 +1222,11 @@
             if(p.c != null) it.whoId = p.c || null;
             if(p.s != null) it.what = p.s;
             if(p.n != null) it.when = p.n || null;
-            if(p.rbd != null) it.remindByDateMin = Number(p.rbd || 0);
-            if(p.rah != null) it.remindAfterHours = Number(p.rah || 0);
-            if(p.raa != null) it.remindAfterAt = p.raa || null;
+            if(p.r != null) it.remindMin = Number(p.r || 0);
+
+            if(p.af != null) it.afterMin = Number(p.af || 0);
+            if(p.aa != null) it.afterAt = p.aa || null;
+
             it.updatedAt = ev.at;
             changed = (JSON.stringify(it) !== before);
           }
@@ -1380,11 +1236,10 @@
         save(EVENTS_KEY, events);
         save(KEY, data);
 
-        cleanupFiredMap();
+        cleanupFiredMaps();
         return changed;
       }
 
-      // Paquete compacto
       function packEvent(ev){
         return { v:1, e:{ i: ev.id, t: ev.type, a: ev.at, p: ev.payload || {} } };
       }
@@ -1402,7 +1257,6 @@
         return JSON.parse(json);
       }
 
-      // ✅ URL corta: generamos siempre con la carpeta (/compromisos/) aunque estés en compromisos.html
       function baseFolderUrl(){
         const path = location.pathname || "/";
         const folder = path.replace(/\/[^\/]*$/, "/");
@@ -1418,34 +1272,22 @@
         return s.slice(0, n-1) + "…";
       }
 
-      // --------- Compartir (modal con mensaje bonito) ----------
-      let shareState = {
-        title: "",
-        shortText: "",
-        longText: "",
-        url: "",
-        mode: "short",
-        who: "",
-        what: "",
-        itemId: null
-      };
+      // --------- Compartir (modal) ----------
+      let shareState = { title:"", shortText:"", longText:"", url:"", mode:"short" };
 
       function openShareModal(){
         $("shareBackdrop").classList.add("show");
         $("shareBackdrop").setAttribute("aria-hidden","false");
-        $("shareAfter").value = "0";
         updateShareUI();
       }
       function closeShareModal(){
         $("shareBackdrop").classList.remove("show");
         $("shareBackdrop").setAttribute("aria-hidden","true");
       }
-
       function updateShareUI(){
         $("shareShort").classList.toggle("active", shareState.mode === "short");
         $("shareLong").classList.toggle("active", shareState.mode === "long");
         $("shareTitle").innerHTML = `<b>${escapeHtml(shareState.title || "Compartir")}</b>`;
-
         const msg = (shareState.mode === "long") ? shareState.longText : shareState.shortText;
         $("shareTextBox").textContent = msg || "";
         $("shareUrlBox").textContent = shareState.url || "";
@@ -1462,18 +1304,9 @@
         }
       }
 
-      async function copyLinkOnly(url){
-        if(!url){ toast("No hay enlace"); return; }
-        await copyToClipboard(url);
-      }
-
       async function doShare(){
         const msg = (shareState.mode === "long") ? shareState.longText : shareState.shortText;
-        const payload = {
-          title: shareState.title || "Compromisos",
-          text: msg,
-          url: shareState.url
-        };
+        const payload = { title: shareState.title || "Compromisos", text: msg, url: shareState.url };
 
         try{
           if(navigator.share){
@@ -1482,9 +1315,7 @@
             closeShareModal();
             return true;
           }
-        }catch(e){
-          // usuario canceló o error -> fallback
-        }
+        }catch(e){}
 
         const combined = (payload.title ? payload.title + "\n" : "") + (payload.text ? payload.text + "\n" : "") + payload.url;
         await copyToClipboard(combined);
@@ -1501,59 +1332,246 @@
         return "📦 Paquete";
       }
 
-      function buildShareMessages(ev, itemMaybe){
-        const it = itemMaybe || (ev?.payload?.i ? data.find(x => x.id === ev.payload.i) : null);
-
+      function buildShareMessages(ev, it){
         const who = it ? normalizedWho(it) : (ev?.payload?.w || "Sin nombre");
         const what = it ? shortPreview(it.what, 120) : shortPreview(ev?.payload?.s || "", 120);
         const whenTxt = it?.when ? fmtDate(it.when) : (ev?.payload?.n ? fmtDate(ev.payload.n) : "Sin fecha");
-        const byDateTxt = (it && it.when && Number(it.remindByDateMin||0) > 0) ? remindLabelByDate(it.remindByDateMin) : "";
-        const afterTxt = (it && Number(it.remindAfterHours||0) > 0) ? remindLabelAfter(it.remindAfterHours) : "";
+
+        const afterMin = Number(it?.afterMin || ev?.payload?.af || 0);
+        const afterTxt = afterMin ? `⏳ Aviso en: ${afterMin >= 1440 ? "24h" : (afterMin >= 60 ? (afterMin/60)+"h" : afterMin+"m")}` : "";
 
         const title = eventTitle(ev.type);
-
         const shortMsg =
           `${title}\n` +
           `👤 ${who}\n` +
           (what ? `📝 ${shortPreview(what, 70)}\n` : "") +
-          (it?.when ? `⏰ ${whenTxt}\n` : "") +
-          ((byDateTxt || afterTxt) ? `${byDateTxt ? byDateTxt+" " : ""}${afterTxt}\n` : "") +
-          `🔗 Abre el enlace para importar en la app.`;
+          (afterTxt ? `${afterTxt}\n` : "") +
+          `🔗 Abre el enlace para importar.`;
 
         const longMsg =
           `${title}\n` +
           `👤 Con: ${who}\n` +
           (what ? `📝 ${what}\n` : "") +
           `⏰ Para: ${whenTxt}\n` +
-          ((byDateTxt || afterTxt) ? `🔔 Recordatorios: ${byDateTxt ? "por fecha ("+byDateTxt+")" : ""}${byDateTxt && afterTxt ? " + " : ""}${afterTxt ? "en horas ("+afterTxt+")" : ""}\n` : "") +
+          (afterTxt ? `${afterTxt}\n` : "") +
           `🔗 Abre el enlace para importar en la app.`;
 
-        return { title, shortMsg, longMsg, who, what };
+        return { title, shortMsg, longMsg };
       }
 
-      async function prepareShare(ev, itemMaybe){
+      async function prepareShare(ev, it){
         const p = makePackage(ev);
         const link = makeLinkFromPackage(p);
 
         $("lastLink").textContent = "Último enlace:\n" + link;
-        $("lastLinkRow").style.display = "";
-        $("lastLinkRow").classList.add("show");
+        $("lastLink").classList.add("show");
 
-        const msgs = buildShareMessages(ev, itemMaybe);
+        const msgs = buildShareMessages(ev, it);
 
-        shareState.title = msgs.title;
-        shareState.shortText = msgs.shortMsg;
-        shareState.longText = msgs.longMsg;
-        shareState.url = link;
-        shareState.mode = "short";
-        shareState.who = msgs.who;
-        shareState.what = msgs.what;
-        shareState.itemId = (itemMaybe && itemMaybe.id) ? itemMaybe.id : (ev?.payload?.i || null);
+        shareState = {
+          title: msgs.title,
+          shortText: msgs.shortMsg,
+          longText: msgs.longMsg,
+          url: link,
+          mode: "short"
+        };
 
         openShareModal();
       }
 
-      // --------- UI: tabs ----------
+      // --------- Recordatorios (por fecha + desde ahora) ----------
+      function firedKey(it){
+        return `${it.id}|${it.when||""}|${Number(it.remindMin||0)}|${it.done?"1":"0"}`;
+      }
+      function afterKey(it){
+        return `${it.id}|${it.afterAt||""}|${Number(it.afterMin||0)}|${it.done?"1":"0"}`;
+      }
+
+      function cleanupFiredMaps(){
+        const liveA = new Set();
+        const liveB = new Set();
+
+        for(const it of data){
+          if(it.done) continue;
+
+          if(it.when && Number(it.remindMin||0) > 0){
+            liveA.add(firedKey(it));
+          }
+          if(it.afterAt && Number(it.afterMin||0) > 0){
+            liveB.add(afterKey(it));
+          }
+        }
+
+        const nextA = {};
+        for(const k of Object.keys(firedMap||{})){
+          if(liveA.has(k)) nextA[k] = firedMap[k];
+        }
+        firedMap = nextA;
+        save(REMIND_FIRED_KEY, firedMap);
+
+        const nextB = {};
+        for(const k of Object.keys(afterFired||{})){
+          if(liveB.has(k)) nextB[k] = afterFired[k];
+        }
+        afterFired = nextB;
+        save(AFTER_FIRED_KEY, afterFired);
+      }
+
+      function canNotify(){
+        if(!settings.notifEnabled) return false;
+        if(typeof Notification === "undefined") return false;
+        return Notification.permission === "granted";
+      }
+
+      function sendLocalNotification(title, body){
+        try{
+          if(canNotify()){
+            new Notification(title, { body });
+            return true;
+          }
+        }catch(e){}
+        return false;
+      }
+
+      function checkReminders(){
+        const now = Date.now();
+
+        // A) Por fecha (X min antes)
+        for(const it of data){
+          if(it.done) continue;
+          const rm = Number(it.remindMin||0);
+          if(!it.when || rm <= 0) continue;
+
+          const due = new Date(it.when).getTime();
+          if(Number.isNaN(due)) continue;
+
+          const trigger = due - rm*60*1000;
+          if(now < trigger) continue;
+          if(now > due + 30*60*1000) continue;
+
+          const k = firedKey(it);
+          if(firedMap && firedMap[k]) continue;
+
+          const who = normalizedWho(it);
+          const what = shortPreview(it.what, 80);
+          const dueTxt = fmtDate(it.when);
+
+          const title = `⏰ Compromiso: ${who}`;
+          const body = (what ? what + " · " : "") + `Para: ${dueTxt}`;
+
+          sendLocalNotification(title, body);
+          toast(`⏰ Recordatorio: ${who}`);
+
+          firedMap[k] = now;
+          save(REMIND_FIRED_KEY, firedMap);
+        }
+
+        // B) Desde ahora (afterAt)
+        for(const it of data){
+          if(it.done) continue;
+          const am = Number(it.afterMin||0);
+          if(!it.afterAt || am <= 0) continue;
+
+          const at = new Date(it.afterAt).getTime();
+          if(Number.isNaN(at)) continue;
+
+          if(now < at) continue;
+          if(now > at + 30*60*1000) continue;
+
+          const k = afterKey(it);
+          if(afterFired && afterFired[k]) continue;
+
+          const who = normalizedWho(it);
+          const what = shortPreview(it.what, 80);
+
+          const title = `🔔 Aviso: ${who}`;
+          const body = what || "Tienes un compromiso pendiente.";
+
+          sendLocalNotification(title, body);
+          toast(`🔔 Aviso: ${who}`);
+
+          afterFired[k] = now;
+          save(AFTER_FIRED_KEY, afterFired);
+        }
+      }
+
+      // --------- Calendario (.ics) ----------
+      function dtToICS(iso){
+        const d = new Date(iso);
+        if(Number.isNaN(d.getTime())) return null;
+        const y = d.getUTCFullYear();
+        const m = pad2(d.getUTCMonth()+1);
+        const da = pad2(d.getUTCDate());
+        const h = pad2(d.getUTCHours());
+        const mi = pad2(d.getUTCMinutes());
+        const s = pad2(d.getUTCSeconds());
+        return `${y}${m}${da}T${h}${mi}${s}Z`;
+      }
+      function makeICSForItem(it){
+        if(!it.when) return null;
+        const dtStart = dtToICS(it.when);
+        if(!dtStart) return null;
+        const startMs = new Date(it.when).getTime();
+        const endMs = startMs + 15*60*1000;
+        const dtEnd = dtToICS(new Date(endMs).toISOString());
+
+        const who = normalizedWho(it);
+        const summary = `Compromiso: ${who}`;
+        const desc = (it.what || "").replaceAll("\n","\\n");
+        const uidv = `${it.id}@compromisos.local`;
+        const stamp = dtToICS(new Date().toISOString());
+
+        return [
+          "BEGIN:VCALENDAR",
+          "VERSION:2.0",
+          "PRODID:-//Compromisos//Local//ES",
+          "CALSCALE:GREGORIAN",
+          "METHOD:PUBLISH",
+          "BEGIN:VEVENT",
+          `UID:${uidv}`,
+          `DTSTAMP:${stamp}`,
+          `DTSTART:${dtStart}`,
+          `DTEND:${dtEnd}`,
+          `SUMMARY:${summary}`,
+          `DESCRIPTION:${desc}`,
+          "END:VEVENT",
+          "END:VCALENDAR"
+        ].join("\r\n");
+      }
+      async function addToCalendar(itemId){
+        const it = data.find(x => x.id === itemId);
+        if(!it){ toast("No encontrado"); return; }
+        if(!it.when){ toast("Pon una fecha para usar calendario"); return; }
+
+        const ics = makeICSForItem(it);
+        if(!ics){ toast("No se pudo crear el evento"); return; }
+
+        const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+        const filename = `compromiso_${itemId}.ics`;
+
+        try{
+          if(navigator.canShare && navigator.share){
+            const file = new File([blob], filename, { type: "text/calendar" });
+            if(navigator.canShare({ files: [file] })){
+              await navigator.share({ title: "Añadir al calendario", text: "Abre el archivo para añadirlo a tu calendario.", files: [file] });
+              toast("Evento listo ✅");
+              return;
+            }
+          }
+        }catch(e){}
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(()=> URL.revokeObjectURL(url), 1200);
+        toast("Descargado .ics ✅ (ábrelo)");
+      }
+
+      // --------- UI / Vistas ----------
       function setPane(newPane){
         pane = newPane;
         $("tabCommitments").classList.toggle("active", pane==="commitments");
@@ -1574,7 +1592,6 @@
         renderAll();
       }
 
-      // --------- Render compromisos ----------
       function renderCommitments(){
         const list = $("list");
         list.innerHTML = "";
@@ -1599,8 +1616,8 @@
           })
           .forEach(item => list.appendChild(renderCard(item)));
 
-        const k = $("statsKicker");
         const overdue = pending.filter(x => isOverdue(x.when)).length;
+        const k = $("statsKicker");
         k.style.display = "block";
         k.textContent = overdue ? `⏰ Tienes ${overdue} compromiso(s) vencido(s).` : `✅ Todo en orden.`;
       }
@@ -1618,8 +1635,8 @@
           `<span class="chip">📝 ${escapeHtml(fmtDate(item.createdAt))}</span>`,
           item.updatedAt ? `<span class="chip">✍️ ${escapeHtml(fmtDate(item.updatedAt))}</span>` : "",
           item.done ? `<span class="chip">✅ ${escapeHtml(fmtDate(item.doneAt))}</span>` : "",
-          item.when && Number(item.remindByDateMin||0) > 0 ? `<span class="chip">${escapeHtml(remindLabelByDate(item.remindByDateMin))}</span>` : "",
-          Number(item.remindAfterHours||0) > 0 ? `<span class="chip">${escapeHtml(remindLabelAfter(item.remindAfterHours))}</span>` : ""
+          item.when && Number(item.remindMin||0) > 0 ? `<span class="chip">${escapeHtml(remindLabel(item.remindMin))}</span>` : "",
+          item.afterAt && Number(item.afterMin||0) > 0 ? `<span class="chip">⏳ ${escapeHtml(item.afterMin>=60 ? (item.afterMin/60)+"h" : item.afterMin+"m")}</span>` : ""
         ].filter(Boolean).join("");
 
         card.innerHTML = `
@@ -1635,39 +1652,32 @@
         `;
 
         const actions = card.querySelector(".actions");
-
         actions.appendChild(mkBtn("📅 Calendario", "btn", () => addToCalendar(item.id)));
-
-        // 📦 Compartir “estado completo” siempre (CREATE como upsert)
         actions.appendChild(mkBtn("📦 Compartir", "btn primary", () => shareSnapshot(item.id)));
-
         if(!item.done){
           actions.appendChild(mkBtn("✅ Hecho", "btn good", () => markDone(item.id)));
           actions.appendChild(mkBtn("✍️ Editar", "btn", () => openEditModal(item.id)));
-          actions.appendChild(mkBtn("🗑️", "btn danger icon", () => deleteItem(item.id), true));
+          actions.appendChild(mkBtn("🗑️ Eliminar", "btn danger", () => deleteItem(item.id)));
         }else{
           actions.appendChild(mkBtn("↩️ Reabrir", "btn", () => reopen(item.id)));
           actions.appendChild(mkBtn("✍️ Editar", "btn", () => openEditModal(item.id)));
-          actions.appendChild(mkBtn("🗑️", "btn danger icon", () => deleteItem(item.id), true));
+          actions.appendChild(mkBtn("🗑️ Eliminar", "btn danger", () => deleteItem(item.id)));
         }
 
         return card;
       }
 
-      function mkBtn(text, cls, onClick, small){
+      function mkBtn(text, cls, onClick){
         const b = document.createElement("button");
         b.className = cls;
         b.textContent = text;
-        if(small){ b.classList.add("icon"); }
         b.addEventListener("click", onClick);
         return b;
       }
 
-      // --------- Render contactos ----------
       function renderContacts(){
         const list = $("contactsList");
         list.innerHTML = "";
-
         $("bContacts").textContent = String(contacts.length);
         $("contactsEmpty").style.display = contacts.length ? "none" : "block";
 
@@ -1697,7 +1707,7 @@
         `;
         const actions = card.querySelector(".actions");
         actions.appendChild(mkBtn("✍️ Editar", "btn", () => openContactEdit(c.id)));
-        actions.appendChild(mkBtn("🗑️", "btn danger", () => deleteContact(c.id)));
+        actions.appendChild(mkBtn("🗑️ Eliminar", "btn danger", () => deleteContact(c.id)));
         return card;
       }
 
@@ -1708,7 +1718,7 @@
         updateSettingsUI();
       }
 
-      // --------- Modal Compromiso ----------
+      // --------- Modal compromiso ----------
       let editingItemId = null;
 
       function openModal(){
@@ -1726,8 +1736,8 @@
         $("fWhat").value = "";
         $("fWhen").value = "";
         $("fWho").value = "";
-        $("fRemindByDate").value = "0";
-        $("fRemindAfter").value = "0";
+        $("fRemind").value = "0";
+        $("fAfter").value = "0";
         fillContactSelect();
         $("fContact").value = "__custom__";
         toggleCustomWho(true);
@@ -1769,14 +1779,14 @@
 
         $("fWhat").value = it.what || "";
         $("fWhen").value = toInputDatetimeLocal(it.when);
-        $("fRemindByDate").value = String(Number(it.remindByDateMin||0));
-        $("fRemindAfter").value = String(Number(it.remindAfterHours||0));
+        $("fRemind").value = String(Number(it.remindMin||0));
+        $("fAfter").value = String(Number(it.afterMin||0));
 
         openModal();
         $("fWhat").focus();
       }
 
-      // --------- Modal Contacto ----------
+      // --------- Contactos modal ----------
       let editingContactId = null;
 
       function openContactModal(){
@@ -1864,14 +1874,16 @@
         $("fWho").value = "";
       }
 
-      // --------- Acciones compromisos ----------
+      // --------- Compromisos acciones ----------
       function createOrEditCommitment(){
         const contactSel = $("fContact").value;
         const what = $("fWhat").value.trim();
         const whenISO = $("fWhen").value ? new Date($("fWhen").value).toISOString() : null;
+        const remindMin = Number($("fRemind").value || 0);
 
-        const remindByDateMin = Number($("fRemindByDate").value || 0);
-        const remindAfterHours = Number($("fRemindAfter").value || 0);
+        // Aviso desde ahora
+        const afterMin = Number($("fAfter").value || 0);
+        const afterAt = afterMin > 0 ? new Date(Date.now() + afterMin*60*1000).toISOString() : null;
 
         if(!what){
           toast("Escribe qué se acordó");
@@ -1896,19 +1908,13 @@
           }
         }
 
-        // Validaciones recordatorio por fecha
-        if(remindByDateMin > 0 && !whenISO){
-          toast("Para recordatorio por fecha necesitas una fecha");
+        if(remindMin > 0 && !whenISO){
+          toast("Para recordatorio por fecha necesitas fecha");
           $("fWhen").focus();
           return null;
         }
 
         const now = new Date().toISOString();
-
-        // Recordatorio en X horas: calculamos at absoluto (aunque haya fecha)
-        const remindAfterAt = (remindAfterHours > 0)
-          ? new Date(Date.now() + remindAfterHours*60*60*1000).toISOString()
-          : null;
 
         if(!editingItemId){
           const itemId = uid();
@@ -1922,26 +1928,15 @@
               w: whoName,
               s: what,
               n: whenISO || null,
-              rbd: remindByDateMin || 0,
-              rah: remindAfterHours || 0,
-              raa: remindAfterAt || null,
+              r: remindMin || 0,
+              // Aviso desde ahora:
+              af: afterMin || 0,
+              aa: afterAt || null,
               ca: now
             }
           };
           const changed = applyEvent(ev);
           if(!changed){ toast("No se pudo guardar"); return null; }
-
-          // Programar recordatorio “en X horas” al crear
-          if(remindAfterHours > 0){
-            scheduleReminderAt(
-              remindAfterAt,
-              `⏰ Compromiso: ${whoName}`,
-              shortPreview(what, 120),
-              itemId,
-              "after_create"
-            );
-          }
-
           return { itemId, ev };
         } else {
           const it = data.find(x => x.id === editingItemId);
@@ -1957,26 +1952,14 @@
               w: whoName,
               s: what,
               n: whenISO || null,
-              rbd: remindByDateMin || 0,
-              rah: remindAfterHours || 0,
-              raa: remindAfterAt || null
+              r: remindMin || 0,
+              af: afterMin || 0,
+              aa: afterAt || null
             }
           };
 
           const changed = applyEvent(ev);
           if(!changed){ toast("Sin cambios"); return null; }
-
-          // Programar recordatorio “en X horas” al editar (sobrescribe, pero lo dejamos simple)
-          if(remindAfterHours > 0){
-            scheduleReminderAt(
-              remindAfterAt,
-              `⏰ Compromiso: ${whoName}`,
-              shortPreview(what, 120),
-              editingItemId,
-              "after_edit"
-            );
-          }
-
           return { itemId: editingItemId, ev };
         }
       }
@@ -2009,16 +1992,22 @@
         renderAll();
         if(changed){
           toast("Eliminado");
-          await prepareShare(ev, { id:itemId, whoName:"(eliminado)", what:"", when:null, remindByDateMin:0, remindAfterHours:0, done:false });
+          await prepareShare(ev, { id:itemId, whoName:"(eliminado)", what:"", when:null, remindMin:0, afterMin:0, afterAt:null, done:false });
         } else {
           toast("Sin cambios");
         }
       }
 
-      // 📦 Compartir “estado completo” (CREATE como upsert) -> útil si el otro aún no lo tenía
+      // 📦 Compartir “estado completo”
       async function shareSnapshot(itemId){
         const it = data.find(x => x.id === itemId);
         if(!it){ toast("No encontrado"); return; }
+
+        // Si tiene "afterMin", re-calculamos afterAt desde ahora al compartir
+        // para que el receptor reciba “en X tiempo” desde el momento de importación.
+        const af = Number(it.afterMin || 0);
+        const aa = af > 0 ? new Date(Date.now() + af*60*1000).toISOString() : null;
+
         const ev = {
           id: uid(),
           type: T.CREATE,
@@ -2029,16 +2018,18 @@
             w: normalizedWho(it),
             s: it.what || "",
             n: it.when || null,
-            rbd: Number(it.remindByDateMin || 0),
-            rah: Number(it.remindAfterHours || 0),
-            raa: it.remindAfterAt || null,
+            r: Number(it.remindMin || 0),
+
+            af: af || 0,
+            aa: aa,
+
             ca: it.createdAt || new Date().toISOString()
           }
         };
         await prepareShare(ev, it);
       }
 
-      // --------- Contactos ----------
+      // --------- Contactos CRUD ----------
       function upsertContact(name, note){
         const n = String(name||"").trim();
         if(!n){ toast("Pon un nombre"); return null; }
@@ -2105,7 +2096,7 @@
         }
       }
 
-      // --------- PWA / instalación / abrir en Chrome ----------
+      // --------- PWA banner ----------
       const isAndroid = /Android/i.test(navigator.userAgent || "");
       const isStandalone = window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
       const isIOSStandalone = !!navigator.standalone;
@@ -2173,12 +2164,8 @@
             return;
           }catch(e){}
         }
-        try{
-          window.open(url, "_blank");
-        }catch(e){
-          copyCurrentLink();
-          toast("Copia el enlace y pégalo en Chrome");
-        }
+        try{ window.open(url, "_blank"); }
+        catch(e){ copyCurrentLink(); toast("Copia el enlace y pégalo en Chrome"); }
       }
 
       window.addEventListener("beforeinstallprompt", (e) => {
@@ -2188,10 +2175,7 @@
       });
 
       $("btnInstall").addEventListener("click", async () => {
-        if(!deferredPrompt){
-          showBanner(isInAppBrowser ? "openchrome" : "info");
-          return;
-        }
+        if(!deferredPrompt){ showBanner(isInAppBrowser ? "openchrome" : "info"); return; }
         deferredPrompt.prompt();
         try{ await deferredPrompt.userChoice; }catch(e){}
         deferredPrompt = null;
@@ -2409,11 +2393,8 @@
       });
 
       function toggleSwitchPin(){
-        if(settings.pinEnabled){
-          openPinModal("disable");
-        } else {
-          openPinModal("enable");
-        }
+        if(settings.pinEnabled){ openPinModal("disable"); }
+        else { openPinModal("enable"); }
       }
 
       function resetAll(){
@@ -2421,183 +2402,6 @@
         if(!ok) return;
         localStorage.clear();
         location.replace(baseFolderUrl());
-      }
-
-      // --------- RECORDATORIOS (local) ----------
-      function firedKey(it){
-        return `${it.id}|${it.when||""}|${Number(it.remindByDateMin||0)}|${it.done?"1":"0"}`;
-      }
-
-      function cleanupFiredMap(){
-        const live = new Set();
-        for(const it of data){
-          if(it.done) continue;
-          if(!it.when) continue;
-          if(Number(it.remindByDateMin||0) <= 0) continue;
-          live.add(firedKey(it));
-        }
-        const next = {};
-        for(const k of Object.keys(firedMap||{})){
-          if(live.has(k)) next[k] = firedMap[k];
-        }
-        firedMap = next;
-        save(REMIND_FIRED_KEY, firedMap);
-      }
-
-      function canNotify(){
-        if(!settings.notifEnabled) return false;
-        if(!notifSupported()) return false;
-        return notifPermission() === "granted";
-      }
-
-      function sendLocalNotification(title, body){
-        try{
-          if(canNotify()){
-            new Notification(title, { body });
-            return true;
-          }
-        }catch(e){}
-        return false;
-      }
-
-      // Recordatorios por fecha (antes de “when”)
-      function checkRemindersByDate(){
-        const now = Date.now();
-        for(const it of data){
-          if(it.done) continue;
-          const rm = Number(it.remindByDateMin||0);
-          if(!it.when || rm <= 0) continue;
-
-          const due = new Date(it.when).getTime();
-          if(Number.isNaN(due)) continue;
-
-          const trigger = due - rm*60*1000;
-
-          if(now < trigger) continue;
-          if(now > due + 30*60*1000) continue;
-
-          const k = firedKey(it);
-          if(firedMap && firedMap[k]) continue;
-
-          const who = normalizedWho(it);
-          const what = shortPreview(it.what, 80);
-          const dueTxt = fmtDate(it.when);
-
-          const title = `⏰ Compromiso: ${who}`;
-          const body = (what ? what + " · " : "") + `Para: ${dueTxt}`;
-
-          sendLocalNotification(title, body);
-          toast(`⏰ Recordatorio: ${who}`);
-
-          firedMap[k] = now;
-          save(REMIND_FIRED_KEY, firedMap);
-        }
-      }
-
-      // Recordatorios absolutos (en X horas)
-      function checkAbsoluteReminders(){
-        const now = Date.now();
-        let changed = false;
-
-        for(const r of reminders){
-          if(r.firedAt) continue;
-          const t = new Date(r.at).getTime();
-          if(Number.isNaN(t)) { r.firedAt = "invalid"; changed = true; continue; }
-
-          // Ventana: dispara si está vencido pero no hace más de 2h
-          if(now >= t && now <= (t + 2*60*60*1000)){
-            sendLocalNotification(r.title, r.body);
-            toast(`🔔 ${r.title}`);
-            r.firedAt = new Date().toISOString();
-            changed = true;
-          }
-        }
-
-        if(changed) saveReminders();
-      }
-
-      // --------- Calendario (.ics) ----------
-      function dtToICS(iso){
-        const d = new Date(iso);
-        if(Number.isNaN(d.getTime())) return null;
-        const y = d.getUTCFullYear();
-        const m = pad2(d.getUTCMonth()+1);
-        const da = pad2(d.getUTCDate());
-        const h = pad2(d.getUTCHours());
-        const mi = pad2(d.getUTCMinutes());
-        const s = pad2(d.getUTCSeconds());
-        return `${y}${m}${da}T${h}${mi}${s}Z`;
-      }
-
-      function makeICSForItem(it){
-        if(!it.when) return null;
-
-        const dtStart = dtToICS(it.when);
-        if(!dtStart) return null;
-
-        const startMs = new Date(it.when).getTime();
-        const endMs = startMs + 15*60*1000;
-        const dtEnd = dtToICS(new Date(endMs).toISOString());
-
-        const who = normalizedWho(it);
-        const summary = `Compromiso: ${who}`;
-        const desc = (it.what || "").replaceAll("\n","\\n");
-        const uidv = `${it.id}@compromisos.local`;
-        const stamp = dtToICS(new Date().toISOString());
-
-        return [
-          "BEGIN:VCALENDAR",
-          "VERSION:2.0",
-          "PRODID:-//Compromisos//Local//ES",
-          "CALSCALE:GREGORIAN",
-          "METHOD:PUBLISH",
-          "BEGIN:VEVENT",
-          `UID:${uidv}`,
-          `DTSTAMP:${stamp}`,
-          `DTSTART:${dtStart}`,
-          `DTEND:${dtEnd}`,
-          `SUMMARY:${summary}`,
-          `DESCRIPTION:${desc}`,
-          "END:VEVENT",
-          "END:VCALENDAR"
-        ].join("\r\n");
-      }
-
-      async function addToCalendar(itemId){
-        const it = data.find(x => x.id === itemId);
-        if(!it){ toast("No encontrado"); return; }
-        if(!it.when){ toast("Pon una fecha para usar calendario"); return; }
-
-        const ics = makeICSForItem(it);
-        if(!ics){ toast("No se pudo crear el evento"); return; }
-
-        const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
-        const filename = `compromiso_${itemId}.ics`;
-
-        try{
-          if(navigator.canShare && navigator.share){
-            const file = new File([blob], filename, { type: "text/calendar" });
-            if(navigator.canShare({ files: [file] })){
-              await navigator.share({
-                title: "Añadir al calendario",
-                text: "Abre el archivo para añadirlo a tu calendario.",
-                files: [file]
-              });
-              toast("Evento listo ✅");
-              return;
-            }
-          }
-        }catch(e){}
-
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(()=> URL.revokeObjectURL(url), 1200);
-        toast("Descargado .ics ✅ (ábrelo)");
       }
 
       // --------- Notif switch ----------
@@ -2616,7 +2420,15 @@
         }
       }
 
-      // --------- Modal Compartir handlers ----------
+      // --------- Service worker ----------
+      (async function registerSW(){
+        if(!("serviceWorker" in navigator)) return;
+        try{
+          await navigator.serviceWorker.register("./sw.js", { scope: "./" });
+        }catch(e){}
+      })();
+
+      // --------- Modal compartir handlers ----------
       $("shareClose").addEventListener("click", closeShareModal);
       $("shareCancel").addEventListener("click", closeShareModal);
       $("shareBackdrop").addEventListener("click", (e)=>{ if(e.target === $("shareBackdrop")) closeShareModal(); });
@@ -2624,11 +2436,10 @@
       $("shareShort").addEventListener("click", ()=>{ shareState.mode="short"; updateShareUI(); });
       $("shareLong").addEventListener("click", ()=>{ shareState.mode="long"; updateShareUI(); });
 
-      $("shareCopyLink").addEventListener("click", async ()=>{
-        await copyLinkOnly(shareState.url);
+      $("shareCopyUrl").addEventListener("click", async ()=> {
+        await copyToClipboard(shareState.url || "");
       });
-
-      $("shareCopyAll").addEventListener("click", async ()=>{
+      $("shareCopyAll").addEventListener("click", async ()=> {
         const msg = (shareState.mode === "long") ? shareState.longText : shareState.shortText;
         const combined = (shareState.title ? shareState.title + "\n" : "") + (msg ? msg + "\n" : "") + shareState.url;
         await copyToClipboard(combined);
@@ -2636,35 +2447,7 @@
 
       $("shareSend").addEventListener("click", doShare);
 
-      $("shareSchedule").addEventListener("click", () => {
-        const h = Number($("shareAfter").value || 0);
-        if(!h){ toast("Elige horas"); return; }
-        const who = shareState.who || "compromiso";
-        const what = shareState.what || "";
-        const r = scheduleReminderInHours(
-          h,
-          `🔔 Revisa: ${who}`,
-          what ? shortPreview(what, 160) : "Recordatorio después de compartir",
-          shareState.itemId,
-          "after_share"
-        );
-        if(r){
-          toast(`Recordatorio en ${h}h ✅`);
-          $("shareAfter").value = "0";
-        } else {
-          toast("No se pudo programar");
-        }
-      });
-
-      // Botón copiar “último enlace” en la cabecera del hero
-      $("btnCopyLastLink").addEventListener("click", async () => {
-        const txt = $("lastLink").textContent || "";
-        const m = txt.match(/https?:\/\/\S+/);
-        if(!m){ toast("No hay enlace"); return; }
-        await copyLinkOnly(m[0]);
-      });
-
-      // --------- UI Eventos ----------
+      // --------- UI eventos ----------
       $("tabCommitments").addEventListener("click", ()=> setPane("commitments"));
       $("tabContacts").addEventListener("click", ()=> setPane("contacts"));
       $("tabSettings").addEventListener("click", ()=> setPane("settings"));
@@ -2757,37 +2540,22 @@
       });
 
       $("btnLockNow").addEventListener("click", () => {
-        if(!settings.pinEnabled){
-          toast("Activa el PIN para bloquear");
-          setPane("settings");
-          return;
-        }
+        if(!settings.pinEnabled){ toast("Activa el PIN para bloquear"); setPane("settings"); return; }
         forceLock();
       });
 
       $("btnResetAll").addEventListener("click", resetAll);
 
-      // --------- Service worker ----------
-      (async function registerSW(){
-        if(!("serviceWorker" in navigator)) return;
-        try{
-          await navigator.serviceWorker.register("./sw.js", { scope: "./" });
-        }catch(e){}
-      })();
-
       // --------- Boot ----------
       updateSettingsUI();
       renderAll();
       tryImportFromUrl();
-      cleanupFiredMap();
+      cleanupFiredMaps();
 
       setTimeout(() => {
         if(isStandalone || isIOSStandalone) return;
-        if(isInAppBrowser){
-          showBanner("openchrome");
-        } else {
-          showBanner(deferredPrompt ? "install" : "info");
-        }
+        if(isInAppBrowser) showBanner("openchrome");
+        else showBanner(deferredPrompt ? "install" : "info");
       }, 650);
 
       // Demo inicial
@@ -2803,9 +2571,9 @@
             w: "Ejemplo: Laura",
             s: "Te paso el PDF del seguro",
             n: new Date(Date.now() + 3*60*60*1000).toISOString(),
-            rbd: 15,
-            rah: 0,
-            raa: null,
+            r: 15,
+            af: 60,
+            aa: new Date(Date.now() + 60*60*1000).toISOString(),
             ca: now
           }
         };
@@ -2813,21 +2581,19 @@
         renderAll();
       }
 
-      // Aplicar bloqueo si corresponde
-      if(settings.pinEnabled){
-        if(!isUnlockedNow()){
-          showLockOverlay();
-        }
+      if(settings.pinEnabled && !isUnlockedNow()){
+        showLockOverlay();
       }
 
-      // Loop recordatorios
-      function tickReminders(){
+      setInterval(() => {
         if(settings.pinEnabled && !isUnlockedNow()) return;
-        checkRemindersByDate();
-        checkAbsoluteReminders();
-      }
-      setInterval(tickReminders, 20000);
-      setTimeout(tickReminders, 1200);
+        checkReminders();
+      }, 20000);
+
+      setTimeout(() => {
+        if(settings.pinEnabled && !isUnlockedNow()) return;
+        checkReminders();
+      }, 1200);
 
     })();
   </script>
