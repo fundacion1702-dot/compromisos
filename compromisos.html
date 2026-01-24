@@ -83,10 +83,10 @@
       box-shadow: var(--shadow);
     }
 
-    /* ✅ Barra superior del hero (izq: notificaciones, der: texto grande) */
+    /* ✅ Barra superior del hero (izq: indicadores, der: texto grande) */
     .heroBar{
       display:flex;
-      align-items:flex-start;
+      align-items:center;
       justify-content:space-between;
       gap:.625rem;
     }
@@ -96,8 +96,15 @@
       gap:.5rem;
       min-width:0;
       flex:1;
-      flex-wrap:wrap; /* ✅ varias “notificaciones” arriba */
+
+      /* ✅ para que quepan varios “avisos” arriba como en tu captura */
+      overflow-x:auto;
+      overflow-y:hidden;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: .125rem;
+      scrollbar-width: none;
     }
+    .heroLeft::-webkit-scrollbar{ display:none; }
 
     .pill{
       display:inline-flex; align-items:center; gap:.5rem;
@@ -109,13 +116,14 @@
       font-size: .8125rem;
       font-weight: 850;
       white-space:nowrap;
+      flex: 0 0 auto;
     }
 
     /* ✅ pill clicable */
     .pill.btnPill{
       cursor:pointer;
       user-select:none;
-      transition: transform .08s ease, background .15s ease;
+      transition: transform .08s ease, background .15s ease, border-color .15s ease;
     }
     .pill.btnPill:active{ transform: scale(.99); }
     .pill.btnPill .badge{
@@ -129,6 +137,15 @@
       background: rgba(255,255,255,.06);
       color: var(--muted);
       border-color: rgba(255,255,255,.12);
+    }
+    .pill.btnPill.warn{
+      background: rgba(255,204,102,.10);
+      border-color: rgba(255,204,102,.25);
+    }
+    .pill.btnPill.info{
+      background: rgba(255,255,255,.05);
+      border-color: rgba(255,255,255,.14);
+      color: var(--text);
     }
 
     .hero h2{
@@ -245,14 +262,38 @@
       border-color: rgba(255,255,255,.10);
     }
 
-    .list{ margin-top: .875rem; display:flex; flex-direction:column; gap: .625rem; }
+    .list{ margin-top: .875rem; display:flex; flex-direction:column; gap: .75rem; } /* ✅ más separación */
     .card{
       border-radius: var(--r);
-      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
-      border:1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02)); /* ✅ más contraste */
+      border:1px solid rgba(255,255,255,.14); /* ✅ borde un pelín más visible */
       padding: .75rem;
-      box-shadow: 0 .75rem 1.875rem rgba(0,0,0,.22);
+      box-shadow: 0 .85rem 2.05rem rgba(0,0,0,.26); /* ✅ más separación visual */
+      position:relative;
+      overflow:hidden;
     }
+    /* ✅ alterna tono para diferenciar tarjetas */
+    .card.alt{
+      background: linear-gradient(180deg, rgba(107,91,255,.10), rgba(255,255,255,.02));
+      border-color: rgba(255,255,255,.16);
+    }
+    /* ✅ “línea” superior sutil para que se note inicio/fin */
+    .card::before{
+      content:"";
+      position:absolute;
+      left: .75rem;
+      right:.75rem;
+      top: .55rem;
+      height: 1px;
+      background: rgba(255,255,255,.08);
+      pointer-events:none;
+    }
+    /* ✅ resalte sutil para vencidos al saltar desde el pill */
+    .card.flash{
+      box-shadow: 0 0 0 1px rgba(255,92,122,.40), 0 1.0rem 2.3rem rgba(0,0,0,.28);
+      border-color: rgba(255,92,122,.35);
+    }
+
     .cardTop{ display:flex; justify-content:space-between; gap:.625rem; align-items:flex-start; }
     .who{ min-width:0; }
     .who .name{
@@ -282,13 +323,13 @@
       color: var(--text);
       white-space:nowrap;
     }
-    .due.bad{ background: rgba(255,92,122,.14); }
+    .due.bad{ background: rgba(255,92,122,.14); border-color: rgba(255,92,122,.25); }
     .desc{
       margin: .625rem 0 0;
       font-size: .9375rem;
       line-height:1.35;
       color: var(--text);
-      opacity: .95;
+      opacity: .96;
       word-break: break-word;
     }
     .actions{ margin-top: .625rem; display:flex; gap: .625rem; flex-wrap:wrap; }
@@ -605,6 +646,7 @@
     .contactCard{
       cursor:pointer;
       user-select:none;
+      transition: transform .08s ease;
     }
     .contactCard:active{
       transform: scale(.995);
@@ -630,23 +672,23 @@
     </header>
 
     <section class="hero">
-      <!-- ✅ ARRIBA: TODO lo “notificable” y contadores -->
+      <!-- ✅ Arriba: TODO lo “tipo notificación” (pendientes/recibidos/vencidos/avisos) -->
       <div class="heroBar">
-        <div class="heroLeft">
-          <div class="pill btnPill muted" id="pillPending" title="Ver compromisos pendientes">
-            📝 Pendientes <span class="badge" id="bTopPending">0</span>
-          </div>
-
-          <div class="pill btnPill muted" id="pillOverdue" title="Ver compromisos vencidos">
-            ⏰ Vencidos <span class="badge" id="bTopOverdue">0</span>
-          </div>
-
-          <div class="pill btnPill muted" id="pillReceived" title="Paquetes recibidos (toca para limpiar)">
-            📥 Recibidos <span class="badge" id="bTopReceived">0</span>
-          </div>
-
+        <div class="heroLeft" aria-label="Indicadores">
           <div class="pill btnPill muted" id="btnNotifPend" title="Avisos pendientes (toca para limpiar)">
             🔔 Avisos <span class="badge" id="bNotifPend">0</span>
+          </div>
+
+          <div class="pill btnPill info" id="btnPendCom" title="Compromisos pendientes (toca para ver)">
+            📝 Pendientes <span class="badge" id="bPendCom">0</span>
+          </div>
+
+          <div class="pill btnPill warn muted" id="btnOverdue" title="Compromisos vencidos (toca para ir a ellos)">
+            ⏰ Vencidos <span class="badge" id="bOverdue">0</span>
+          </div>
+
+          <div class="pill btnPill muted" id="btnReceived" title="Compromisos recibidos por enlace (toca para limpiar)">
+            📥 Recibidos <span class="badge" id="bReceived">0</span>
           </div>
         </div>
 
@@ -674,7 +716,7 @@
         </div>
       </div>
 
-      <!-- ✅ Ya no mostramos el aviso abajo (lo llevamos arriba en “Vencidos”) -->
+      <!-- (Se deja oculto; ahora los avisos se muestran arriba en pills) -->
       <div class="kicker" id="statsKicker" style="display:none"></div>
     </section>
 
@@ -1048,10 +1090,10 @@
       // ✅ Manual plegable
       const HELP_KEY = "compromisos_help_v1";
 
-      // ✅ Indicador local de avisos pendientes (recordatorios disparados)
+      // ✅ Indicador local de avisos pendientes (recordatorios)
       const PENDING_NOTIF_KEY = "compromisos_pending_notifs_v1";
 
-      // ✅ Contador de paquetes/compromisos recibidos (importados)
+      // ✅ Indicador local de “recibidos” (importados por enlace)
       const RECEIVED_KEY = "compromisos_received_v1";
 
       // Tipos numéricos para acortar paquetes
@@ -1121,7 +1163,7 @@
         localStorage.setItem(key, JSON.stringify(value));
       }
 
-      // --------- Avisos pendientes (contador local mínimo) ----------
+      // --------- Avisos pendientes (recordatorios) ----------
       let pendingNotifs = load(PENDING_NOTIF_KEY, { c:0, at:0 });
 
       function renderPendingBadge(){
@@ -1129,11 +1171,8 @@
         const pill = $("btnNotifPend");
         $("bNotifPend").textContent = String(c);
 
-        if(c > 0){
-          pill.classList.remove("muted");
-        } else {
-          pill.classList.add("muted");
-        }
+        if(c > 0) pill.classList.remove("muted");
+        else pill.classList.add("muted");
       }
 
       function incPendingBadge(){
@@ -1156,24 +1195,20 @@
 
       function renderReceivedBadge(){
         const c = Math.max(0, Number(received?.c || 0));
-        const pill = $("pillReceived");
-        $("bTopReceived").textContent = String(c);
-
-        if(c > 0){
-          pill.classList.remove("muted");
-        } else {
-          pill.classList.add("muted");
-        }
+        const pill = $("btnReceived");
+        $("bReceived").textContent = String(c);
+        if(c > 0) pill.classList.remove("muted");
+        else pill.classList.add("muted");
       }
 
-      function incReceived(){
+      function incReceivedBadge(){
         received.c = Math.max(0, Number(received.c || 0)) + 1;
         received.at = Date.now();
         save(RECEIVED_KEY, received);
         renderReceivedBadge();
       }
 
-      function clearReceived(){
+      function clearReceivedBadge(){
         received.c = 0;
         received.at = Date.now();
         save(RECEIVED_KEY, received);
@@ -1215,7 +1250,6 @@
       function setTextScale(on){
         const isOn = !!on;
         const root = document.documentElement;
-
         root.style.setProperty("--fs-base", isOn ? "18px" : "16px");
 
         const b = $("btnA11y");
@@ -1425,21 +1459,6 @@
         if(m === 60) return "🔔 1h";
         if(m === 1440) return "🔔 1d";
         return "🔔";
-      }
-
-      // --------- Contadores “arriba” (pendientes / vencidos) ----------
-      function renderTopCounters(){
-        const pending = data.filter(x => !x.done);
-        const overdue = pending.filter(x => isOverdue(x.when)).length;
-
-        $("bTopPending").textContent = String(pending.length);
-        $("bTopOverdue").textContent = String(overdue);
-
-        const pillP = $("pillPending");
-        const pillO = $("pillOverdue");
-
-        if(pending.length > 0) pillP.classList.remove("muted"); else pillP.classList.add("muted");
-        if(overdue > 0) pillO.classList.remove("muted"); else pillO.classList.add("muted");
       }
 
       // --------- Eventos + paquetes cortos ----------
@@ -1907,6 +1926,35 @@
         renderAll();
       }
 
+      function updateTopIndicators(){
+        const pending = data.filter(x => !x.done);
+        const overdue = pending.filter(x => isOverdue(x.when)).length;
+
+        $("bPendCom").textContent = String(pending.length);
+        $("bOverdue").textContent = String(overdue);
+
+        const pillPend = $("btnPendCom");
+        if(pending.length > 0) pillPend.classList.remove("muted");
+        else pillPend.classList.add("muted");
+
+        const pillOver = $("btnOverdue");
+        pillOver.classList.toggle("muted", overdue <= 0);
+      }
+
+      function flashOverdueCards(){
+        // marca tarjetas vencidas durante un momento para ubicarlas visualmente
+        const cards = Array.from(document.querySelectorAll(".card[data-overdue='1']"));
+        if(!cards.length){
+          toast("No hay vencidos");
+          return;
+        }
+        cards.forEach(c => c.classList.add("flash"));
+        try{
+          cards[0].scrollIntoView({ behavior:"smooth", block:"start" });
+        }catch(e){}
+        setTimeout(()=> cards.forEach(c => c.classList.remove("flash")), 1200);
+      }
+
       function renderCommitments(){
         const list = $("list");
         list.innerHTML = "";
@@ -1918,33 +1966,33 @@
         $("bDone").textContent = String(done.length);
         $("bContacts").textContent = String(contacts.length);
 
-        // ✅ Arriba: contadores siempre actualizados
-        renderTopCounters();
-
         const items = (view === "pending") ? pending : done;
 
         $("empty").style.display = items.length ? "none" : "block";
 
         items
+          .slice()
           .sort((a,b) => {
             const ta = a.when ? new Date(a.when).getTime() : (view==="pending" ? Number.POSITIVE_INFINITY : 0);
             const tb = b.when ? new Date(b.when).getTime() : (view==="pending" ? Number.POSITIVE_INFINITY : 0);
             if(view === "pending") return ta - tb;
             return (new Date(b.doneAt||0).getTime()) - (new Date(a.doneAt||0).getTime());
           })
-          .forEach(item => list.appendChild(renderCard(item)));
+          .forEach((item, idx) => list.appendChild(renderCard(item, idx)));
 
-        // ✅ Ya no mostramos el texto abajo; queda “arriba” en Vencidos.
+        // ✅ ahora el mensaje “tienes vencidos” va arriba en pill (no aquí)
         $("statsKicker").style.display = "none";
       }
 
-      function renderCard(item){
+      function renderCard(item, idx){
         const card = document.createElement("div");
-        card.className = "card";
+        card.className = "card" + (idx % 2 ? " alt" : "");
+        card.dataset.id = item.id;
 
         const who = normalizedWho(item);
         const dueText = item.when ? fmtDate(item.when) : "Sin fecha";
         const overdue = !item.done && isOverdue(item.when);
+        card.dataset.overdue = overdue ? "1" : "0";
         const dueClass = overdue ? "due bad" : "due";
 
         const chips = [
