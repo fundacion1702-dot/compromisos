@@ -83,10 +83,10 @@
       box-shadow: var(--shadow);
     }
 
-    /* ✅ Barra superior del hero (izq: pendientes, der: texto grande) */
+    /* ✅ Barra superior del hero (izq: notificaciones, der: texto grande) */
     .heroBar{
       display:flex;
-      align-items:center;
+      align-items:flex-start;
       justify-content:space-between;
       gap:.625rem;
     }
@@ -96,6 +96,7 @@
       gap:.5rem;
       min-width:0;
       flex:1;
+      flex-wrap:wrap; /* ✅ varias “notificaciones” arriba */
     }
 
     .pill{
@@ -110,7 +111,7 @@
       white-space:nowrap;
     }
 
-    /* ✅ pill clicable para pendientes */
+    /* ✅ pill clicable */
     .pill.btnPill{
       cursor:pointer;
       user-select:none;
@@ -622,18 +623,30 @@
         </div>
       </div>
 
-      <!-- ✅ En header dejamos solo instalar (texto grande va en el hero, como en tu captura) -->
+      <!-- ✅ En header dejamos solo instalar (texto grande va en el hero) -->
       <div style="display:flex; gap:.625rem; align-items:center; flex:0 0 auto;">
         <button class="iconbtn" id="btnInstall" style="display:none">⬇️ <small>Instalar</small></button>
       </div>
     </header>
 
     <section class="hero">
-      <!-- ✅ Izquierda: avisador pendientes. Derecha: botón texto grande (zona del círculo rojo) -->
+      <!-- ✅ ARRIBA: TODO lo “notificable” y contadores -->
       <div class="heroBar">
         <div class="heroLeft">
-          <div class="pill btnPill muted" id="btnNotifPend" title="Notificaciones pendientes (toca para limpiar)">
-            🔔 Pendientes <span class="badge" id="bNotifPend">0</span>
+          <div class="pill btnPill muted" id="pillPending" title="Ver compromisos pendientes">
+            📝 Pendientes <span class="badge" id="bTopPending">0</span>
+          </div>
+
+          <div class="pill btnPill muted" id="pillOverdue" title="Ver compromisos vencidos">
+            ⏰ Vencidos <span class="badge" id="bTopOverdue">0</span>
+          </div>
+
+          <div class="pill btnPill muted" id="pillReceived" title="Paquetes recibidos (toca para limpiar)">
+            📥 Recibidos <span class="badge" id="bTopReceived">0</span>
+          </div>
+
+          <div class="pill btnPill muted" id="btnNotifPend" title="Avisos pendientes (toca para limpiar)">
+            🔔 Avisos <span class="badge" id="bNotifPend">0</span>
           </div>
         </div>
 
@@ -661,6 +674,7 @@
         </div>
       </div>
 
+      <!-- ✅ Ya no mostramos el aviso abajo (lo llevamos arriba en “Vencidos”) -->
       <div class="kicker" id="statsKicker" style="display:none"></div>
     </section>
 
@@ -1034,8 +1048,11 @@
       // ✅ Manual plegable
       const HELP_KEY = "compromisos_help_v1";
 
-      // ✅ Indicador local de pendientes (placeholder “pendientes por leer”)
+      // ✅ Indicador local de avisos pendientes (recordatorios disparados)
       const PENDING_NOTIF_KEY = "compromisos_pending_notifs_v1";
+
+      // ✅ Contador de paquetes/compromisos recibidos (importados)
+      const RECEIVED_KEY = "compromisos_received_v1";
 
       // Tipos numéricos para acortar paquetes
       const T = { CREATE:0, DONE:1, REOPEN:2, DELETE:3, EDIT:4 };
@@ -1104,7 +1121,7 @@
         localStorage.setItem(key, JSON.stringify(value));
       }
 
-      // --------- Pendientes (contador local mínimo) ----------
+      // --------- Avisos pendientes (contador local mínimo) ----------
       let pendingNotifs = load(PENDING_NOTIF_KEY, { c:0, at:0 });
 
       function renderPendingBadge(){
@@ -1112,7 +1129,6 @@
         const pill = $("btnNotifPend");
         $("bNotifPend").textContent = String(c);
 
-        // visual: si 0, se ve “muted”; si >0, se ve como pill normal
         if(c > 0){
           pill.classList.remove("muted");
         } else {
@@ -1132,7 +1148,37 @@
         pendingNotifs.at = Date.now();
         save(PENDING_NOTIF_KEY, pendingNotifs);
         renderPendingBadge();
-        toast("Pendientes limpiadas");
+        toast("Avisos limpiados");
+      }
+
+      // --------- Recibidos (importados) ----------
+      let received = load(RECEIVED_KEY, { c:0, at:0 });
+
+      function renderReceivedBadge(){
+        const c = Math.max(0, Number(received?.c || 0));
+        const pill = $("pillReceived");
+        $("bTopReceived").textContent = String(c);
+
+        if(c > 0){
+          pill.classList.remove("muted");
+        } else {
+          pill.classList.add("muted");
+        }
+      }
+
+      function incReceived(){
+        received.c = Math.max(0, Number(received.c || 0)) + 1;
+        received.at = Date.now();
+        save(RECEIVED_KEY, received);
+        renderReceivedBadge();
+      }
+
+      function clearReceived(){
+        received.c = 0;
+        received.at = Date.now();
+        save(RECEIVED_KEY, received);
+        renderReceivedBadge();
+        toast("Recibidos limpiados");
       }
 
       // --------- Confirm modal (propio) ----------
@@ -1170,7 +1216,6 @@
         const isOn = !!on;
         const root = document.documentElement;
 
-        // ✅ Ahora afecta a TODO porque toda la UI usa rem y html font-size
         root.style.setProperty("--fs-base", isOn ? "18px" : "16px");
 
         const b = $("btnA11y");
@@ -1380,6 +1425,21 @@
         if(m === 60) return "🔔 1h";
         if(m === 1440) return "🔔 1d";
         return "🔔";
+      }
+
+      // --------- Contadores “arriba” (pendientes / vencidos) ----------
+      function renderTopCounters(){
+        const pending = data.filter(x => !x.done);
+        const overdue = pending.filter(x => isOverdue(x.when)).length;
+
+        $("bTopPending").textContent = String(pending.length);
+        $("bTopOverdue").textContent = String(overdue);
+
+        const pillP = $("pillPending");
+        const pillO = $("pillOverdue");
+
+        if(pending.length > 0) pillP.classList.remove("muted"); else pillP.classList.add("muted");
+        if(overdue > 0) pillO.classList.remove("muted"); else pillO.classList.add("muted");
       }
 
       // --------- Eventos + paquetes cortos ----------
@@ -1711,7 +1771,7 @@
           sendLocalNotification(title, body);
           toast(`⏰ Recordatorio: ${who}`);
 
-          // ✅ sube contador local “pendientes”
+          // ✅ sube contador local “avisos”
           incPendingBadge();
 
           firedMap[k] = now;
@@ -1742,7 +1802,7 @@
           sendLocalNotification(title, body);
           toast(`🔔 Aviso: ${who}`);
 
-          // ✅ sube contador local “pendientes”
+          // ✅ sube contador local “avisos”
           incPendingBadge();
 
           afterFired[k] = now;
@@ -1858,6 +1918,9 @@
         $("bDone").textContent = String(done.length);
         $("bContacts").textContent = String(contacts.length);
 
+        // ✅ Arriba: contadores siempre actualizados
+        renderTopCounters();
+
         const items = (view === "pending") ? pending : done;
 
         $("empty").style.display = items.length ? "none" : "block";
@@ -1871,10 +1934,8 @@
           })
           .forEach(item => list.appendChild(renderCard(item)));
 
-        const overdue = pending.filter(x => isOverdue(x.when)).length;
-        const k = $("statsKicker");
-        k.style.display = "block";
-        k.textContent = overdue ? `⏰ Tienes ${overdue} compromiso(s) vencido(s).` : `✅ Todo en orden.`;
+        // ✅ Ya no mostramos el texto abajo; queda “arriba” en Vencidos.
+        $("statsKicker").style.display = "none";
       }
 
       function renderCard(item){
@@ -1946,7 +2007,6 @@
         const c = contactById(contactId);
         if(!c){ toast("Contacto no encontrado"); return; }
 
-        // ✅ Ir a Compromisos y abrir modal ya con el contacto elegido
         setPane("commitments");
         resetCommitmentForm();
         fillContactSelect();
@@ -1982,7 +2042,6 @@
         actions.appendChild(mkBtn("✍️ Editar", "btn", () => openContactEdit(c.id)));
         actions.appendChild(mkBtn("🗑️ Eliminar", "btn danger", () => deleteContact(c.id)));
 
-        // ✅ Click en la tarjeta (excepto botones) -> nuevo compromiso con ese contacto
         card.addEventListener("click", (e) => {
           if(e.target.closest("button")) return;
           openNewCommitmentForContact(c.id);
@@ -1997,6 +2056,8 @@
         fillContactSelect();
         updateSettingsUI();
         renderPendingBadge();
+        renderReceivedBadge();
+        renderTopCounters();
       }
 
       // --------- Modal compromiso ----------
@@ -2797,7 +2858,6 @@
         renderAll();
         toast("Contacto guardado ✅");
 
-        // ✅ Mejor UX: tras crear contacto, abrir directamente nuevo compromiso con él
         openNewCommitmentForContact(c.id);
       });
 
@@ -2833,33 +2893,64 @@
 
       $("btnResetAll").addEventListener("click", resetAll);
 
-      // ✅ Texto grande (ahora en hero, zona derecha)
+      // ✅ Texto grande (zona derecha)
       $("btnA11y").addEventListener("click", toggleTextScale);
 
       // ✅ Manual plegable
       $("btnHelpToggle").addEventListener("click", toggleHelp);
 
-      // ✅ Pendientes: tocar para limpiar
+      // ✅ Avisos: tocar para limpiar
       $("btnNotifPend").addEventListener("click", () => {
         if(Number(pendingNotifs?.c || 0) <= 0){
-          toast("Sin pendientes");
+          toast("Sin avisos");
           return;
         }
         clearPendingBadge();
       });
 
+      // ✅ Recibidos: tocar para limpiar
+      $("pillReceived").addEventListener("click", () => {
+        if(Number(received?.c || 0) <= 0){
+          toast("Sin recibidos");
+          return;
+        }
+        clearReceived();
+      });
+
+      // ✅ Pendientes: ir a lista de pendientes
+      $("pillPending").addEventListener("click", () => {
+        setPane("commitments");
+        view = "pending";
+        $("tabPending").classList.add("active");
+        $("tabDone").classList.remove("active");
+        renderCommitments();
+        toast("Mostrando pendientes");
+      });
+
+      // ✅ Vencidos: ir a pendientes (donde aparecen marcados)
+      $("pillOverdue").addEventListener("click", () => {
+        setPane("commitments");
+        view = "pending";
+        $("tabPending").classList.add("active");
+        $("tabDone").classList.remove("active");
+        renderCommitments();
+        const pending = data.filter(x => !x.done);
+        const overdue = pending.filter(x => isOverdue(x.when)).length;
+        toast(overdue ? `⏰ Tienes ${overdue} vencido(s)` : "Sin vencidos");
+      });
+
       // --------- Boot ----------
-      // Aplica preferencia de accesibilidad
       const a11y = load(A11Y_KEY, { big:false });
       setTextScale(!!a11y.big);
 
-      // Aplica preferencia del manual
       const helpPref = load(HELP_KEY, { show:false });
       setHelpVisible(!!helpPref.show);
 
       updateSettingsUI();
       renderAll();
       renderPendingBadge();
+      renderReceivedBadge();
+      renderTopCounters();
 
       // Import desde hash (si viene con #p=...)
       (function tryImportFromUrl(){
@@ -2882,6 +2973,11 @@
           const ev = unpackEvent(pack);
           if(!ev) throw new Error("bad");
           const applied = applyEvent(ev);
+
+          if(applied){
+            incReceived();
+          }
+
           renderAll();
           toast(applied ? "Paquete importado ✅" : "Paquete ya aplicado (o sin cambios)");
         }catch(e){
@@ -2905,6 +3001,11 @@
           const ev = unpackEvent(pack);
           if(!ev) throw new Error("bad");
           const applied = applyEvent(ev);
+
+          if(applied){
+            incReceived();
+          }
+
           renderAll();
           toast(applied ? "Paquete importado ✅" : "Paquete ya aplicado (o sin cambios)");
         }catch(e){}
