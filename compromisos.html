@@ -23,7 +23,6 @@
       --shadow: 0 14px 40px rgba(0,0,0,.35);
       --r:18px;
 
-      /* textos un poco más grandes */
       --fs-base: 16px;
     }
 
@@ -150,6 +149,10 @@
       background: rgba(255,92,122,.12);
       border-color: rgba(255,92,122,.35);
     }
+    .btn.ghost{
+      background: rgba(255,255,255,.04);
+      border-color: rgba(255,255,255,.12);
+    }
 
     .tabs{
       margin-top: 14px;
@@ -170,6 +173,8 @@
       font-weight: 950;
       font-size: 15px;
       display:flex; align-items:center; justify-content:center; gap:8px;
+      min-width: 0;
+      white-space:nowrap;
     }
     .tab.active{
       color: var(--text);
@@ -409,6 +414,132 @@
       color: var(--muted);
       margin: 10px 0 0;
     }
+
+    /* Ajustes (switch) */
+    .rowline{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding: 12px;
+      border-radius: 16px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.05);
+      box-shadow: 0 10px 25px rgba(0,0,0,.12);
+    }
+    .rowline .ttl{ font-weight: 950; }
+    .rowline .sub{ font-size: 13.5px; color: var(--muted); margin-top: 3px; line-height:1.25; }
+    .stack{ display:flex; flex-direction:column; min-width:0; }
+    .right{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+
+    .switch{
+      width: 52px;
+      height: 32px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+      position: relative;
+      cursor:pointer;
+      flex:0 0 auto;
+    }
+    .switch::after{
+      content:"";
+      position:absolute;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      background: rgba(255,255,255,.90);
+      box-shadow: 0 10px 20px rgba(0,0,0,.35);
+      transition: transform .18s ease, background .18s ease;
+    }
+    .switch.on{
+      background: rgba(107,91,255,.35);
+      border-color: rgba(255,255,255,.22);
+    }
+    .switch.on::after{
+      transform: translateX(20px);
+      background: rgba(255,255,255,.96);
+    }
+
+    /* Bloqueo (PIN) overlay */
+    .lockOverlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.62);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 16px;
+      z-index: 2000;
+    }
+    .lockOverlay.show{ display:flex; }
+    .lockCard{
+      width: min(420px, 100%);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(23,26,51,.98), rgba(18,20,39,.98));
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: 0 22px 60px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .lockHead{
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+    }
+    .lockHead h3{ margin:0; font-size: 18px; font-weight: 950; }
+    .lockHead p{ margin:6px 0 0; color: var(--muted); font-size: 14px; line-height:1.25; }
+    .lockBody{ padding: 14px; display:flex; flex-direction:column; gap: 12px; }
+    .pinDots{
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      margin-top: 2px;
+    }
+    .dot{
+      width: 14px; height: 14px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,.22);
+      background: rgba(255,255,255,.06);
+    }
+    .dot.on{
+      background: rgba(107,91,255,.85);
+      border-color: rgba(255,255,255,.30);
+      box-shadow: 0 10px 25px rgba(107,91,255,.22);
+    }
+    .keypad{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .key{
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 14px 12px;
+      font-size: 18px;
+      font-weight: 950;
+      cursor:pointer;
+      transition: transform .08s ease, background .15s ease;
+      text-align:center;
+    }
+    .key:active{ transform: scale(.99); }
+    .key.primary{
+      background: linear-gradient(135deg, rgba(107,91,255,.95), rgba(138,125,255,.55));
+      border-color: rgba(255,255,255,.18);
+    }
+    .key.danger{
+      background: rgba(255,92,122,.12);
+      border-color: rgba(255,92,122,.35);
+    }
+    .lockFoot{
+      padding: 12px 14px 14px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
   </style>
 </head>
 
@@ -430,10 +561,10 @@
       <div class="row">
         <div class="pill">👥 Contactos</div>
         <div class="pill">📦 Paquetes</div>
-        <div class="pill">✍️ Editar</div>
+        <div class="pill">🔒 PIN</div>
       </div>
       <h2>Comparte cambios como un enlace (sin cuentas).</h2>
-      <p>El mensaje puede decir “Nuevo compromiso / Compromiso finalizado” y luego llevar el enlace. El enlace ahora es más corto y los cambios pueden ser CREATE/DONE/EDIT/…</p>
+      <p>El mensaje puede decir “Nuevo compromiso / Compromiso finalizado” y luego llevar el enlace. Todo va local y con PIN opcional.</p>
       <div class="mono" id="lastLink"></div>
       <div class="kicker" id="statsKicker" style="display:none"></div>
     </section>
@@ -456,9 +587,10 @@
     <nav class="tabs" aria-label="Vistas">
       <button class="tab active" id="tabCommitments">📝 Compromisos</button>
       <button class="tab" id="tabContacts">👥 Amigos <span class="badge" id="bContacts">0</span></button>
+      <button class="tab" id="tabSettings">⚙️ Ajustes</button>
     </nav>
 
-    <!-- Subtabs compromisos -->
+    <!-- Compromisos -->
     <div id="commitmentsPane">
       <nav class="subtabs" aria-label="Pestañas">
         <button class="subtab active" id="tabPending">Pendientes <span class="badge" id="bPending">0</span></button>
@@ -474,1091 +606,40 @@
       <div class="list" id="contactsList"></div>
       <div class="empty" id="contactsEmpty">No tienes contactos aún. Pulsa <b>+</b> para crear el primero.</div>
     </div>
-  </div>
 
-  <button class="fab" id="fab" aria-label="Nuevo">+</button>
-
-  <!-- Modal Compromiso (nuevo/editar) -->
-  <div class="backdrop" id="backdrop" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="sheet">
-      <div class="sheetHead">
-        <h3 id="modalTitle">Nuevo compromiso</h3>
-        <button class="close" id="btnClose">✕</button>
-      </div>
-
-      <div class="sheetBody">
-        <div class="field">
-          <label for="fContact">¿Con quién?</label>
-          <select id="fContact"></select>
-          <div class="hint" id="contactHint">Puedes elegir un contacto o escribir uno nuevo.</div>
-        </div>
-
-        <div class="field" id="customWhoField" style="display:none">
-          <label for="fWho">Nombre (nuevo contacto)</label>
-          <input id="fWho" type="text" placeholder="Ej: Laura / Mamá / Juan (del trabajo)" autocomplete="off"/>
-        </div>
-
-        <div class="field">
-          <label for="fWhat">¿Qué se acordó?</label>
-          <textarea id="fWhat" placeholder="Ej: Te paso el PDF / Te devuelvo 20€ / Quedamos el jueves…"></textarea>
-        </div>
-
-        <div class="field">
-          <label for="fWhen">¿Para cuándo?</label>
-          <input id="fWhen" type="datetime-local" />
-          <div class="hint">Puedes dejarlo sin fecha.</div>
-        </div>
-
-        <div class="hint">
-          Al guardar, podrás <b>Compartir</b> el cambio (nuevo / editado / finalizado…).
-        </div>
-      </div>
-
-      <div class="sheetFoot">
-        <button class="btn danger" id="btnCancel">Cancelar</button>
-        <button class="btn good" id="btnSave">Guardar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Contacto (nuevo/editar) -->
-  <div class="backdrop" id="cBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="sheet">
-      <div class="sheetHead">
-        <h3 id="cModalTitle">Nuevo contacto</h3>
-        <button class="close" id="cBtnClose">✕</button>
-      </div>
-
-      <div class="sheetBody">
-        <div class="field">
-          <label for="cName">Nombre</label>
-          <input id="cName" type="text" placeholder="Ej: Laura" autocomplete="off"/>
-        </div>
-        <div class="field">
-          <label for="cNote">Nota (opcional)</label>
-          <input id="cNote" type="text" placeholder="Ej: Trabajo / Vecina / Familia" autocomplete="off"/>
-        </div>
-        <div class="hint">Esto solo se guarda en tu móvil.</div>
-      </div>
-
-      <div class="sheetFoot">
-        <button class="btn danger" id="cBtnCancel">Cancelar</button>
-        <button class="btn good" id="cBtnSave">Guardar</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="toast" id="toast"></div>
-
-  <script>
-    (function(){
-      "use strict";
-
-      const $ = (id) => document.getElementById(id);
-
-      const KEY = "compromisos_local_v3";
-      const EVENTS_KEY = "compromisos_events_v3";
-      const CONTACTS_KEY = "compromisos_contacts_v3";
-
-      // Tipos numéricos para acortar paquetes
-      const T = { CREATE:0, DONE:1, REOPEN:2, DELETE:3, EDIT:4 };
-
-      function uid(){
-        return "c" + Math.random().toString(16).slice(2) + Date.now().toString(16);
-      }
-      function pad2(n){ return String(n).padStart(2,"0"); }
-
-      function fmtDate(dt){
-        if(!dt) return "Sin fecha";
-        const d = new Date(dt);
-        if(Number.isNaN(d.getTime())) return "Sin fecha";
-        const now = new Date();
-        const sameYear = d.getFullYear() === now.getFullYear();
-        const day = pad2(d.getDate());
-        const mon = pad2(d.getMonth()+1);
-        const hh = pad2(d.getHours());
-        const mm = pad2(d.getMinutes());
-        return (sameYear ? `${day}/${mon}` : `${day}/${mon}/${d.getFullYear()}`) + ` ${hh}:${mm}`;
-      }
-      function isOverdue(dt){
-        if(!dt) return false;
-        const d = new Date(dt);
-        if(Number.isNaN(d.getTime())) return false;
-        return d.getTime() < Date.now();
-      }
-
-      function toast(msg){
-        const t = $("toast");
-        t.textContent = msg;
-        t.classList.add("show");
-        clearTimeout(toast._timer);
-        toast._timer = setTimeout(()=> t.classList.remove("show"), 2400);
-      }
-
-      function escapeHtml(s){
-        return String(s ?? "")
-          .replaceAll("&","&amp;")
-          .replaceAll("<","&lt;")
-          .replaceAll(">","&gt;")
-          .replaceAll('"',"&quot;")
-          .replaceAll("'","&#039;");
-      }
-
-      // Base64URL (utf8-safe)
-      function b64urlEncode(str){
-        const b64 = btoa(unescape(encodeURIComponent(str)));
-        return b64.replaceAll("+","-").replaceAll("/","_").replaceAll("=","");
-      }
-      function b64urlDecode(b64url){
-        let b64 = b64url.replaceAll("-","+").replaceAll("_","/");
-        while(b64.length % 4) b64 += "=";
-        return decodeURIComponent(escape(atob(b64)));
-      }
-
-      function load(key, fallback){
-        try{
-          const raw = localStorage.getItem(key);
-          if(!raw) return fallback;
-          const v = JSON.parse(raw);
-          return v ?? fallback;
-        }catch(e){ return fallback; }
-      }
-      function save(key, value){
-        localStorage.setItem(key, JSON.stringify(value));
-      }
-
-      let data = load(KEY, []);
-      let events = load(EVENTS_KEY, []);
-      let contacts = load(CONTACTS_KEY, []);
-
-      // migración desde v2 si existe (básica)
-      (function migrateIfNeeded(){
-        const old = localStorage.getItem("compromisos_local_v2");
-        if(old && (!data || data.length===0)){
-          try{
-            const arr = JSON.parse(old);
-            if(Array.isArray(arr) && arr.length){
-              data = arr.map(x => ({
-                id: x.id || uid(),
-                whoId: null,
-                whoName: x.who || "Sin nombre",
-                what: x.what || "",
-                when: x.when || null,
-                done: !!x.done,
-                createdAt: x.createdAt || new Date().toISOString(),
-                doneAt: x.doneAt || null,
-                updatedAt: x.updatedAt || null
-              }));
-              save(KEY, data);
-            }
-          }catch(e){}
-        }
-      })();
-
-      let view = "pending";
-      let pane = "commitments"; // commitments | contacts
-
-      function contactById(id){ return contacts.find(c => c.id === id) || null; }
-
-      function normalizedWho(item){
-        if(item.whoId){
-          const c = contactById(item.whoId);
-          if(c && c.name) return c.name;
-        }
-        return item.whoName || "Sin nombre";
-      }
-
-      // Eventos internos (completos) + paquetes cortos para compartir
-      function makeEvent(type, payload){
-        return { id: uid(), type, at: new Date().toISOString(), payload };
-      }
-
-      function applyEvent(ev){
-        if(!ev || ev.type == null) return false;
-        if(events.some(x => x.id === ev.id)) return false; // evitar duplicados
-
-        let changed = false;
-
-        if(ev.type === T.CREATE){
-          const p = ev.payload || {};
-          const itemId = p.i || uid();
-          if(!data.some(x => x.id === itemId)){
-            data.push({
-              id: itemId,
-              whoId: p.c || null,
-              whoName: p.w || "Sin nombre",
-              what: p.s || "",
-              when: p.n || null,
-              done: false,
-              createdAt: p.ca || ev.at,
-              doneAt: null,
-              updatedAt: null
-            });
-            changed = true;
-          }
-        }
-        else if(ev.type === T.DONE){
-          const p = ev.payload || {};
-          const it = data.find(x => x.id === p.i);
-          if(it && !it.done){
-            it.done = true;
-            it.doneAt = ev.at;
-            it.updatedAt = ev.at;
-            changed = true;
-          }
-        }
-        else if(ev.type === T.REOPEN){
-          const p = ev.payload || {};
-          const it = data.find(x => x.id === p.i);
-          if(it && it.done){
-            it.done = false;
-            it.doneAt = null;
-            it.updatedAt = ev.at;
-            changed = true;
-          }
-        }
-        else if(ev.type === T.DELETE){
-          const p = ev.payload || {};
-          const before = data.length;
-          data = data.filter(x => x.id !== p.i);
-          changed = (data.length !== before);
-        }
-        else if(ev.type === T.EDIT){
-          const p = ev.payload || {};
-          const it = data.find(x => x.id === p.i);
-          if(it){
-            // solo aplicar si viene algo
-            const before = JSON.stringify(it);
-            if(p.w != null) it.whoName = p.w;
-            if(p.c != null) it.whoId = p.c || null;
-            if(p.s != null) it.what = p.s;
-            if(p.n != null) it.when = p.n || null;
-            it.updatedAt = ev.at;
-            changed = (JSON.stringify(it) !== before);
-          }
-        }
-
-        events.push(ev);
-        save(EVENTS_KEY, events);
-        save(KEY, data);
-        return changed;
-      }
-
-      // Paquete compacto:
-      // { v:1, e:{ i:<eventId>, t:<typeNum>, a:<iso>, p:{...payloadShort} } }
-      function packEvent(ev){
-        return { v:1, e:{ i: ev.id, t: ev.type, a: ev.at, p: ev.payload || {} } };
-      }
-      function unpackEvent(pack){
-        if(!pack || pack.v !== 1 || !pack.e) return null;
-        const e = pack.e;
-        if(!e.i || e.t == null || !e.a) return null;
-        return { id: e.i, type: e.t, at: e.a, payload: e.p || {} };
-      }
-      function makePackage(ev){
-        return b64urlEncode(JSON.stringify(packEvent(ev)));
-      }
-      function parsePackage(p){
-        const json = b64urlDecode(p);
-        return JSON.parse(json);
-      }
-      function makeLinkFromPackage(p){
-        return location.origin + location.pathname + "#p=" + p;
-      }
-
-      function shortPreview(text, n){
-        const s = String(text||"").trim();
-        if(s.length <= n) return s;
-        return s.slice(0, n-1) + "…";
-      }
-
-      async function sharePretty({title, text, url}){
-        try{
-          if(navigator.share){
-            await navigator.share({ title, text, url });
-            return true;
-          }
-        }catch(e){}
-
-        // fallback: copiamos un texto bonito
-        const full = (title ? (title + "\n") : "") + (text ? (text + "\n") : "") + url;
-        try{
-          await navigator.clipboard.writeText(full);
-          toast("Mensaje copiado ✅");
-          return true;
-        }catch(e){
-          prompt("Copia este mensaje:", full);
-          return true;
-        }
-      }
-
-      // UI: tabs
-      function setPane(newPane){
-        pane = newPane;
-        $("tabCommitments").classList.toggle("active", pane==="commitments");
-        $("tabContacts").classList.toggle("active", pane==="contacts");
-        $("commitmentsPane").style.display = (pane==="commitments") ? "" : "none";
-        $("contactsPane").style.display = (pane==="contacts") ? "" : "none";
-
-        // FAB cambia según vista
-        $("fab").setAttribute("aria-label", pane==="contacts" ? "Nuevo contacto" : "Nuevo compromiso");
-        renderAll();
-      }
-
-      // Render compromisos
-      function renderCommitments(){
-        const list = $("list");
-        list.innerHTML = "";
-
-        const pending = data.filter(x => !x.done);
-        const done = data.filter(x => x.done);
-
-        $("bPending").textContent = String(pending.length);
-        $("bDone").textContent = String(done.length);
-        $("bContacts").textContent = String(contacts.length);
-
-        const items = (view === "pending") ? pending : done;
-
-        $("empty").style.display = items.length ? "none" : "block";
-
-        items
-          .sort((a,b) => {
-            const ta = a.when ? new Date(a.when).getTime() : (view==="pending" ? Number.POSITIVE_INFINITY : 0);
-            const tb = b.when ? new Date(b.when).getTime() : (view==="pending" ? Number.POSITIVE_INFINITY : 0);
-            if(view === "pending") return ta - tb;
-            return (new Date(b.doneAt||0).getTime()) - (new Date(a.doneAt||0).getTime());
-          })
-          .forEach(item => list.appendChild(renderCard(item)));
-
-        // kicker
-        const k = $("statsKicker");
-        const overdue = pending.filter(x => isOverdue(x.when)).length;
-        k.style.display = "block";
-        k.textContent = overdue ? `⏰ Tienes ${overdue} compromiso(s) vencido(s).` : `✅ Todo en orden.`;
-      }
-
-      function renderCard(item){
-        const card = document.createElement("div");
-        card.className = "card";
-
-        const who = normalizedWho(item);
-        const dueText = item.when ? fmtDate(item.when) : "Sin fecha";
-        const overdue = !item.done && isOverdue(item.when);
-        const dueClass = overdue ? "due bad" : "due";
-
-        const meta = [
-          `<span class="chip">📝 ${escapeHtml(fmtDate(item.createdAt))}</span>`,
-          item.updatedAt ? `<span class="chip">✍️ ${escapeHtml(fmtDate(item.updatedAt))}</span>` : "",
-          item.done ? `<span class="chip">✅ ${escapeHtml(fmtDate(item.doneAt))}</span>` : ""
-        ].filter(Boolean).join("");
-
-        card.innerHTML = `
-          <div class="cardTop">
-            <div class="who">
-              <p class="name">${escapeHtml(who)}</p>
-              <p class="meta">${meta}</p>
-            </div>
-            <div class="${dueClass}">⏰ ${escapeHtml(dueText)}${overdue ? " · Vencido" : ""}</div>
+    <!-- Ajustes -->
+    <div id="settingsPane" style="display:none">
+      <div class="list">
+        <div class="rowline">
+          <div class="stack" style="min-width:0">
+            <div class="ttl">🔒 Bloqueo por PIN</div>
+            <div class="sub">Protege la app con un PIN de 4 dígitos. Puedes activarlo o desactivarlo cuando quieras.</div>
           </div>
-          <div class="desc">${escapeHtml(item.what || "—")}</div>
-          <div class="actions"></div>
-        `;
-
-        const actions = card.querySelector(".actions");
-
-        if(!item.done){
-          actions.appendChild(mkBtn("✅ Hecho", "btn good", () => markDone(item.id)));
-          actions.appendChild(mkBtn("📦 Compartir", "btn primary", () => shareEventForItem("CREATE_OR_EDIT", item.id)));
-          actions.appendChild(mkBtn("✍️ Editar", "btn", () => openEditModal(item.id)));
-          actions.appendChild(mkBtn("🗑️", "btn danger icon", () => deleteItem(item.id), true));
-        }else{
-          actions.appendChild(mkBtn("↩️ Reabrir", "btn", () => reopen(item.id)));
-          actions.appendChild(mkBtn("📦 Compartir", "btn primary", () => shareEventForItem("DONE_STATE", item.id)));
-          actions.appendChild(mkBtn("✍️ Editar", "btn", () => openEditModal(item.id)));
-          actions.appendChild(mkBtn("🗑️", "btn danger icon", () => deleteItem(item.id), true));
-        }
-
-        return card;
-      }
-
-      function mkBtn(text, cls, onClick, small){
-        const b = document.createElement("button");
-        b.className = cls;
-        b.textContent = text;
-        if(small){ b.classList.add("icon"); }
-        b.addEventListener("click", onClick);
-        return b;
-      }
-
-      // Render contactos
-      function renderContacts(){
-        const list = $("contactsList");
-        list.innerHTML = "";
-
-        $("bContacts").textContent = String(contacts.length);
-
-        $("contactsEmpty").style.display = contacts.length ? "none" : "block";
-
-        contacts
-          .slice()
-          .sort((a,b) => (a.name||"").localeCompare(b.name||"", "es"))
-          .forEach(c => list.appendChild(renderContactCard(c)));
-      }
-
-      function renderContactCard(c){
-        const card = document.createElement("div");
-        card.className = "card";
-        const note = c.note ? `<span class="chip">🛈 ${escapeHtml(c.note)}</span>` : "";
-        card.innerHTML = `
-          <div class="cardTop">
-            <div class="who">
-              <p class="name">${escapeHtml(c.name || "Sin nombre")}</p>
-              <p class="meta">
-                <span class="chip">👥 Contacto</span>
-                ${note}
-              </p>
-            </div>
-            <div class="due">⭐</div>
+          <div class="right">
+            <div class="switch" id="swPin" role="switch" aria-checked="false" tabindex="0"></div>
           </div>
-          <div class="desc">${escapeHtml(c.note || "—")}</div>
-          <div class="actions"></div>
-        `;
-        const actions = card.querySelector(".actions");
-        actions.appendChild(mkBtn("✍️ Editar", "btn", () => openContactEdit(c.id)));
-        actions.appendChild(mkBtn("🗑️", "btn danger", () => deleteContact(c.id)));
-        return card;
-      }
-
-      function renderAll(){
-        renderCommitments();
-        renderContacts();
-        fillContactSelect();
-      }
-
-      // --------- Modal Compromiso (nuevo/editar) ----------
-      let editingItemId = null;
-
-      function openModal(){
-        $("backdrop").classList.add("show");
-        $("backdrop").setAttribute("aria-hidden","false");
-      }
-      function closeModal(){
-        $("backdrop").classList.remove("show");
-        $("backdrop").setAttribute("aria-hidden","true");
-      }
-
-      function resetCommitmentForm(){
-        editingItemId = null;
-        $("modalTitle").textContent = "Nuevo compromiso";
-        $("fWhat").value = "";
-        $("fWhen").value = "";
-        $("fWho").value = "";
-        // select por defecto
-        fillContactSelect();
-        $("fContact").value = "__custom__";
-        toggleCustomWho(true);
-      }
-
-      function toggleCustomWho(show){
-        $("customWhoField").style.display = show ? "" : "none";
-      }
-
-      function toInputDatetimeLocal(iso){
-        if(!iso) return "";
-        const d = new Date(iso);
-        if(Number.isNaN(d.getTime())) return "";
-        // YYYY-MM-DDTHH:MM
-        const yyyy = d.getFullYear();
-        const mm = pad2(d.getMonth()+1);
-        const dd = pad2(d.getDate());
-        const hh = pad2(d.getHours());
-        const mi = pad2(d.getMinutes());
-        return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
-      }
-
-      function openEditModal(itemId){
-        const it = data.find(x => x.id === itemId);
-        if(!it){ toast("No encontrado"); return; }
-
-        editingItemId = itemId;
-        $("modalTitle").textContent = "Editar compromiso";
-
-        // Contacto
-        fillContactSelect();
-        if(it.whoId && contactById(it.whoId)){
-          $("fContact").value = it.whoId;
-          toggleCustomWho(false);
-          $("fWho").value = "";
-        } else {
-          $("fContact").value = "__custom__";
-          toggleCustomWho(true);
-          $("fWho").value = it.whoName || "";
-        }
-
-        $("fWhat").value = it.what || "";
-        $("fWhen").value = toInputDatetimeLocal(it.when);
-
-        openModal();
-        $("fWhat").focus();
-      }
-
-      // --------- Modal Contacto ----------
-      let editingContactId = null;
-
-      function openContactModal(){
-        $("cBackdrop").classList.add("show");
-        $("cBackdrop").setAttribute("aria-hidden","false");
-      }
-      function closeContactModal(){
-        $("cBackdrop").classList.remove("show");
-        $("cBackdrop").setAttribute("aria-hidden","true");
-      }
-      function resetContactForm(){
-        editingContactId = null;
-        $("cModalTitle").textContent = "Nuevo contacto";
-        $("cName").value = "";
-        $("cNote").value = "";
-      }
-
-      function openContactEdit(id){
-        const c = contacts.find(x => x.id === id);
-        if(!c){ toast("Contacto no encontrado"); return; }
-        editingContactId = id;
-        $("cModalTitle").textContent = "Editar contacto";
-        $("cName").value = c.name || "";
-        $("cNote").value = c.note || "";
-        openContactModal();
-        $("cName").focus();
-      }
-
-      // --------- Contact select ----------
-      function fillContactSelect(){
-        const sel = $("fContact");
-        const current = sel.value;
-        sel.innerHTML = "";
-
-        const optCustom = document.createElement("option");
-        optCustom.value = "__custom__";
-        optCustom.textContent = "✍️ Escribir un nombre (sin guardar)";
-        sel.appendChild(optCustom);
-
-        if(contacts.length){
-          const sep = document.createElement("option");
-          sep.disabled = true;
-          sep.textContent = "──────────";
-          sel.appendChild(sep);
-
-          contacts
-            .slice()
-            .sort((a,b) => (a.name||"").localeCompare(b.name||"", "es"))
-            .forEach(c => {
-              const o = document.createElement("option");
-              o.value = c.id;
-              o.textContent = "👤 " + (c.name || "Sin nombre");
-              sel.appendChild(o);
-            });
-        }
-
-        const optNew = document.createElement("option");
-        optNew.value = "__new_contact__";
-        optNew.textContent = "➕ Crear contacto…";
-        sel.appendChild(optNew);
-
-        // restablecer selección si sigue existiendo
-        if(current){
-          sel.value = current;
-          if(sel.value !== current){
-            sel.value = "__custom__";
-          }
-        } else {
-          sel.value = "__custom__";
-        }
-      }
-
-      function onContactSelectChanged(){
-        const v = $("fContact").value;
-        if(v === "__custom__"){
-          toggleCustomWho(true);
-          return;
-        }
-        if(v === "__new_contact__"){
-          // abrir modal contacto, y al guardar lo seleccionamos
-          resetContactForm();
-          openContactModal();
-          $("cName").focus();
-          // volvemos a custom temporalmente para evitar estado raro
-          $("fContact").value = "__custom__";
-          toggleCustomWho(true);
-          return;
-        }
-        // es un contacto
-        toggleCustomWho(false);
-        $("fWho").value = "";
-      }
-
-      // --------- Acciones compromisos ----------
-      function createOrEditCommitment(){
-        const contactSel = $("fContact").value;
-        const what = $("fWhat").value.trim();
-        const whenISO = $("fWhen").value ? new Date($("fWhen").value).toISOString() : null;
-
-        if(!what){
-          toast("Escribe qué se acordó");
-          $("fWhat").focus();
-          return null;
-        }
-
-        let whoId = null;
-        let whoName = "";
-
-        if(contactSel && contactSel !== "__custom__" && contactSel !== "__new_contact__"){
-          const c = contactById(contactSel);
-          if(!c){
-            toast("Contacto no válido");
-            return null;
-          }
-          whoId = c.id;
-          whoName = c.name || "Sin nombre";
-        } else {
-          whoName = $("fWho").value.trim();
-          if(!whoName){
-            toast("Pon con quién es el compromiso");
-            $("fWho").focus();
-            return null;
-          }
-        }
-
-        const now = new Date().toISOString();
-
-        if(!editingItemId){
-          // CREATE
-          const itemId = uid();
-          const ev = {
-            id: uid(),
-            type: T.CREATE,
-            at: now,
-            payload: {
-              i: itemId,
-              c: whoId || null,
-              w: whoName,
-              s: what,
-              n: whenISO || null,
-              ca: now
-            }
-          };
-          const changed = applyEvent(ev);
-          if(!changed){
-            toast("No se pudo guardar");
-            return null;
-          }
-          return { itemId, ev };
-        } else {
-          // EDIT
-          const it = data.find(x => x.id === editingItemId);
-          if(!it){ toast("No encontrado"); return null; }
-
-          const ev = {
-            id: uid(),
-            type: T.EDIT,
-            at: now,
-            payload: {
-              i: editingItemId,
-              c: whoId || null,
-              w: whoName,
-              s: what,
-              n: whenISO || null
-            }
-          };
-
-          const changed = applyEvent(ev);
-          if(!changed){
-            toast("Sin cambios");
-            return null;
-          }
-          return { itemId: editingItemId, ev };
-        }
-      }
-
-      function markDone(itemId){
-        const ev = makeEvent(T.DONE, { i: itemId });
-        const changed = applyEvent(ev);
-        renderAll();
-        if(changed){
-          toast("Marcado como hecho ✅");
-          shareEvent(ev, "Compromiso finalizado");
-        }else toast("Sin cambios");
-      }
-
-      function reopen(itemId){
-        const ev = makeEvent(T.REOPEN, { i: itemId });
-        const changed = applyEvent(ev);
-        renderAll();
-        if(changed){
-          toast("Reabierto");
-          shareEvent(ev, "Compromiso reabierto");
-        }else toast("Sin cambios");
-      }
-
-      function deleteItem(itemId){
-        const ev = makeEvent(T.DELETE, { i: itemId });
-        const changed = applyEvent(ev);
-        renderAll();
-        if(changed){
-          toast("Eliminado");
-          // compartir borrado solo si quieres; por defecto no.
-        }else toast("Sin cambios");
-      }
-
-      // Decide qué evento compartir desde un item
-      async function shareEventForItem(kind, itemId){
-        const it = data.find(x => x.id === itemId);
-        if(!it){ toast("No encontrado"); return; }
-
-        if(kind === "DONE_STATE"){
-          const title = it.done ? "Compromiso finalizado" : "Compromiso reabierto";
-          // creamos un evento mínimo del estado actual para compartir
-          const ev = it.done ? makeEvent(T.DONE, { i: itemId }) : makeEvent(T.REOPEN, { i: itemId });
-          await shareEvent(ev, title, it);
-          return;
-        }
-
-        // CREATE_OR_EDIT: comparte el estado completo (lo más útil)
-        const title = it.updatedAt ? "Compromiso actualizado" : "Nuevo compromiso";
-        const ev = {
-          id: uid(),
-          type: T.CREATE, // enviamos CREATE completo como snapshot (para importar aunque no lo tengan)
-          at: new Date().toISOString(),
-          payload: {
-            i: it.id,
-            c: it.whoId || null,
-            w: normalizedWho(it),
-            s: it.what || "",
-            n: it.when || null,
-            ca: it.createdAt || new Date().toISOString()
-          }
-        };
-        await shareEvent(ev, title, it);
-      }
-
-      async function shareEvent(ev, title, itemOverride){
-        const p = makePackage(ev);
-        const link = makeLinkFromPackage(p);
-
-        $("lastLink").textContent = "Último enlace:\n" + link;
-        $("lastLink").classList.add("show");
-
-        const it = itemOverride || (ev.payload && ev.payload.i ? data.find(x => x.id === ev.payload.i) : null);
-        const who = it ? normalizedWho(it) : "";
-        const what = it ? shortPreview(it.what, 80) : "";
-
-        // Mensaje “bonito”: esto es lo que verán en WhatsApp/Telegram como texto
-        const text =
-          (who ? `👤 ${who}\n` : "") +
-          (what ? `📝 ${what}\n` : "") +
-          `🔗 Abre para importar en la app.`;
-
-        await sharePretty({ title, text, url: link });
-      }
-
-      // --------- Contactos ----------
-      function upsertContact(name, note){
-        const n = String(name||"").trim();
-        if(!n){ toast("Pon un nombre"); return null; }
-
-        if(!editingContactId){
-          const c = { id: uid(), name: n, note: String(note||"").trim(), createdAt: new Date().toISOString() };
-          contacts.push(c);
-          save(CONTACTS_KEY, contacts);
-          return c;
-        } else {
-          const c = contacts.find(x => x.id === editingContactId);
-          if(!c){ toast("No encontrado"); return null; }
-          c.name = n;
-          c.note = String(note||"").trim();
-          c.updatedAt = new Date().toISOString();
-          save(CONTACTS_KEY, contacts);
-
-          // actualizar compromisos que usan ese contacto (solo visual; id permanece)
-          save(KEY, data);
-          return c;
-        }
-      }
-
-      function deleteContact(id){
-        const c = contacts.find(x => x.id === id);
-        if(!c){ toast("No encontrado"); return; }
-
-        // si está en uso, lo dejamos pero “desvinculamos” (para no romper nombres)
-        data.forEach(it => {
-          if(it.whoId === id){
-            it.whoName = normalizedWho(it);
-            it.whoId = null;
-          }
-        });
-        contacts = contacts.filter(x => x.id !== id);
-
-        save(CONTACTS_KEY, contacts);
-        save(KEY, data);
-
-        renderAll();
-        toast("Contacto eliminado");
-      }
-
-      // --------- Import desde URL ----------
-      function tryImportFromUrl(){
-        const h = location.hash || "";
-        const m = h.match(/#p=([A-Za-z0-9\-_]+)/);
-        if(!m) return false;
-
-        const p = m[1];
-        try{
-          const pack = parsePackage(p);
-          const ev = unpackEvent(pack);
-          if(!ev) throw new Error("Paquete inválido");
-
-          const applied = applyEvent(ev);
-          renderAll();
-
-          // limpiar hash (solo https)
-          history.replaceState(null, "", location.origin + location.pathname);
-
-          toast(applied ? "Paquete importado ✅" : "Paquete ya aplicado (o sin cambios)");
-          return true;
-        }catch(e){
-          history.replaceState(null, "", location.origin + location.pathname);
-          toast("No se pudo importar el paquete");
-          return false;
-        }
-      }
-
-      // --------- PWA / instalación / abrir en Chrome ----------
-      const isAndroid = /Android/i.test(navigator.userAgent || "");
-      const isStandalone = window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
-      const isIOSStandalone = !!navigator.standalone;
-      const isInAppBrowser = (function(){
-        const ua = (navigator.userAgent || "").toLowerCase();
-        return ua.includes("wv") || ua.includes("webview") ||
-               ua.includes("instagram") ||
-               ua.includes("fbav") || ua.includes("fb_iab") ||
-               ua.includes("telegram") ||
-               ua.includes("whatsapp");
-      })();
-
-      let deferredPrompt = null;
-
-      function showBanner(mode){
-        // mode: "install" | "openchrome" | "info"
-        const banner = $("installBanner");
-        const title = $("installTitle");
-        const text = $("installText");
-        const bInstall = $("btnInstallBanner");
-        const bOpen = $("btnOpenChrome");
-        const bCopy = $("btnCopyLink");
-
-        bInstall.style.display = "none";
-        bOpen.style.display = "none";
-        bCopy.style.display = "none";
-
-        if(mode === "openchrome"){
-          title.textContent = "Ábrelo en Chrome para instalarla";
-          text.innerHTML =
-            "Estás en un navegador interno (WhatsApp/Telegram). Para instalar, toca <b>Abrir en Chrome</b>.";
-          bOpen.style.display = "flex";
-          bCopy.style.display = "flex";
-        } else if(mode === "install"){
-          title.textContent = "Instálala para usarla como app";
-          text.innerHTML = "Pulsa <b>Instalar</b>. Luego se abrirá como una app normal desde el icono.";
-          bInstall.style.display = "flex";
-        } else {
-          title.textContent = "Consejo";
-          text.innerHTML = "Si no ves “Instalar” en el menú, abre en <b>Chrome</b> o instala desde el menú <b>⋮</b>.";
-          bCopy.style.display = "flex";
-          if(isInAppBrowser) bOpen.style.display = "flex";
-        }
-
-        banner.classList.add("show");
-      }
-
-      function hideBanner(){ $("installBanner").classList.remove("show"); }
-
-      async function copyCurrentLink(){
-        try{
-          await navigator.clipboard.writeText(location.href);
-          toast("Enlace copiado ✅");
-        }catch(e){
-          prompt("Copia este enlace:", location.href);
-        }
-      }
-
-      function openInChrome(){
-        const url = location.href;
-        if(isAndroid){
-          try{
-            const u = new URL(url);
-            const path = (u.pathname || "/") + (u.search || "") + (u.hash || "");
-            const intent = "intent://" + u.host + path + "#Intent;scheme=https;package=com.android.chrome;end";
-            location.href = intent;
-            return;
-          }catch(e){}
-        }
-        try{
-          window.open(url, "_blank");
-        }catch(e){
-          copyCurrentLink();
-          toast("Copia el enlace y pégalo en Chrome");
-        }
-      }
-
-      window.addEventListener("beforeinstallprompt", (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        $("btnInstall").style.display = "flex";
-      });
-
-      $("btnInstall").addEventListener("click", async () => {
-        if(!deferredPrompt){
-          showBanner(isInAppBrowser ? "openchrome" : "info");
-          return;
-        }
-        deferredPrompt.prompt();
-        try{ await deferredPrompt.userChoice; }catch(e){}
-        deferredPrompt = null;
-        $("btnInstall").style.display = "none";
-      });
-
-      $("btnInstallBanner").addEventListener("click", async () => {
-        if(!deferredPrompt){
-          if(isInAppBrowser){ openInChrome(); return; }
-          showBanner("info");
-          return;
-        }
-        deferredPrompt.prompt();
-        try{ await deferredPrompt.userChoice; }catch(e){}
-        deferredPrompt = null;
-        $("btnInstall").style.display = "none";
-        hideBanner();
-      });
-
-      $("btnOpenChrome").addEventListener("click", openInChrome);
-      $("btnCopyLink").addEventListener("click", copyCurrentLink);
-      $("btnHideBanner").addEventListener("click", hideBanner);
-
-      // --------- Eventos UI ----------
-      $("tabCommitments").addEventListener("click", ()=> setPane("commitments"));
-      $("tabContacts").addEventListener("click", ()=> setPane("contacts"));
-
-      $("tabPending").addEventListener("click", () => {
-        view = "pending";
-        $("tabPending").classList.add("active");
-        $("tabDone").classList.remove("active");
-        renderCommitments();
-      });
-      $("tabDone").addEventListener("click", () => {
-        view = "done";
-        $("tabDone").classList.add("active");
-        $("tabPending").classList.remove("active");
-        renderCommitments();
-      });
-
-      $("fab").addEventListener("click", () => {
-        if(pane === "contacts"){
-          resetContactForm();
-          openContactModal();
-          $("cName").focus();
-          return;
-        }
-        resetCommitmentForm();
-        openModal();
-        $("fContact").focus();
-      });
-
-      $("btnClose").addEventListener("click", closeModal);
-      $("btnCancel").addEventListener("click", closeModal);
-      $("backdrop").addEventListener("click", (e)=>{ if(e.target === $("backdrop")) closeModal(); });
-
-      $("fContact").addEventListener("change", onContactSelectChanged);
-
-      $("btnSave").addEventListener("click", async () => {
-        const res = createOrEditCommitment();
-        if(!res) return;
-
-        closeModal();
-        renderAll();
-
-        if(editingItemId){
-          toast("Actualizado ✅");
-          await shareEvent(res.ev, "Compromiso actualizado");
-        } else {
-          toast("Guardado ✅");
-          await shareEvent(res.ev, "Nuevo compromiso");
-        }
-      });
-
-      // Contact modal
-      $("cBtnClose").addEventListener("click", closeContactModal);
-      $("cBtnCancel").addEventListener("click", closeContactModal);
-      $("cBackdrop").addEventListener("click", (e)=>{ if(e.target === $("cBackdrop")) closeContactModal(); });
-
-      $("cBtnSave").addEventListener("click", () => {
-        const c = upsertContact($("cName").value, $("cNote").value);
-        if(!c) return;
-
-        closeContactModal();
-        renderAll();
-        toast("Contacto guardado ✅");
-
-        // si veníamos de “crear contacto” desde el select, lo seleccionamos automáticamente
-        fillContactSelect();
-        if(pane === "commitments"){
-          $("fContact").value = c.id;
-          toggleCustomWho(false);
-        }
-      });
-
-      // --------- SW ----------
-      (async function registerSW(){
-        if(!("serviceWorker" in navigator)) return;
-        try{
-          await navigator.serviceWorker.register("./sw.js", { scope: "./" });
-        }catch(e){}
-      })();
-
-      // --------- Boot ----------
-      renderAll();
-      tryImportFromUrl();
-
-      // Banner: si no está instalada y está en in-app, mostrar abrir en Chrome
-      setTimeout(() => {
-        if(isStandalone || isIOSStandalone) return;
-        if(isInAppBrowser){
-          showBanner("openchrome");
-        } else {
-          // si Chrome no dispara beforeinstallprompt, al menos damos info
-          showBanner(deferredPrompt ? "install" : "info");
-        }
-      }, 600);
-
-      // Demo inicial
-      if(data.length === 0){
-        const now = new Date().toISOString();
-        const ev = {
-          id: uid(),
-          type: T.CREATE,
-          at: now,
-          payload: {
-            i: uid(),
-            c: null,
-            w: "Ejemplo: Laura",
-            s: "Te paso el PDF del seguro",
-            n: new Date(Date.now() + 3*60*60*1000).toISOString(),
-            ca: now
-          }
-        };
-        applyEvent(ev);
-        renderAll();
-      }
-
-    })();
-  </script>
-</body>
-</html>
+        </div>
+
+        <div class="rowline">
+          <div class="stack" style="min-width:0">
+            <div class="ttl">⏱️ Auto-bloqueo</div>
+            <div class="sub">Cuando sales de la app, se bloquea pasado este tiempo.</div>
+          </div>
+          <div class="right">
+            <select id="selAutoLock" style="min-width:160px">
+              <option value="0">Inmediato</option>
+              <option value="1">1 minuto</option>
+              <option value="5">5 minutos</option>
+              <option value="15">15 minutos</option>
+              <option value="60">60 minutos</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="rowline">
+          <div class="stack" style="min-width:0">
+            <div class="ttl">🕒 Recordar desbloqueo</div>
+            <div class="sub">Durante este tiempo no pedirá PIN (si el PIN está activado).</div>
+          </div>
+          <div class="right">
+            <select id="selRemember" style="min-width
