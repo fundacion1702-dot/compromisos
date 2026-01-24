@@ -1,73 +1,123 @@
-/* sw.js — Service Worker básico para PWA Compromisos (offline + cache) */
-"use strict";
+/* sw.js — Compromisos (PWA) */
+(() => {
+  "use strict";
 
-const CACHE_VERSION = "compromisos-pwa-v1";
-const APP_SHELL = [
-  "./",
-  "./compromisos.html",
-  "./manifest.webmanifest",
-  "./icon-192.png",
-  "./icon-512.png"
-];
+  // Sube esta versión cuando cambies archivos para forzar actualización de caché
+  const VERSION = "compromisos-sw-v1.0.0";
+  const STATIC_CACHE = `static-${VERSION}`;
+  const RUNTIME_CACHE = `runtime-${VERSION}`;
 
-// Instalación: precache del “app shell”
-self.addEventListener("install", (event) => {
-  event.waitUntil((async () => {
-    const cache = await caches.open(CACHE_VERSION);
-    // cache.addAll falla si algún recurso no existe (p.ej. iconos).
-    // Por eso lo hacemos “best effort”.
-    await Promise.all(APP_SHELL.map(async (url) => {
-      try { await cache.add(url); } catch (e) { /* ignore */ }
-    }));
-    await self.skipWaiting();
-  })());
-});
+  // Página “principal” para fallback offline (ajústala si tu archivo principal se llama distinto)
+  const APP_SHELL = "./compromisos.html";
 
-// Activación: limpiar caches antiguas
-self.addEventListener("activate", (event) => {
-  event.waitUntil((async () => {
-    const keys = await caches.keys();
-    await Promise.all(keys.map((k) => (k === CACHE_VERSION ? null : caches.delete(k))));
-    await self.clients.claim();
-  })());
-});
+  // Archivos base a cachear (añade aquí si tienes más assets)
+  const PRECACHE_URLS = [
+    "./",
+    APP_SHELL,
+    "./manifest.webmanifest",
+    "./icon-192.png",
+    "./icon-512.png"
+  ];
 
-// Fetch: cache-first para recursos, network-fallback
-self.addEventListener("fetch", (event) => {
-  const req = event.request;
-  if (req.method !== "GET") return;
+  self.addEventListener("install", (event) => {
+    event.waitUntil((async () => {
+      const cache = await caches.open(STATIC_CACHE);
+      await cache.addAll(PRECACHE_URLS.map(u => new Request(u, { cache: "reload" })));
+      // Activa el SW nuevo sin esperar (si quieres comportamiento “suave”, comenta)
+      self.skipWaiting();
+    })());
+  });
 
-  const url = new URL(req.url);
+  self.addEventListener("activate", (event) => {
+    event.waitUntil((async () => {
+      // Limpia cachés antiguos
+      const keys = await caches.keys();
+      await Promise.all(
+        keys
+          .filter(k => (k.startsWith("static-") || k.startsWith("runtime-")) && k !== STATIC_CACHE && k !== RUNTIME_CACHE)
+          .map(k => caches.delete(k))
+      );
 
-  // Solo manejamos mismo origen
-  if (url.origin !== self.location.origin) return;
+      // Controla inmediatamente las pestañas abiertas
+      self.clients.claim();
+    })());
+  });
 
-  event.respondWith((async () => {
-    // Navegaciones: intenta red, si falla sirve el HTML principal (offline)
-    if (req.mode === "navigate") {
-      try {
-        const fresh = await fetch(req);
-        const cache = await caches.open(CACHE_VERSION);
-        cache.put("./compromisos.html", fresh.clone()).catch(() => {});
-        return fresh;
-      } catch (e) {
-        const cached = await caches.match("./compromisos.html");
-        return cached || new Response("Offline", { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } });
-      }
+  // Permite forzar la actualización desde la app (por si lo usas más adelante)
+  self.addEventListener("message", (event) => {
+    const msg = event.data;
+    if (!msg) return;
+
+    if (msg === "SKIP_WAITING" || (msg && msg.type === "SKIP_WAITING")) {
+      self.skipWaiting();
     }
+  });
 
-    // Recursos: cache-first
-    const cached = await caches.match(req);
+  function isNavigationRequest(request) {
+    return request.mode === "navigate" ||
+      (request.method === "GET" &&
+       request.headers.get("accept") &&
+       request.headers.get("accept").includes("text/html"));
+  }
+
+  async function cacheFirst(request) {
+    const cached = await caches.match(request);
     if (cached) return cached;
 
+    const res = await fetch(request);
+    const cache = await caches.open(RUNTIME_CACHE);
+    cache.put(request, res.clone());
+    return res;
+  }
+
+  async function networkFirst(request) {
+    const cache = await caches.open(RUNTIME_CACHE);
     try {
-      const fresh = await fetch(req);
-      // Cachea recursos estáticos “razonables”
-      const cache = await caches.open(CACHE_VERSION);
-      cache.put(req, fresh.clone()).catch(() => {});
-      return fresh;
+      const res = await fetch(request);
+      cache.put(request, res.clone());
+      return res;
     } catch (e) {
-      return new Response("Offline", { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+      const cached = await cache.match(request) || await caches.match(request);
+      if (cached) return cached;
+      // Fallback a la app principal para que abra aunque no haya red
+      return caches.match(APP_SHELL);
     }
-  })());
-});
+  }
+
+  self.addEventListener("fetch", (event) => {
+    const req = event.request;
+    if (req.method !== "GET") return;
+
+    const url = new URL(req.url);
+
+    // Solo interceptamos lo propio (mismo origen)
+    if (url.origin !== self.location.origin) return;
+
+    // Para navegaciones (HTML) → Network-first (así se actualiza cuando hay red)
+    if (isNavigationRequest(req)) {
+      event.respondWith(networkFirst(req));
+      return;
+    }
+
+    // Para assets estáticos típicos → Cache-first
+    const isStaticAsset =
+      url.pathname.endsWith(".js") ||
+      url.pathname.endsWith(".css") ||
+      url.pathname.endsWith(".png") ||
+      url.pathname.endsWith(".jpg") ||
+      url.pathname.endsWith(".jpeg") ||
+      url.pathname.endsWith(".webp") ||
+      url.pathname.endsWith(".svg") ||
+      url.pathname.endsWith(".ico") ||
+      url.pathname.endsWith(".webmanifest") ||
+      url.pathname.endsWith(".json");
+
+    if (isStaticAsset) {
+      event.respondWith(cacheFirst(req));
+      return;
+    }
+
+    // Resto → intenta red y guarda; si falla, usa caché si existe
+    event.respondWith(networkFirst(req));
+  });
+})();
