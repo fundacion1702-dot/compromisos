@@ -75,14 +75,29 @@
     .iconbtn small{ color:var(--muted); font-weight:800; font-size: .78125rem; }
 
     .hero{
-      margin-top: .875rem;
-      padding: .875rem;
+      margin-top: .75rem;
+      padding: .75rem; /* ✅ más compacto */
       border-radius: var(--r);
       background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
       border:1px solid var(--stroke);
       box-shadow: var(--shadow);
     }
-    .hero .row{ display:flex; gap:.625rem; align-items:flex-start; flex-wrap:wrap; }
+
+    /* ✅ Barra superior del hero (izq: pendientes, der: texto grande) */
+    .heroBar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:.625rem;
+    }
+    .heroLeft{
+      display:flex;
+      align-items:center;
+      gap:.5rem;
+      min-width:0;
+      flex:1;
+    }
+
     .pill{
       display:inline-flex; align-items:center; gap:.5rem;
       padding: .5rem .625rem;
@@ -94,8 +109,38 @@
       font-weight: 850;
       white-space:nowrap;
     }
-    .hero h2{ margin: .625rem 0 .375rem; font-size: 1.125rem; line-height:1.25; }
-    .hero p{ margin: 0; color: var(--muted); font-size: .9375rem; line-height:1.4; }
+
+    /* ✅ pill clicable para pendientes */
+    .pill.btnPill{
+      cursor:pointer;
+      user-select:none;
+      transition: transform .08s ease, background .15s ease;
+    }
+    .pill.btnPill:active{ transform: scale(.99); }
+    .pill.btnPill .badge{
+      margin-left:.25rem;
+      min-width: 1.375rem;
+      padding: .125rem .5rem;
+      font-size: .78125rem;
+      background: rgba(0,0,0,.22);
+    }
+    .pill.btnPill.muted{
+      background: rgba(255,255,255,.06);
+      color: var(--muted);
+      border-color: rgba(255,255,255,.12);
+    }
+
+    .hero h2{
+      margin: .5rem 0 .3125rem; /* ✅ más compacto */
+      font-size: 1.125rem;
+      line-height:1.25;
+    }
+    .hero p{
+      margin: 0;
+      color: var(--muted);
+      font-size: .9375rem;
+      line-height:1.4;
+    }
 
     .banner{
       margin-top: .75rem;
@@ -529,7 +574,7 @@
     }
 
     /* ✅ Manual plegable */
-    .helpWrap{ margin-top:.75rem; }
+    .helpWrap{ margin-top:.625rem; } /* ✅ un pelín más compacto */
     .helpMiniBtn{
       width:100%;
       justify-content:space-between;
@@ -577,19 +622,24 @@
         </div>
       </div>
 
+      <!-- ✅ En header dejamos solo instalar (texto grande va en el hero, como en tu captura) -->
       <div style="display:flex; gap:.625rem; align-items:center; flex:0 0 auto;">
-        <button class="iconbtn tgl" id="btnA11y" title="Texto grande">👓 <small id="a11yLabel">Texto</small></button>
         <button class="iconbtn" id="btnInstall" style="display:none">⬇️ <small>Instalar</small></button>
       </div>
     </header>
 
     <section class="hero">
-      <div class="row">
-        <div class="pill">👥 Contactos</div>
-        <div class="pill">📦 Paquetes</div>
-        <div class="pill">🔔 Recordatorios</div>
-        <div class="pill">🔒 PIN</div>
+      <!-- ✅ Izquierda: avisador pendientes. Derecha: botón texto grande (zona del círculo rojo) -->
+      <div class="heroBar">
+        <div class="heroLeft">
+          <div class="pill btnPill muted" id="btnNotifPend" title="Notificaciones pendientes (toca para limpiar)">
+            🔔 Pendientes <span class="badge" id="bNotifPend">0</span>
+          </div>
+        </div>
+
+        <button class="iconbtn tgl" id="btnA11y" title="Texto grande">👓 <small id="a11yLabel">Texto</small></button>
       </div>
+
       <h2>Comparte cambios como un enlace (sin cuentas).</h2>
       <p>Ahora puedes enviar un compromiso con un <b>aviso “desde ahora”</b> (5 min / 1 hora…) que se programa al importar.</p>
 
@@ -900,7 +950,6 @@
         <button class="btn" id="shareCopyUrl">🔗 Copiar enlace</button>
         <button class="btn" id="shareCopyAll">📋 Copiar texto+enlace</button>
         <button class="btn primary" id="shareSend">📤 Compartir</button>
-        <!-- ✅ “Cancelar” puede dar sensación de abortar: mejor “Hecho” -->
         <button class="btn danger" id="shareCancel">Hecho</button>
       </div>
     </div>
@@ -985,6 +1034,9 @@
       // ✅ Manual plegable
       const HELP_KEY = "compromisos_help_v1";
 
+      // ✅ Indicador local de pendientes (placeholder “pendientes por leer”)
+      const PENDING_NOTIF_KEY = "compromisos_pending_notifs_v1";
+
       // Tipos numéricos para acortar paquetes
       const T = { CREATE:0, DONE:1, REOPEN:2, DELETE:3, EDIT:4 };
 
@@ -1052,13 +1104,42 @@
         localStorage.setItem(key, JSON.stringify(value));
       }
 
+      // --------- Pendientes (contador local mínimo) ----------
+      let pendingNotifs = load(PENDING_NOTIF_KEY, { c:0, at:0 });
+
+      function renderPendingBadge(){
+        const c = Math.max(0, Number(pendingNotifs?.c || 0));
+        const pill = $("btnNotifPend");
+        $("bNotifPend").textContent = String(c);
+
+        // visual: si 0, se ve “muted”; si >0, se ve como pill normal
+        if(c > 0){
+          pill.classList.remove("muted");
+        } else {
+          pill.classList.add("muted");
+        }
+      }
+
+      function incPendingBadge(){
+        pendingNotifs.c = Math.max(0, Number(pendingNotifs.c || 0)) + 1;
+        pendingNotifs.at = Date.now();
+        save(PENDING_NOTIF_KEY, pendingNotifs);
+        renderPendingBadge();
+      }
+
+      function clearPendingBadge(){
+        pendingNotifs.c = 0;
+        pendingNotifs.at = Date.now();
+        save(PENDING_NOTIF_KEY, pendingNotifs);
+        renderPendingBadge();
+        toast("Pendientes limpiadas");
+      }
+
       // --------- Confirm modal (propio) ----------
       const Confirm = (function(){
         let resolver = null;
-        let current = null;
 
         function open({ title, msg, yesText, danger }){
-          current = { title, msg, yesText, danger: !!danger };
           $("confirmTitle").textContent = title || "Confirmar";
           $("confirmMsg").innerHTML = msg || "";
           $("confirmYes").textContent = yesText || "Sí, continuar";
@@ -1630,6 +1711,9 @@
           sendLocalNotification(title, body);
           toast(`⏰ Recordatorio: ${who}`);
 
+          // ✅ sube contador local “pendientes”
+          incPendingBadge();
+
           firedMap[k] = now;
           save(REMIND_FIRED_KEY, firedMap);
         }
@@ -1657,6 +1741,9 @@
 
           sendLocalNotification(title, body);
           toast(`🔔 Aviso: ${who}`);
+
+          // ✅ sube contador local “pendientes”
+          incPendingBadge();
 
           afterFired[k] = now;
           save(AFTER_FIRED_KEY, afterFired);
@@ -1909,6 +1996,7 @@
         renderContacts();
         fillContactSelect();
         updateSettingsUI();
+        renderPendingBadge();
       }
 
       // --------- Modal compromiso ----------
@@ -2269,42 +2357,10 @@
       }
 
       // --------- Import desde URL (robusto con “buzón”) ----------
-      function readPackFromHash(){
+      function parsePackageFromHash(){
         const h = location.hash || "";
         const m = h.match(/#p=([A-Za-z0-9\-_]+)/);
         return m ? m[1] : null;
-      }
-
-      function storeInboxPack(p){
-        try{
-          localStorage.setItem(INBOX_PACK_KEY, p);
-          localStorage.setItem(INBOX_TS_KEY, String(Date.now()));
-        }catch(e){}
-      }
-
-      function takeInboxPack(){
-        try{
-          const p = localStorage.getItem(INBOX_PACK_KEY);
-          if(!p) return null;
-          localStorage.removeItem(INBOX_PACK_KEY);
-          localStorage.removeItem(INBOX_TS_KEY);
-          return p;
-        }catch(e){ return null; }
-      }
-
-      function tryApplyPack(p){
-        try{
-          const pack = parsePackage(p);
-          const ev = unpackEvent(pack);
-          if(!ev) throw new Error("Paquete inválido");
-          const applied = applyEvent(ev);
-          renderAll();
-          toast(applied ? "Paquete importado ✅" : "Paquete ya aplicado (o sin cambios)");
-          return true;
-        }catch(e){
-          toast("No se pudo importar el paquete");
-          return false;
-        }
       }
 
       function clearHashToBase(){
@@ -2777,11 +2833,20 @@
 
       $("btnResetAll").addEventListener("click", resetAll);
 
-      // ✅ Texto grande
+      // ✅ Texto grande (ahora en hero, zona derecha)
       $("btnA11y").addEventListener("click", toggleTextScale);
 
       // ✅ Manual plegable
       $("btnHelpToggle").addEventListener("click", toggleHelp);
+
+      // ✅ Pendientes: tocar para limpiar
+      $("btnNotifPend").addEventListener("click", () => {
+        if(Number(pendingNotifs?.c || 0) <= 0){
+          toast("Sin pendientes");
+          return;
+        }
+        clearPendingBadge();
+      });
 
       // --------- Boot ----------
       // Aplica preferencia de accesibilidad
@@ -2794,12 +2859,11 @@
 
       updateSettingsUI();
       renderAll();
+      renderPendingBadge();
 
       // Import desde hash (si viene con #p=...)
       (function tryImportFromUrl(){
-        const h = location.hash || "";
-        const m = h.match(/#p=([A-Za-z0-9\-_]+)/);
-        const p = m ? m[1] : null;
+        const p = parsePackageFromHash();
         if(!p) return;
 
         if(isInAppBrowser){
@@ -2807,7 +2871,7 @@
             localStorage.setItem(INBOX_PACK_KEY, p);
             localStorage.setItem(INBOX_TS_KEY, String(Date.now()));
           }catch(e){}
-          try{ history.replaceState(null, "", baseFileUrl()); }catch(e){ location.hash=""; }
+          clearHashToBase();
           showBanner("openchrome_import");
           toast("Para importar: abre en Chrome");
           return;
@@ -2824,7 +2888,7 @@
           toast("No se pudo importar el paquete");
         }
 
-        try{ history.replaceState(null, "", baseFileUrl()); }catch(e){ location.hash=""; }
+        clearHashToBase();
       })();
 
       // Import desde buzón (si antes se abrió desde WhatsApp)
