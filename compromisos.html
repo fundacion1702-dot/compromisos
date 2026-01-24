@@ -21,25 +21,15 @@
       --stroke:rgba(255,255,255,.10);
       --shadow: 0 14px 40px rgba(0,0,0,.35);
       --r:18px;
-
-      /* Base */
       --fs-base: 16px;
-
-      /* ✅ Accesibilidad (se controla con <html data-a11y="big">) */
-      --fs-base-big: 18px;
-      --fs-scale: 1;
     }
-
-    /* ✅ Si está activo “texto grande”, escalamos TODO de forma consistente */
-    html[data-a11y="big"]{
-      --fs-base: var(--fs-base-big);
-      --fs-scale: 1.12; /* un poco más para que se note incluso en elementos con px fijos */
-    }
-
     *{ box-sizing:border-box; }
+
+    /* ✅ Base tipográfica controlada por variable */
+    html{ font-size: var(--fs-base); }
     body{
       margin:0;
-      font-size: var(--fs-base);
+      font-size: 1rem;
       font-family:
         system-ui, -apple-system, Segoe UI, Roboto, Arial,
         "Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji",
@@ -50,7 +40,15 @@
       color:var(--text);
       min-height:100vh;
       padding-bottom:96px;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
     }
+    /* ✅ “Texto grande” más robusto (incluye ajuste del navegador) */
+    body[data-bigtext="1"]{
+      -webkit-text-size-adjust: 125%;
+      text-size-adjust: 125%;
+    }
+
     .wrap{ max-width:560px; margin:0 auto; padding:16px 14px 0; }
     header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:6px; }
     .brand{ display:flex; align-items:center; gap:10px; min-width:0; }
@@ -60,10 +58,10 @@
       box-shadow: 0 12px 30px rgba(107,91,255,.25);
       border:1px solid rgba(255,255,255,.14);
       flex:0 0 auto; font-weight:950; letter-spacing:.5px;
-      font-size: calc(18px * var(--fs-scale));
+      font-size: 18px;
     }
-    .brand h1{ margin:0; font-size: calc(20px * var(--fs-scale)); line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .brand p{ margin:2px 0 0; font-size: calc(13.5px * var(--fs-scale)); color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .brand h1{ margin:0; font-size:20px; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .brand p{ margin:2px 0 0; font-size:13.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
     .iconbtn{
       border:1px solid var(--stroke);
@@ -76,12 +74,12 @@
       transition: transform .08s ease, background .15s ease;
       display:flex; align-items:center; gap:8px;
       font-weight:900;
-      font-size: calc(14px * var(--fs-scale));
+      font-size: 14px;
       flex:0 0 auto;
       white-space:nowrap;
     }
     .iconbtn:active{ transform: scale(.98); }
-    .iconbtn small{ color:var(--muted); font-weight:800; font-size: calc(12.5px * var(--fs-scale)); }
+    .iconbtn small{ color:var(--muted); font-weight:800; font-size: 12.5px; }
 
     .hero{
       margin-top: 14px;
@@ -99,12 +97,12 @@
       border: 1px solid rgba(255,255,255,.14);
       background: rgba(107,91,255,.14);
       color: var(--text);
-      font-size: calc(13px * var(--fs-scale));
+      font-size: 13px;
       font-weight: 850;
       white-space:nowrap;
     }
-    .hero h2{ margin: 10px 0 6px; font-size: calc(18px * var(--fs-scale)); line-height:1.25; }
-    .hero p{ margin: 0; color: var(--muted); font-size: calc(15px * var(--fs-scale)); line-height:1.4; }
+    .hero h2{ margin: 10px 0 6px; font-size: 18px; line-height:1.25; }
+    .hero p{ margin: 0; color: var(--muted); font-size: 15px; line-height:1.4; }
 
     .banner{
       margin-top: 12px;
@@ -116,8 +114,8 @@
       display:none;
     }
     .banner.show{ display:block; }
-    .banner .title{ font-weight:950; margin:0 0 6px; font-size: calc(16px * var(--fs-scale)); }
-    .banner .txt{ margin:0; color:var(--muted); font-size: calc(14.5px * var(--fs-scale)); line-height:1.35; }
+    .banner .title{ font-weight:950; margin:0 0 6px; font-size: 16px; }
+    .banner .txt{ margin:0; color:var(--muted); font-size:14.5px; line-height:1.35; }
     .banner .row{ display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
 
     .btn{
@@ -128,7 +126,7 @@
       padding: 11px 12px;
       cursor:pointer;
       font-weight: 950;
-      font-size: calc(15px * var(--fs-scale));
+      font-size: 15px;
       transition: transform .08s ease, background .15s ease;
       display:flex; align-items:center; justify-content:center; gap:8px;
       flex:1;
@@ -158,7 +156,7 @@
       border-radius: 14px;
       cursor:pointer;
       font-weight: 950;
-      font-size: calc(15px * var(--fs-scale));
+      font-size: 15px;
       display:flex; align-items:center; justify-content:center; gap:8px;
       min-width: 0;
       white-space:nowrap;
@@ -174,7 +172,7 @@
       min-width: 24px;
       padding: 2px 9px;
       border-radius: 999px;
-      font-size: calc(13px * var(--fs-scale));
+      font-size: 13px;
       font-weight: 950;
       background: rgba(0,0,0,.25);
       border: 1px solid rgba(255,255,255,.14);
@@ -197,7 +195,7 @@
       border-radius: 14px;
       cursor:pointer;
       font-weight: 950;
-      font-size: calc(14.5px * var(--fs-scale));
+      font-size: 14.5px;
       display:flex; align-items:center; justify-content:center; gap:8px;
       min-width:0;
       white-space:nowrap;
@@ -219,11 +217,11 @@
     .cardTop{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
     .who{ min-width:0; }
     .who .name{
-      margin:0; font-size: calc(16px * var(--fs-scale)); font-weight: 950; letter-spacing:.2px;
+      margin:0; font-size: 16px; font-weight: 950; letter-spacing:.2px;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
     .who .meta{
-      margin: 4px 0 0; font-size: calc(13px * var(--fs-scale)); color: var(--muted);
+      margin: 4px 0 0; font-size: 13px; color: var(--muted);
       display:flex; gap:8px; flex-wrap:wrap;
     }
     .chip{
@@ -233,10 +231,10 @@
       background: rgba(255,255,255,.05);
       color: var(--muted);
       font-weight: 850;
-      font-size: calc(12.5px * var(--fs-scale));
+      font-size: 12.5px;
     }
     .due{
-      font-size: calc(13.5px * var(--fs-scale));
+      font-size: 13.5px;
       font-weight: 950;
       padding: 7px 11px;
       border-radius: 999px;
@@ -248,7 +246,7 @@
     .due.bad{ background: rgba(255,92,122,.14); }
     .desc{
       margin: 10px 0 0;
-      font-size: calc(15px * var(--fs-scale));
+      font-size: 15px;
       line-height:1.35;
       color: var(--text);
       opacity: .95;
@@ -264,7 +262,7 @@
       text-align:center;
       line-height:1.35;
       display:none;
-      font-size: calc(15px * var(--fs-scale));
+      font-size: 15px;
     }
 
     .fab{
@@ -278,7 +276,7 @@
       background: linear-gradient(135deg, rgba(107,91,255,.95), rgba(138,125,255,.55));
       box-shadow: 0 18px 45px rgba(107,91,255,.25), 0 14px 40px rgba(0,0,0,.35);
       color: white;
-      font-size: calc(30px * var(--fs-scale));
+      font-size: 30px;
       font-weight: 950;
       cursor:pointer;
       display:grid;
@@ -313,7 +311,7 @@
       display:flex; align-items:center; justify-content:space-between; gap:12px;
       border-bottom: 1px solid rgba(255,255,255,.10);
     }
-    .sheetHead h3{ margin:0; font-size: calc(17px * var(--fs-scale)); font-weight: 950; letter-spacing:.2px; }
+    .sheetHead h3{ margin:0; font-size: 17px; font-weight: 950; letter-spacing:.2px; }
     .close{
       border:1px solid rgba(255,255,255,.16);
       background: rgba(255,255,255,.06);
@@ -322,12 +320,12 @@
       padding: 9px 11px;
       cursor:pointer;
       font-weight: 950;
-      font-size: calc(14px * var(--fs-scale));
+      font-size: 14px;
     }
     .sheetBody{ padding: 14px; display:flex; flex-direction:column; gap: 10px; }
     .field label{
       display:block;
-      font-size: calc(13.5px * var(--fs-scale));
+      font-size: 13.5px;
       font-weight: 950;
       color: var(--muted);
       margin-bottom: 6px;
@@ -340,12 +338,12 @@
       background: rgba(255,255,255,.06);
       color: var(--text);
       outline: none;
-      font-size: calc(16px * var(--fs-scale));
+      font-size: 16px;
     }
     .field textarea{ min-height: 92px; resize: vertical; }
 
     .hint{
-      font-size: calc(13.5px * var(--fs-scale));
+      font-size: 13.5px;
       color: var(--muted);
       margin-top: 6px;
       line-height:1.35;
@@ -365,7 +363,7 @@
       border-radius: 14px;
       box-shadow: 0 18px 40px rgba(0,0,0,.45);
       font-weight: 850;
-      font-size: calc(14px * var(--fs-scale));
+      font-size: 14px;
       display:none;
       z-index: 1000;
       max-width: calc(100% - 28px);
@@ -375,7 +373,7 @@
 
     .mono{
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: calc(13px * var(--fs-scale));
+      font-size:13px;
       color:var(--muted);
       word-break: break-all;
       background: rgba(255,255,255,.04);
@@ -388,7 +386,7 @@
     .mono.show{ display:block; }
 
     .kicker{
-      font-size: calc(13px * var(--fs-scale));
+      font-size: 13px;
       color: var(--muted);
       margin: 10px 0 0;
     }
@@ -404,8 +402,8 @@
       background: rgba(255,255,255,.05);
       box-shadow: 0 10px 25px rgba(0,0,0,.12);
     }
-    .rowline .ttl{ font-weight: 950; font-size: calc(15px * var(--fs-scale)); }
-    .rowline .sub{ font-size: calc(13.5px * var(--fs-scale)); color: var(--muted); margin-top: 3px; line-height:1.25; }
+    .rowline .ttl{ font-weight: 950; }
+    .rowline .sub{ font-size: 13.5px; color: var(--muted); margin-top: 3px; line-height:1.25; }
     .stack{ display:flex; flex-direction:column; min-width:0; }
     .right{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
 
@@ -460,8 +458,8 @@
       padding: 14px 14px 10px;
       border-bottom: 1px solid rgba(255,255,255,.10);
     }
-    .lockHead h3{ margin:0; font-size: calc(18px * var(--fs-scale)); font-weight: 950; }
-    .lockHead p{ margin:6px 0 0; color: var(--muted); font-size: calc(14px * var(--fs-scale)); line-height:1.25; }
+    .lockHead h3{ margin:0; font-size: 18px; font-weight: 950; }
+    .lockHead p{ margin:6px 0 0; color: var(--muted); font-size: 14px; line-height:1.25; }
     .lockBody{ padding: 14px; display:flex; flex-direction:column; gap: 12px; }
     .pinDots{ display:flex; justify-content:center; gap:10px; margin-top: 2px; }
     .dot{
@@ -487,7 +485,7 @@
       background: rgba(255,255,255,.06);
       color: var(--text);
       padding: 14px 12px;
-      font-size: calc(18px * var(--fs-scale));
+      font-size: 18px;
       font-weight: 950;
       cursor:pointer;
       transition: transform .08s ease, background .15s ease;
@@ -515,7 +513,7 @@
       padding: 10px 12px;
       cursor:pointer;
       font-weight: 950;
-      font-size: calc(14.5px * var(--fs-scale));
+      font-size: 14.5px;
       white-space:nowrap;
     }
     .seg button.active{
@@ -528,7 +526,7 @@
     .twoCol > *{ flex:1; min-width: 160px; }
 
     /* Modal confirm propio */
-    .confirmMsg{ font-size: calc(15px * var(--fs-scale)); color:var(--text); opacity:.95; line-height:1.35; }
+    .confirmMsg{ font-size:15px; color:var(--text); opacity:.95; line-height:1.35; }
     .dangerTxt{ color: rgba(255,92,122,.95); font-weight: 950; }
 
     /* Botón texto grande */
@@ -536,6 +534,13 @@
       background: rgba(107,91,255,.20);
       border-color: rgba(255,255,255,.18);
     }
+
+    /* ✅ Contacto clicable para crear compromiso */
+    .card.contactCard{
+      cursor:pointer;
+      transition: transform .08s ease, background .15s ease;
+    }
+    .card.contactCard:active{ transform: scale(.995); }
   </style>
 </head>
 
@@ -565,10 +570,7 @@
       </div>
       <h2>Comparte cambios como un enlace (sin cuentas).</h2>
       <p>Ahora puedes enviar un compromiso con un <b>aviso “desde ahora”</b> (5 min / 1 hora…) que se programa al importar.</p>
-
-      <!-- ✅ Eliminado el bloque “Último enlace” que ocupaba mucho -->
-      <!-- <div class="mono" id="lastLink"></div> -->
-
+      <!-- ✅ Eliminado “Último enlace” que ocupaba mucho -->
       <div class="kicker" id="statsKicker" style="display:none"></div>
     </section>
 
@@ -1036,13 +1038,14 @@
         return { open };
       })();
 
-      // --------- ✅ Accesibilidad (texto grande) ----------
+      // --------- Accesibilidad (texto grande) ----------
       function setTextScale(on){
         const isOn = !!on;
+        const root = document.documentElement;
 
-        // ✅ Marcamos el estado en <html> para que el CSS escale todo
-        document.documentElement.toggleAttribute("data-a11y", isOn);
-        if(isOn) document.documentElement.setAttribute("data-a11y","big");
+        root.style.setProperty("--fs-base", isOn ? "18px" : "16px");
+        // ✅ también marcamos en body para que el navegador ajuste el tamaño del texto
+        document.body.setAttribute("data-bigtext", isOn ? "1" : "0");
 
         const b = $("btnA11y");
         b.classList.toggle("on", isOn);
@@ -1053,7 +1056,6 @@
       function toggleTextScale(){
         const s = load(A11Y_KEY, { big:false });
         setTextScale(!s.big);
-        toast(!s.big ? "Texto grande activado" : "Texto normal");
       }
 
       // --------- Ajustes (PIN / notifs) ----------
@@ -1474,12 +1476,6 @@
         const p = makePackage(ev);
         const link = makeLinkFromPackage(p);
 
-        // ✅ Ya no mostramos “Último enlace” en la home (lo pediste)
-        // if($("lastLink")){
-        //   $("lastLink").textContent = "Último enlace:\n" + link;
-        //   $("lastLink").classList.add("show");
-        // }
-
         const msgs = buildShareMessages(ev, it);
 
         shareState = {
@@ -1785,7 +1781,11 @@
         const b = document.createElement("button");
         b.className = cls;
         b.textContent = text;
-        b.addEventListener("click", onClick);
+        b.addEventListener("click", (e) => {
+          // ✅ evita que el click “suba” si el contenedor es clicable (contactos)
+          e.stopPropagation();
+          onClick(e);
+        });
         return b;
       }
 
@@ -1801,24 +1801,73 @@
           .forEach(c => list.appendChild(renderContactCard(c)));
       }
 
+      // ✅ NUEVO: tocar un amigo abre directamente “Nuevo compromiso” con ese amigo seleccionado
+      function startCommitmentForContact(contactId){
+        const c = contactById(contactId);
+        if(!c){ toast("Contacto no encontrado"); return; }
+
+        // Aseguramos vista de pendientes
+        view = "pending";
+        $("tabPending").classList.add("active");
+        $("tabDone").classList.remove("active");
+
+        // Cambiamos a compromisos y abrimos modal ya con el contacto seleccionado
+        setPane("commitments");
+
+        resetCommitmentForm();
+        fillContactSelect();
+
+        $("fContact").value = contactId;
+
+        if($("fContact").value !== contactId){
+          // fallback raro (por si no aparece en el select)
+          $("fContact").value = "__custom__";
+          toggleCustomWho(true);
+          $("fWho").value = c.name || "";
+        }else{
+          toggleCustomWho(false);
+          $("fWho").value = "";
+        }
+
+        openModal();
+        setTimeout(()=> {
+          try{ $("fWhat").focus(); }catch(e){}
+        }, 60);
+      }
+
       function renderContactCard(c){
         const card = document.createElement("div");
-        card.className = "card";
+        card.className = "card contactCard";
+        card.setAttribute("role","button");
+        card.setAttribute("tabindex","0");
+        card.title = "Toca para crear un compromiso con este amigo";
+
         const note = c.note ? `<span class="chip">🛈 ${escapeHtml(c.note)}</span>` : "";
         card.innerHTML = `
           <div class="cardTop">
             <div class="who">
               <p class="name">${escapeHtml(c.name || "Sin nombre")}</p>
               <p class="meta">
-                <span class="chip">👥 Contacto</span>
+                <span class="chip">👥 Amigo</span>
+                <span class="chip">➕ Nuevo compromiso</span>
                 ${note}
               </p>
             </div>
             <div class="due">⭐</div>
           </div>
-          <div class="desc">${escapeHtml(c.note || "—")}</div>
+          <div class="desc">${escapeHtml(c.note || "Toca para crear un compromiso con este amigo.")}</div>
           <div class="actions"></div>
         `;
+
+        // Click / Enter / Espacio => abrir modal de compromiso
+        card.addEventListener("click", () => startCommitmentForContact(c.id));
+        card.addEventListener("keydown", (e) => {
+          if(e.key === "Enter" || e.key === " "){
+            e.preventDefault();
+            startCommitmentForContact(c.id);
+          }
+        });
+
         const actions = card.querySelector(".actions");
         actions.appendChild(mkBtn("✍️ Editar", "btn", () => openContactEdit(c.id)));
         actions.appendChild(mkBtn("🗑️ Eliminar", "btn danger", () => deleteContact(c.id)));
