@@ -1,912 +1,928 @@
+<!-- ✅ PARTE 1/3 — compromisos.html (ESTILO NUEVO “TARJETAS / MENÚ VISUAL” tipo la foto) -->
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Compromisos</title>
-  <meta name="theme-color" content="#6b5bff"/>
+
+  <!-- PWA -->
   <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#F2F3F5"/>
+
+  <!-- iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Compromisos">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
   <style>
     :root{
-      --bg:#0b0c12;
-      --surface:#121427;
-      --surface2:#171a33;
-      --text:#e9ecff;
-      --muted:#aab0d6;
-      --primary:#6b5bff;
-      --primary2:#8a7dff;
-      --good:#36d399;
-      --bad:#ff5c7a;
-      --warn:#ffcc66;
-      --stroke:rgba(255,255,255,.10);
-      --shadow: 0 14px 40px rgba(0,0,0,.35);
-      --r:18px;
-      --fs-base: 16px; /* se ajusta desde JS (texto grande) */
+      /* 🎨 Look & feel tipo “menú visual” (como tu captura) */
+      --bg: #F2F3F5;
+      --surface: #FFFFFF;
+      --surface2: #F7F8FA;
+      --text: #111827;
+      --muted: #6B7280;
+      --border: #E5E7EB;
+      --shadow: 0 10px 28px rgba(17,24,39,.08);
+      --shadow2: 0 6px 18px rgba(17,24,39,.06);
 
-      /* ✅ NUEVO: tono más marcado para tarjetas (mejor contraste) */
-      --cardA: rgba(27,31,62,.96);
-      --cardB: rgba(17,19,38,.86);
-      --cardAltA: rgba(33,28,66,.96);
-      --cardAltB: rgba(17,19,38,.84);
-      --cardStroke: rgba(255,255,255,.18);
+      --primary: #2563EB;
+      --primarySoft: rgba(37,99,235,.10);
+
+      --danger: #DC2626;
+      --dangerSoft: rgba(220,38,38,.10);
+
+      --good: #16A34A;
+      --goodSoft: rgba(22,163,74,.10);
+
+      --chip: #EEF2FF;
+      --chipText: #1F2A5A;
+
+      --radius: 18px;
+      --radius2: 22px;
+      --max: 880px;
+
+      --tap: 48px;
+      --fs: 16px;
+      --fsBig: 18px;
+
+      --icon: #111827;
     }
-    *{ box-sizing:border-box; }
 
-    /* ✅ A11y: toda la UI escalará porque usamos rem */
-    html{ font-size: var(--fs-base); }
-
+    *{ box-sizing: border-box; }
+    html, body{ height:100%; }
     body{
       margin:0;
-      font-size: 1rem;
-      font-family:
-        system-ui, -apple-system, Segoe UI, Roboto, Arial,
-        "Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji",
-        "Noto Emoji", sans-serif;
-      background: radial-gradient(62.5rem 37.5rem at 20% -10%, rgba(107,91,255,.35), transparent 60%),
-                  radial-gradient(50rem 37.5rem at 90% 0%, rgba(255,204,102,.15), transparent 55%),
-                  var(--bg);
-      color:var(--text);
-      min-height:100vh;
-      padding-bottom:6rem;
-    }
-    .wrap{ max-width:35rem; margin:0 auto; padding:1rem .875rem 0; }
-    header{ display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-top:.375rem; }
-    .brand{ display:flex; align-items:center; gap:.625rem; min-width:0; }
-    .logo{
-      width:2.75rem;height:2.75rem;border-radius:.9375rem; display:grid;place-items:center;
-      background: linear-gradient(135deg, rgba(107,91,255,.95), rgba(138,125,255,.70));
-      box-shadow: 0 .75rem 1.875rem rgba(107,91,255,.25);
-      border:1px solid rgba(255,255,255,.14);
-      flex:0 0 auto; font-weight:950; letter-spacing:.03125rem;
-      font-size: 1.125rem;
-    }
-    .brand h1{ margin:0; font-size:1.25rem; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .brand p{ margin:.125rem 0 0; font-size:.84375rem; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-
-    .iconbtn{
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,.06);
-      color:var(--text);
-      border-radius: .875rem;
-      padding: .6875rem .75rem;
-      cursor:pointer;
-      box-shadow: 0 .625rem 1.5rem rgba(0,0,0,.18);
-      transition: transform .08s ease, background .15s ease;
-      display:flex; align-items:center; gap:.5rem;
-      font-weight:900;
-      font-size: .875rem;
-      flex:0 0 auto;
-      white-space:nowrap;
-    }
-    .iconbtn:active{ transform: scale(.98); }
-    .iconbtn small{ color:var(--muted); font-weight:800; font-size: .78125rem; }
-
-    .hero{
-      margin-top: .75rem;
-      padding: .75rem; /* compacto */
-      border-radius: var(--r);
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      border:1px solid var(--stroke);
-      box-shadow: var(--shadow);
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      font-size: var(--fs);
     }
 
-    /* ✅ Barra superior del hero:
-       - Izq: TODAS las notificaciones / contadores (wrap)
-       - Der: texto grande
-       - Importante: que no se monten encima de textos -> align-start + wrap */
-    .heroBar{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:.625rem;
+    a{ color:inherit; }
+
+    .wrap{
+      width: min(var(--max), calc(100% - 24px));
+      margin: 0 auto;
+      padding: 14px 0 92px;
     }
-    .heroLeft{
+
+    /* Top bar */
+    .topbar{
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(242,243,245,.85);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(229,231,235,.7);
+    }
+    .topbarInner{
+      width: min(var(--max), calc(100% - 24px));
+      margin: 0 auto;
+      padding: 12px 0;
       display:flex;
       align-items:center;
-      gap:.5rem;
-      min-width:0;
-      flex:1;
-      flex-wrap:wrap;         /* ✅ permite varias pills sin pisarse */
-      row-gap:.5rem;
+      justify-content: space-between;
+      gap: 10px;
     }
-
-    .pill{
-      display:inline-flex; align-items:center; gap:.5rem;
-      padding: .5rem .625rem;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(107,91,255,.14);
-      color: var(--text);
-      font-size: .8125rem;
-      font-weight: 850;
-      white-space:nowrap;
-      max-width: 100%;
-    }
-
-    /* ✅ pill clicable */
-    .pill.btnPill{
-      cursor:pointer;
-      user-select:none;
-      transition: transform .08s ease, background .15s ease, border-color .15s ease;
-    }
-    .pill.btnPill:active{ transform: scale(.99); }
-
-    .pill .badge{
-      margin-left:.25rem;
-      min-width: 1.375rem;
-      padding: .125rem .5rem;
-      font-size: .78125rem;
-      background: rgba(0,0,0,.22);
-      border:1px solid rgba(255,255,255,.14);
-      border-radius:999px;
-      font-weight:950;
-      display:inline-grid;
-      place-items:center;
-    }
-
-    .pill.btnPill.muted{
-      background: rgba(255,255,255,.06);
-      color: var(--muted);
-      border-color: rgba(255,255,255,.12);
-    }
-    .pill.btnPill.warn{
-      background: rgba(255,204,102,.14);
-      border-color: rgba(255,204,102,.26);
-    }
-    .pill.btnPill.bad{
-      background: rgba(255,92,122,.14);
-      border-color: rgba(255,92,122,.30);
-    }
-    .pill.btnPill.good{
-      background: rgba(54,211,153,.14);
-      border-color: rgba(54,211,153,.28);
-    }
-
-    .hero h2{
-      margin: .75rem 0 .3125rem; /* ✅ algo más de aire para no tocar las pills */
-      font-size: 1.125rem;
-      line-height:1.25;
-    }
-    .hero p{
-      margin: 0;
-      color: var(--muted);
-      font-size: .9375rem;
-      line-height:1.4;
-    }
-
-    .banner{
-      margin-top: .75rem;
-      padding: .75rem;
-      border-radius: var(--r);
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.05);
-      box-shadow: 0 .75rem 1.875rem rgba(0,0,0,.18);
-      display:none;
-    }
-    .banner.show{ display:block; }
-    .banner .title{ font-weight:950; margin:0 0 .375rem; font-size: 1rem; }
-    .banner .txt{ margin:0; color:var(--muted); font-size:.90625rem; line-height:1.35; }
-    .banner .row{ display:flex; gap:.625rem; margin-top:.625rem; flex-wrap:wrap; }
-
-    .btn{
-      border-radius: .875rem;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      color: var(--text);
-      padding: .6875rem .75rem;
-      cursor:pointer;
-      font-weight: 950;
-      font-size: .9375rem;
-      transition: transform .08s ease, background .15s ease;
-      display:flex; align-items:center; justify-content:center; gap:.5rem;
-      flex:1;
-      min-width: 7.5rem;
-      white-space:nowrap;
-    }
-    .btn:active{ transform: scale(.99); }
-    .btn.primary{ background: linear-gradient(135deg, rgba(107,91,255,.95), rgba(138,125,255,.55)); border-color: rgba(255,255,255,.16); }
-    .btn.good{ background: linear-gradient(135deg, rgba(54,211,153,.95), rgba(54,211,153,.55)); border-color: rgba(255,255,255,.16); color:#06150f; }
-    .btn.danger{ background: rgba(255,92,122,.12); border-color: rgba(255,92,122,.35); }
-    .btn.ghost{ background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.12); }
-
-    .tabs{
-      margin-top: .875rem;
-      display:flex; gap:.625rem; padding: .375rem;
-      border-radius: 1rem;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,.05);
-      box-shadow: 0 .625rem 1.5625rem rgba(0,0,0,.15);
-    }
-    .tab{
-      flex:1;
-      border:1px solid transparent;
-      background: transparent;
-      color: var(--muted);
-      padding: .6875rem .75rem;
-      border-radius: .875rem;
-      cursor:pointer;
-      font-weight: 950;
-      font-size: .9375rem;
-      display:flex; align-items:center; justify-content:center; gap:.5rem;
+    .brand{
+      display:flex;
+      align-items:center;
+      gap: 10px;
       min-width: 0;
-      white-space:nowrap;
     }
-    .tab.active{
-      color: var(--text);
-      background: linear-gradient(135deg, rgba(107,91,255,.85), rgba(138,125,255,.55));
-      border-color: rgba(255,255,255,.16);
-      box-shadow: 0 .75rem 1.875rem rgba(107,91,255,.22);
-    }
-    .badge{
-      display:inline-grid; place-items:center;
-      min-width: 1.5rem;
-      padding: .125rem .5625rem;
-      border-radius: 999px;
-      font-size: .8125rem;
-      font-weight: 950;
-      background: rgba(0,0,0,.25);
-      border: 1px solid rgba(255,255,255,.14);
-      color: var(--text);
-    }
-
-    .subtabs{
-      margin-top: .75rem;
-      display:flex; gap:.625rem; padding: .375rem;
-      border-radius: 1rem;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,.05);
-    }
-    .subtab{
-      flex:1;
-      border:1px solid transparent;
-      background: transparent;
-      color: var(--muted);
-      padding: .625rem .75rem;
-      border-radius: .875rem;
-      cursor:pointer;
-      font-weight: 950;
-      font-size: .90625rem;
-      display:flex; align-items:center; justify-content:center; gap:.5rem;
-      min-width:0;
-      white-space:nowrap;
-    }
-    .subtab.active{
-      color: var(--text);
-      background: rgba(255,255,255,.06);
-      border-color: rgba(255,255,255,.10);
-    }
-
-    .list{ margin-top: .875rem; display:flex; flex-direction:column; gap: .75rem; }
-
-    /* ✅ NUEVO: tarjetas con tono MÁS distinto del fondo (y entre ellas) */
-    .card{
-      border-radius: var(--r);
-      background: linear-gradient(180deg, var(--cardA), var(--cardB));
-      border:1px solid var(--cardStroke);
-      padding: .8125rem;
-      box-shadow: 0 .875rem 2.25rem rgba(0,0,0,.34);
-      position:relative;
-      overflow:hidden;
-      backdrop-filter: blur(6px);
-    }
-    .card.alt{
-      background: linear-gradient(180deg, var(--cardAltA), var(--cardAltB));
-      border-color: rgba(255,255,255,.20);
-      box-shadow: 0 .875rem 2.25rem rgba(0,0,0,.38);
-    }
-    .card::before{
-      content:"";
-      position:absolute;
-      inset:0 0 auto 0;
-      height: 2px;
-      background: linear-gradient(90deg, rgba(107,91,255,.70), rgba(255,204,102,.25), rgba(54,211,153,.20));
-      opacity:.62;
-    }
-    .card::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.10), inset 0 0 0 1px rgba(255,255,255,.06);
-      border-radius: var(--r);
-      opacity:.9;
-    }
-
-    .cardTop{ display:flex; justify-content:space-between; gap:.625rem; align-items:flex-start; }
-    .who{ min-width:0; }
-    .who .name{
-      margin:0; font-size: 1rem; font-weight: 950; letter-spacing:.0125rem;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
-    .who .meta{
-      margin: .25rem 0 0; font-size: .8125rem; color: var(--muted);
-      display:flex; gap:.5rem; flex-wrap:wrap;
-    }
-    .chip{
-      display:inline-flex; align-items:center; gap:.375rem;
-      padding: .25rem .5625rem; border-radius: 999px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.05);
-      color: var(--muted);
-      font-weight: 850;
-      font-size: .78125rem;
-    }
-    .due{
-      font-size: .84375rem;
-      font-weight: 950;
-      padding: .4375rem .6875rem;
-      border-radius: 999px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,204,102,.12);
-      color: var(--text);
-      white-space:nowrap;
-    }
-    .due.bad{ background: rgba(255,92,122,.14); border-color: rgba(255,92,122,.30); }
-    .desc{
-      margin: .625rem 0 0;
-      font-size: .9375rem;
-      line-height:1.35;
-      color: var(--text);
-      opacity: .96;
-      word-break: break-word;
-    }
-    .actions{ margin-top: .75rem; display:flex; gap: .625rem; flex-wrap:wrap; }
-
-    .empty{
-      padding: 1.125rem .875rem;
-      border-radius: var(--r);
-      border: 1px dashed rgba(255,255,255,.18);
-      background: rgba(255,255,255,.03);
-      color: var(--muted);
-      text-align:center;
-      line-height:1.35;
-      display:none;
-      font-size: .9375rem;
-    }
-
-    .fab{
-      position: fixed;
-      right: 1rem;
-      bottom: 1.125rem;
-      width: 3.875rem;
-      height: 3.875rem;
-      border-radius: 1.25rem;
-      border: 1px solid rgba(255,255,255,.16);
-      background: linear-gradient(135deg, rgba(107,91,255,.95), rgba(138,125,255,.55));
-      box-shadow: 0 1.125rem 2.8125rem rgba(107,91,255,.25), 0 .875rem 2.5rem rgba(0,0,0,.35);
-      color: white;
-      font-size: 1.875rem;
-      font-weight: 950;
-      cursor:pointer;
+    .logo{
+      width: 42px; height: 42px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #fff, #f3f4f6);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow2);
       display:grid;
       place-items:center;
-      user-select:none;
-      z-index: 50;
+      flex: 0 0 auto;
     }
-    .fab:active{ transform: scale(.98); }
+    .logo span{ font-size: 20px; }
+    .titleBox{ min-width:0; }
+    .title{
+      margin:0;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: .2px;
+      line-height: 1.1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .subtitle{
+      margin: 3px 0 0;
+      font-size: 12.5px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
+    .topActions{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex: 0 0 auto;
+    }
+
+    /* “Píldoras” arriba (notifs / recibidos / vencidos) */
+    .pills{
+      display:flex;
+      gap: 8px;
+      align-items:center;
+      justify-content:flex-end;
+      flex-wrap: wrap;
+    }
+    .pillBtn{
+      height: 34px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow2);
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text);
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .pillBtn:active{ transform: translateY(1px); }
+    .pillDot{
+      width: 10px; height: 10px;
+      border-radius: 999px;
+      background: var(--muted);
+      opacity: .35;
+    }
+    .pillCount{
+      min-width: 22px;
+      height: 22px;
+      padding: 0 7px;
+      border-radius: 999px;
+      display:grid;
+      place-items:center;
+      font-weight: 800;
+      font-size: 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .pillBtn.primary .pillDot{ background: var(--primary); opacity: .9; }
+    .pillBtn.primary .pillCount{ background: var(--primarySoft); border-color: rgba(37,99,235,.18); }
+
+    .pillBtn.danger .pillDot{ background: var(--danger); opacity: .9; }
+    .pillBtn.danger .pillCount{ background: var(--dangerSoft); border-color: rgba(220,38,38,.18); }
+
+    .pillBtn.good .pillDot{ background: var(--good); opacity: .9; }
+    .pillBtn.good .pillCount{ background: var(--goodSoft); border-color: rgba(22,163,74,.18); }
+
+    /* Menú visual tipo “cuadrículas” */
+    .menuGrid{
+      margin-top: 14px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .tile{
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow2);
+      padding: 14px 14px;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      display:flex;
+      align-items:center;
+      gap: 12px;
+      min-height: 72px;
+    }
+    .tile:active{ transform: translateY(1px); }
+    .tileIcon{
+      width: 44px; height: 44px;
+      border-radius: 16px;
+      display:grid;
+      place-items:center;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--icon);
+      flex: 0 0 auto;
+    }
+    .tileIcon span{ font-size: 20px; }
+    .tileText{ min-width:0; flex: 1 1 auto; }
+    .tileTitle{
+      margin:0;
+      font-weight: 900;
+      letter-spacing: .2px;
+      font-size: 16px;
+      line-height: 1.1;
+    }
+    .tileMeta{
+      margin: 5px 0 0;
+      font-size: 12.5px;
+      color: var(--muted);
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width: 28px;
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      font-weight: 900;
+      font-size: 12px;
+      color: var(--text);
+    }
+    .badge.primary{ background: var(--primarySoft); border-color: rgba(37,99,235,.20); color: #1E40AF; }
+    .badge.danger{ background: var(--dangerSoft); border-color: rgba(220,38,38,.20); color: #991B1B; }
+    .badge.good{ background: var(--goodSoft); border-color: rgba(22,163,74,.20); color: #14532D; }
+
+    /* Secciones */
+    .section{
+      margin-top: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow2);
+      overflow: hidden;
+    }
+    .sectionHead{
+      padding: 14px 14px 12px;
+      display:flex;
+      align-items:flex-end;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(229,231,235,.8);
+      background: linear-gradient(180deg, #fff, #fbfbfc);
+    }
+    .sectionHead h2{
+      margin:0;
+      font-size: 16px;
+      font-weight: 950;
+      letter-spacing: .2px;
+    }
+    .sectionHead p{
+      margin: 4px 0 0;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+    .segTabs{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .segBtn{
+      height: 34px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      cursor:pointer;
+      font-weight: 800;
+      font-size: 13px;
+      color: var(--text);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .segBtn.active{
+      background: var(--primarySoft);
+      border-color: rgba(37,99,235,.22);
+      color: #1E40AF;
+    }
+
+    /* Tarjetas (compromisos / contactos) */
+    .list{
+      padding: 12px;
+      display:flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .card{
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow2);
+      padding: 12px 12px;
+    }
+    .cardTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .who .name{
+      margin:0;
+      font-weight: 950;
+      letter-spacing: .2px;
+      font-size: 15.5px;
+    }
+    .who .meta{
+      margin: 6px 0 0;
+      display:flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: var(--chip);
+      color: var(--chipText);
+      border: 1px solid rgba(99,102,241,.18);
+    }
+
+    .due{
+      flex: 0 0 auto;
+      font-size: 12.5px;
+      color: var(--muted);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .due.bad{
+      color: #991B1B;
+      background: var(--dangerSoft);
+      border-color: rgba(220,38,38,.20);
+    }
+
+    .desc{
+      margin-top: 10px;
+      color: var(--text);
+      line-height: 1.35;
+      font-size: 14.5px;
+      padding: 10px 10px;
+      border-radius: 14px;
+      background: #FAFAFB;
+      border: 1px solid rgba(229,231,235,.9);
+    }
+
+    .actions{
+      margin-top: 10px;
+      display:flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* Botones */
+    .btn{
+      height: 40px;
+      padding: 0 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-weight: 900;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap: 8px;
+    }
+    .btn:active{ transform: translateY(1px); }
+
+    .btn.primary{
+      background: var(--primarySoft);
+      border-color: rgba(37,99,235,.22);
+      color: #1E40AF;
+    }
+    .btn.good{
+      background: var(--goodSoft);
+      border-color: rgba(22,163,74,.22);
+      color: #14532D;
+    }
+    .btn.danger{
+      background: var(--dangerSoft);
+      border-color: rgba(220,38,38,.22);
+      color: #991B1B;
+    }
+
+    /* Vacío */
+    .empty{
+      padding: 14px 12px 18px;
+      color: var(--muted);
+      text-align:center;
+      font-size: 13.5px;
+    }
+
+    /* Bottom bar (más limpio) */
+    .bottomBar{
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      background: rgba(255,255,255,.88);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(229,231,235,.9);
+      padding: 10px 12px;
+      z-index: 20;
+    }
+    .bottomInner{
+      width: min(var(--max), calc(100% - 24px));
+      margin: 0 auto;
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      justify-content: space-between;
+    }
+    .navBtn{
+      flex: 1 1 0;
+      height: 44px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      box-shadow: var(--shadow2);
+      cursor:pointer;
+      font-weight: 950;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 8px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .navBtn.active{
+      background: var(--primarySoft);
+      border-color: rgba(37,99,235,.22);
+      color: #1E40AF;
+    }
+
+    /* FAB */
+    .fab{
+      position: fixed;
+      right: 16px;
+      bottom: 82px;
+      width: 56px;
+      height: 56px;
+      border-radius: 20px;
+      border: 1px solid rgba(37,99,235,.18);
+      background: #2563EB;
+      color: #fff;
+      font-size: 26px;
+      font-weight: 900;
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      box-shadow: 0 18px 40px rgba(37,99,235,.22);
+      z-index: 25;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .fab:active{ transform: translateY(1px); }
+
+    /* Modales (misma lógica, nuevo look) */
     .backdrop{
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,.55);
+      background: rgba(17,24,39,.45);
       display:none;
-      align-items:flex-end;
+      align-items:center;
       justify-content:center;
-      padding: .875rem;
-      z-index: 999;
+      padding: 16px;
+      z-index: 50;
     }
     .backdrop.show{ display:flex; }
 
-    .sheet{
-      width: min(35rem, 100%);
-      border-radius: 1.375rem;
-      background: linear-gradient(180deg, rgba(23,26,51,.98), rgba(18,20,39,.98));
-      border:1px solid rgba(255,255,255,.14);
-      box-shadow: 0 1.375rem 3.75rem rgba(0,0,0,.55);
+    .modal{
+      width: min(560px, 100%);
+      border-radius: 22px;
+      background: var(--surface);
+      border: 1px solid rgba(229,231,235,.9);
+      box-shadow: 0 24px 70px rgba(17,24,39,.20);
       overflow:hidden;
     }
-    .sheetHead{
-      padding: .75rem .875rem;
-      display:flex; align-items:center; justify-content:space-between; gap:.75rem;
-      border-bottom: 1px solid rgba(255,255,255,.10);
+    .modalHead{
+      padding: 14px 14px 12px;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(229,231,235,.9);
+      background: linear-gradient(180deg, #fff, #fbfbfc);
     }
-    .sheetHead h3{ margin:0; font-size: 1.0625rem; font-weight: 950; letter-spacing:.0125rem; }
-    .close{
-      border:1px solid rgba(255,255,255,.16);
-      background: rgba(255,255,255,.06);
-      color: var(--text);
-      border-radius: .875rem;
-      padding: .5625rem .6875rem;
-      cursor:pointer;
+    .modalHead h3{
+      margin:0;
+      font-size: 16px;
       font-weight: 950;
-      font-size: .875rem;
     }
-    .sheetBody{ padding: .875rem; display:flex; flex-direction:column; gap: .625rem; }
-    .field label{
+    .iconBtn{
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      cursor:pointer;
+      font-weight: 900;
+    }
+    .modalBody{ padding: 12px 14px 14px; }
+    .field{ margin-top: 10px; }
+    .label{
       display:block;
-      font-size: .84375rem;
-      font-weight: 950;
+      font-size: 12.5px;
       color: var(--muted);
-      margin-bottom: .375rem;
+      margin: 0 0 6px;
+      font-weight: 800;
     }
-    .field input, .field textarea, .field select{
+    input, select, textarea{
       width: 100%;
-      padding: .8125rem .75rem;
-      border-radius: .875rem;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      color: var(--text);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: #fff;
+      padding: 12px 12px;
+      font-size: 15px;
       outline: none;
-      font-size: 1rem;
     }
-    .field textarea{ min-height: 5.75rem; resize: vertical; }
-
-    .hint{
-      font-size: .84375rem;
-      color: var(--muted);
-      margin-top: .375rem;
-      line-height:1.35;
+    textarea{ min-height: 92px; resize: vertical; }
+    input:focus, select:focus, textarea:focus{
+      border-color: rgba(37,99,235,.35);
+      box-shadow: 0 0 0 4px rgba(37,99,235,.10);
     }
 
-    .sheetFoot{ padding: .75rem .875rem .875rem; display:flex; gap: .625rem; flex-wrap:wrap; }
-
-    .toast{
-      position: fixed;
-      left: 50%;
-      transform: translateX(-50%);
-      bottom: 5.625rem;
-      background: rgba(0,0,0,.65);
-      border: 1px solid rgba(255,255,255,.18);
-      color: var(--text);
-      padding: .625rem .75rem;
-      border-radius: .875rem;
-      box-shadow: 0 1.125rem 2.5rem rgba(0,0,0,.45);
-      font-weight: 850;
-      font-size: .875rem;
-      display:none;
-      z-index: 1000;
-      max-width: calc(100% - 1.75rem);
-      text-align:center;
-    }
-    .toast.show{ display:block; }
-
-    .mono{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size:.8125rem;
-      color:var(--muted);
-      word-break: break-all;
-      background: rgba(255,255,255,.04);
-      border:1px solid rgba(255,255,255,.10);
-      padding:.625rem;
-      border-radius:.875rem;
-      margin-top:.625rem;
-      display:none;
-    }
-    .mono.show{ display:block; }
-
-    .kicker{
-      font-size: .8125rem;
-      color: var(--muted);
-      margin: .625rem 0 0;
-      display:none; /* ✅ ya no queremos notificaciones abajo */
-    }
-
-    .rowline{
+    .modalFoot{
+      padding: 12px 14px 14px;
       display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:.75rem;
-      padding: .75rem;
-      border-radius: 1rem;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,.05);
-      box-shadow: 0 .625rem 1.5625rem rgba(0,0,0,.12);
+      flex-wrap: wrap;
+      gap: 10px;
+      border-top: 1px solid rgba(229,231,235,.9);
+      justify-content:flex-end;
+      background: #fff;
     }
-    .rowline .ttl{ font-weight: 950; }
-    .rowline .sub{ font-size: .84375rem; color: var(--muted); margin-top: .1875rem; line-height:1.25; }
-    .stack{ display:flex; flex-direction:column; min-width:0; }
-    .right{ display:flex; gap:.625rem; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+    .dangerTxt{ color: #991B1B; font-weight: 800; }
 
-    .switch{
-      width: 3.25rem;
-      height: 2rem;
-      border-radius: 999px;
-      border:1px solid rgba(255,255,255,.18);
-      background: rgba(255,255,255,.08);
-      position: relative;
-      cursor:pointer;
-      flex:0 0 auto;
-    }
-    .switch::after{
-      content:"";
-      position:absolute;
-      width: 1.625rem;
-      height: 1.625rem;
-      border-radius: 50%;
-      top: .125rem;
-      left: .125rem;
-      background: rgba(255,255,255,.90);
-      box-shadow: 0 .625rem 1.25rem rgba(0,0,0,.35);
-      transition: transform .18s ease, background .18s ease;
-    }
-    .switch.on{
-      background: rgba(107,91,255,.35);
-      border-color: rgba(255,255,255,.22);
-    }
-    .switch.on::after{ transform: translateX(1.25rem); background: rgba(255,255,255,.96); }
-
-    .lockOverlay{
+    /* Banner instalación */
+    .installBanner{
       position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.62);
+      left: 12px; right: 12px;
+      bottom: 156px;
+      z-index: 30;
       display:none;
-      align-items:center;
-      justify-content:center;
-      padding: 1rem;
-      z-index: 2000;
     }
-    .lockOverlay.show{ display:flex; }
-    .lockCard{
-      width: min(26.25rem, 100%);
-      border-radius: 1.375rem;
-      background: linear-gradient(180deg, rgba(23,26,51,.98), rgba(18,20,39,.98));
-      border:1px solid rgba(255,255,255,.14);
-      box-shadow: 0 1.375rem 3.75rem rgba(0,0,0,.55);
-      overflow:hidden;
+    .installBanner.show{ display:block; }
+    .installCard{
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 12px 12px;
     }
-    .lockHead{
-      padding: .875rem .875rem .625rem;
-      border-bottom: 1px solid rgba(255,255,255,.10);
-    }
-    .lockHead h3{ margin:0; font-size: 1.125rem; font-weight: 950; }
-    .lockHead p{ margin:.375rem 0 0; color: var(--muted); font-size: .875rem; line-height:1.25; }
-    .lockBody{ padding: .875rem; display:flex; flex-direction:column; gap: .75rem; }
-    .pinDots{ display:flex; justify-content:center; gap:.625rem; margin-top: .125rem; }
-    .dot{
-      width: .875rem; height: .875rem;
-      border-radius: 999px;
-      border: 2px solid rgba(255,255,255,.22);
-      background: rgba(255,255,255,.06);
-    }
-    .dot.on{
-      background: rgba(107,91,255,.85);
-      border-color: rgba(255,255,255,.30);
-      box-shadow: 0 .625rem 1.5625rem rgba(107,91,255,.22);
-    }
-    .keypad{
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: .625rem;
-      margin-top: .375rem;
-    }
-    .key{
-      border-radius: 1rem;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      color: var(--text);
-      padding: .875rem .75rem;
-      font-size: 1.125rem;
-      font-weight: 950;
-      cursor:pointer;
-      transition: transform .08s ease, background .15s ease;
-      text-align:center;
-    }
-    .key:active{ transform: scale(.99); }
-    .key.primary{ background: linear-gradient(135deg, rgba(107,91,255,.95), rgba(138,125,255,.55)); border-color: rgba(255,255,255,.18); }
-    .key.danger{ background: rgba(255,92,122,.12); border-color: rgba(255,92,122,.35); }
-    .lockFoot{ padding: .75rem .875rem .875rem; display:flex; gap:.625rem; flex-wrap:wrap; }
-
-    .seg{
+    .installRow{
       display:flex;
-      gap:.625rem;
-      padding: .375rem;
-      border-radius: 1rem;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.04);
+      gap: 10px;
+      align-items:flex-start;
+      justify-content: space-between;
     }
-    .seg button{
-      flex:1;
-      border-radius: .875rem;
-      border:1px solid transparent;
-      background: transparent;
-      color: var(--muted);
-      padding: .625rem .75rem;
-      cursor:pointer;
+    .installTitle{
+      margin: 0;
       font-weight: 950;
-      font-size: .90625rem;
-      white-space:nowrap;
+      font-size: 14.5px;
     }
-    .seg button.active{
-      color: var(--text);
-      background: rgba(255,255,255,.06);
-      border-color: rgba(255,255,255,.12);
-    }
-
-    .twoCol{ display:flex; gap:.625rem; flex-wrap:wrap; }
-    .twoCol > *{ flex:1; min-width: 10rem; }
-
-    /* Modal confirm propio */
-    .confirmMsg{ font-size:.9375rem; color:var(--text); opacity:.95; line-height:1.35; }
-    .dangerTxt{ color: rgba(255,92,122,.95); font-weight: 950; }
-
-    /* Botón texto grande */
-    .iconbtn.tgl.on{
-      background: rgba(107,91,255,.20);
-      border-color: rgba(255,255,255,.18);
-    }
-
-    /* ✅ Manual plegable */
-    .helpWrap{ margin-top:.625rem; }
-    .helpMiniBtn{
-      width:100%;
-      justify-content:space-between;
-    }
-    .helpBox{
-      margin-top:.625rem;
-      padding:.75rem;
-      border-radius: 1rem;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.04);
-    }
-    .helpBox h3{
-      margin:0 0 .375rem;
-      font-size: .9375rem;
-      font-weight: 950;
-    }
-    .helpBox ul{
-      margin:.375rem 0 0 1.1rem;
-      padding:0;
+    .installText{
+      margin: 6px 0 0;
       color: var(--muted);
-      font-size: .90625rem;
-      line-height:1.35;
+      font-size: 13px;
+      line-height: 1.3;
     }
-    .helpBox li{ margin:.25rem 0; }
 
-    /* ✅ Contacto: ahora vuelve a poder abrir “nuevo compromiso” al tocar tarjeta */
-    .contactCard{
-      cursor:pointer;
-      user-select:none;
+    /* Responsive */
+    @media (min-width: 720px){
+      .menuGrid{ grid-template-columns: 1fr 1fr 1fr 1fr; }
+      .tile{ min-height: 78px; }
+      .fab{ right: 22px; }
     }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
-    <header>
-      <div class="brand">
-        <div class="logo">C</div>
-        <div style="min-width:0">
-          <h1>Compromisos</h1>
-          <p>Paquetes entre móviles · sin base de datos</p>
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbarInner">
+      <div class="brand" role="banner" aria-label="Compromisos">
+        <div class="logo" aria-hidden="true"><span>🗓️</span></div>
+        <div class="titleBox">
+          <p class="title">Compromisos</p>
+          <p class="subtitle" id="statsKicker">Todo en tarjetas, más visual.</p>
         </div>
       </div>
 
-      <!-- ✅ En header dejamos solo instalar -->
-      <div style="display:flex; gap:.625rem; align-items:center; flex:0 0 auto;">
-        <button class="iconbtn" id="btnInstall" style="display:none">⬇️ <small>Instalar</small></button>
-      </div>
-    </header>
+      <div class="topActions">
+        <div class="pills" aria-label="Indicadores">
+          <!-- estos IDs los usa tu JS -->
+          <button class="pillBtn primary" id="btnNotifPend" type="button" title="Notificaciones pendientes">
+            <span class="pillDot" aria-hidden="true"></span>
+            <span>Pendientes</span>
+            <span class="pillCount" id="bPending">0</span>
+          </button>
 
-    <section class="hero">
-      <!-- ✅ ARRIBA: TODAS las notificaciones/contadores (clicables) + texto grande a la derecha -->
-      <div class="heroBar">
-        <div class="heroLeft">
+          <button class="pillBtn danger" id="btnOverdue" type="button" title="Vencidos">
+            <span class="pillDot" aria-hidden="true"></span>
+            <span>Vencidos</span>
+            <span class="pillCount" id="bOverdue">0</span>
+          </button>
 
-          <!-- 🔔 Notificaciones pendientes (recordatorios / avisos disparados) -->
-          <div class="pill btnPill muted" id="btnNotifPend" title="Notificaciones pendientes (toca para limpiar)">
-            🔔 Notifs <span class="badge" id="bNotifPend">0</span>
-          </div>
-
-          <!-- 📝 Compromisos pendientes (sin hacer) -->
-          <div class="pill btnPill muted" id="btnPendCommit" title="Ver compromisos pendientes">
-            📝 Pend. <span class="badge" id="bPendCommit">0</span>
-          </div>
-
-          <!-- ⏰ Vencidos -->
-          <div class="pill btnPill muted" id="btnOverdue" title="Ver compromisos vencidos">
-            ⏰ Venc. <span class="badge" id="bOverdue">0</span>
-          </div>
-
-          <!-- 📥 Recibidos (paquetes importados desde enlace) -->
-          <div class="pill btnPill muted" id="btnReceived" title="Ver/limpiar recibidos">
-            📥 Recib. <span class="badge" id="bReceived">0</span>
-          </div>
-
+          <button class="pillBtn good" id="btnReceived" type="button" title="Recibidos">
+            <span class="pillDot" aria-hidden="true"></span>
+            <span>Recibidos</span>
+            <span class="pillCount" id="bReceived">0</span>
+          </button>
         </div>
-
-        <button class="iconbtn tgl" id="btnA11y" title="Texto grande">👓 <small id="a11yLabel">Texto</small></button>
-      </div>
-
-      <h2>Comparte cambios como un enlace (sin cuentas).</h2>
-      <p>Ahora puedes enviar un compromiso con un <b>aviso “desde ahora”</b> (5 min / 1 hora…) que se programa al importar.</p>
-
-      <!-- ✅ Manual plegable (limpia pantalla) -->
-      <div class="helpWrap">
-        <button class="iconbtn helpMiniBtn" id="btnHelpToggle" title="Guía rápida">
-          📘 <span id="helpToggleLabel" style="font-weight:950">Ver guía rápida</span>
-          <small id="helpToggleHint">Toques</small>
-        </button>
-        <div class="helpBox" id="helpBox" style="display:none">
-          <h3>Guía rápida</h3>
-          <ul>
-            <li><b>+</b> crea un compromiso (o un contacto si estás en “Amigos”).</li>
-            <li><b>📦 Compartir</b> envía el paquete por WhatsApp/Telegram.</li>
-            <li>El receptor abre el enlace y se <b>importa</b> en su móvil.</li>
-            <li><b>⏳ Desde ahora</b> crea un aviso relativo (5 min / 1 h…).</li>
-            <li><b>📅 Calendario</b> es la opción más fiable para recordatorios.</li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- ✅ ya no queremos avisos abajo -->
-      <div class="kicker" id="statsKicker"></div>
-    </section>
-
-    <section class="banner" id="installBanner">
-      <p class="title" id="installTitle">Instálala para usarla como app</p>
-      <p class="txt" id="installText">
-        Si la abres dentro de WhatsApp/Telegram, toca <b>Abrir en Chrome</b> para poder instalar e importar bien.
-      </p>
-      <div class="row">
-        <button class="btn primary" id="btnInstallBanner" style="display:none">⬇️ Instalar</button>
-        <button class="btn primary" id="btnOpenChrome" style="display:none">🌐 Abrir en Chrome</button>
-        <button class="btn" id="btnCopyLink" style="display:none">📋 Copiar enlace</button>
-        <button class="btn" id="btnHideBanner">Ocultar</button>
-      </div>
-    </section>
-
-    <nav class="tabs" aria-label="Vistas">
-      <button class="tab active" id="tabCommitments">📝 Compromisos</button>
-      <button class="tab" id="tabContacts">👥 Amigos <span class="badge" id="bContacts">0</span></button>
-      <button class="tab" id="tabSettings">⚙️ Ajustes</button>
-    </nav>
-
-    <div id="commitmentsPane">
-      <nav class="subtabs" aria-label="Pestañas">
-        <button class="subtab active" id="tabPending">Pendientes <span class="badge" id="bPending">0</span></button>
-        <button class="subtab" id="tabDone">Hechos <span class="badge" id="bDone">0</span></button>
-      </nav>
-
-      <div class="list" id="list"></div>
-      <div class="empty" id="empty">No tienes compromisos aquí. Pulsa <b>+</b> para crear uno nuevo.</div>
-    </div>
-
-    <div id="contactsPane" style="display:none">
-      <div class="list" id="contactsList"></div>
-      <div class="empty" id="contactsEmpty">No tienes contactos aún. Pulsa <b>+</b> para crear el primero.</div>
-    </div>
-
-    <div id="settingsPane" style="display:none">
-      <div class="list">
-
-        <div class="rowline">
-          <div class="stack" style="min-width:0">
-            <div class="ttl">🔔 Notificaciones</div>
-            <div class="sub">Recordatorios locales (fiables con la app abierta; en segundo plano depende del móvil). Usa Calendario si quieres 100%.</div>
-          </div>
-          <div class="right">
-            <div class="switch" id="swNotif" role="switch" aria-checked="false" tabindex="0"></div>
-            <button class="btn" id="btnNotifPerm" style="flex:0 0 auto; min-width: 10rem;">Permitir</button>
-          </div>
-        </div>
-
-        <div class="rowline">
-          <div class="stack" style="min-width:0">
-            <div class="ttl">🔒 Bloqueo por PIN</div>
-            <div class="sub">Protege la app con un PIN de 4 dígitos. Puedes activarlo o desactivarlo cuando quieras.</div>
-          </div>
-          <div class="right">
-            <div class="switch" id="swPin" role="switch" aria-checked="false" tabindex="0"></div>
-          </div>
-        </div>
-
-        <div class="rowline">
-          <div class="stack" style="min-width:0">
-            <div class="ttl">⏱️ Auto-bloqueo</div>
-            <div class="sub">Cuando sales de la app, se bloquea pasado este tiempo.</div>
-          </div>
-          <div class="right">
-            <select id="selAutoLock" style="min-width:10rem">
-              <option value="0">Inmediato</option>
-              <option value="1">1 minuto</option>
-              <option value="5">5 minutos</option>
-              <option value="15">15 minutos</option>
-              <option value="60">60 minutos</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="rowline">
-          <div class="stack" style="min-width:0">
-            <div class="ttl">🕒 Recordar desbloqueo</div>
-            <div class="sub">Durante este tiempo no pedirá PIN (si el PIN está activado).</div>
-          </div>
-          <div class="right">
-            <select id="selRemember" style="min-width:10rem">
-              <option value="0">No recordar</option>
-              <option value="10">10 minutos</option>
-              <option value="30">30 minutos</option>
-              <option value="60">60 minutos</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="rowline">
-          <div class="stack" style="min-width:0">
-            <div class="ttl">🔁 Cambiar PIN</div>
-            <div class="sub">Requiere el PIN actual (si está activado).</div>
-          </div>
-          <div class="right">
-            <button class="btn" id="btnChangePin">Cambiar</button>
-          </div>
-        </div>
-
-        <div class="rowline">
-          <div class="stack" style="min-width:0">
-            <div class="ttl">🔒 Bloquear ahora</div>
-            <div class="sub">Te pide el PIN en la próxima apertura (o ahora mismo si el PIN está activado).</div>
-          </div>
-          <div class="right">
-            <button class="btn danger" id="btnLockNow">Bloquear</button>
-          </div>
-        </div>
-
-        <div class="rowline">
-          <div class="stack" style="min-width:0">
-            <div class="ttl">🧹 Restablecer app</div>
-            <div class="sub">Borra compromisos, contactos y ajustes del móvil (irreversible).</div>
-          </div>
-          <div class="right">
-            <button class="btn danger" id="btnResetAll">Borrar todo</button>
-          </div>
-        </div>
-
-        <div class="hint" style="margin-top:.375rem" id="notifHint"></div>
-
       </div>
     </div>
   </div>
 
-  <!-- ✅ FIN PARTE 1/3 -->
+  <div class="wrap">
+    <!-- Menú visual (tipo tu foto) -->
+    <div class="menuGrid" aria-label="Menú">
+      <div class="tile" id="tilePending" role="button" tabindex="0">
+        <div class="tileIcon"><span>📝</span></div>
+        <div class="tileText">
+          <p class="tileTitle">Pendientes</p>
+          <p class="tileMeta">
+            <span class="badge primary" id="tilePendingCount">0</span>
+            <span>compromisos</span>
+          </p>
+        </div>
+      </div>
 
-<!-- ✅ PARTE 2/3 -->
+      <div class="tile" id="tileDone" role="button" tabindex="0">
+        <div class="tileIcon"><span>✅</span></div>
+        <div class="tileText">
+          <p class="tileTitle">Hechos</p>
+          <p class="tileMeta">
+            <span class="badge good" id="tileDoneCount">0</span>
+            <span>completados</span>
+          </p>
+        </div>
+      </div>
 
-<button class="fab" id="fab" aria-label="Nuevo">+</button>
+      <div class="tile" id="tileContacts" role="button" tabindex="0">
+        <div class="tileIcon"><span>👥</span></div>
+        <div class="tileText">
+          <p class="tileTitle">Amigos</p>
+          <p class="tileMeta">
+            <span class="badge" id="tileContactsCount">0</span>
+            <span>guardados</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="tile" id="tileSettings" role="button" tabindex="0">
+        <div class="tileIcon"><span>⚙️</span></div>
+        <div class="tileText">
+          <p class="tileTitle">Ajustes</p>
+          <p class="tileMeta">
+            <span class="badge">🔒</span>
+            <span>privacidad</span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANE: COMPROMISOS -->
+    <div id="commitmentsPane" class="section" style="margin-top:14px;">
+      <div class="sectionHead">
+        <div>
+          <h2>Compromisos</h2>
+          <p>Todo ordenado y fácil de ver.</p>
+        </div>
+        <div class="segTabs" role="tablist" aria-label="Pendientes o Hechos">
+          <button class="segBtn active" id="tabPending" type="button">Pendientes</button>
+          <button class="segBtn" id="tabDone" type="button">Hechos</button>
+        </div>
+      </div>
+
+      <div class="list" id="list"></div>
+      <div class="empty" id="empty">No hay compromisos aquí todavía.</div>
+    </div>
+
+    <!-- PANE: CONTACTOS -->
+    <div id="contactsPane" class="section" style="display:none;">
+      <div class="sectionHead">
+        <div>
+          <h2>Amigos</h2>
+          <p>Toca una tarjeta para crear un compromiso con ese amigo.</p>
+        </div>
+        <div class="segTabs">
+          <span class="badge" id="bContacts">0</span>
+        </div>
+      </div>
+
+      <div class="list" id="contactsList"></div>
+      <div class="empty" id="contactsEmpty">Aún no has creado amigos.</div>
+    </div>
+
+    <!-- PANE: SETTINGS (sigue en PARTE 2) -->
+    <div id="settingsPane" class="section" style="display:none;">
+      <div class="sectionHead">
+        <div>
+          <h2>Ajustes</h2>
+          <p>Bloqueo, notificaciones y accesibilidad.</p>
+        </div>
+      </div>
+
+      <!-- ✅ CONTINÚA EN PARTE 2 -->
+      <div class="list" style="gap:12px;">
+        <div class="card">
+          <div class="cardTop">
+            <div class="who">
+              <p class="name">Accesibilidad</p>
+              <p class="meta"><span class="chip">👁️ Texto grande</span></p>
+            </div>
+            <div class="due">Ajuste rápido</div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" id="btnA11y" type="button">🔎 Texto grande</button>
+          </div>
+        </div>
+
+        <!-- (el resto de Ajustes + modales + JS va en PARTE 2 y PARTE 3) -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom nav (IDs existentes) -->
+  <div class="bottomBar">
+    <div class="bottomInner">
+      <button class="navBtn active" id="tabCommitments" type="button">🗓️ Compromisos</button>
+      <button class="navBtn" id="tabContacts" type="button">👥 Amigos</button>
+      <button class="navBtn" id="tabSettings" type="button">⚙️ Ajustes</button>
+      <button class="navBtn" id="btnInstall" type="button" style="display:none;">⬇️ Instalar</button>
+    </div>
+  </div>
+
+  <button class="fab" id="fab" type="button" aria-label="Nuevo compromiso">＋</button>
+
+  <!-- Banner instalación (estructura; lógica en JS) -->
+  <div class="installBanner" id="installBanner" aria-hidden="true">
+    <div class="installCard">
+      <div class="installRow">
+        <div>
+          <p class="installTitle" id="installTitle">Instálala</p>
+          <p class="installText" id="installText">Consejo</p>
+        </div>
+        <button class="iconBtn" id="btnHideBanner" type="button" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="actions" style="margin-top:10px;">
+        <button class="btn primary" id="btnInstallBanner" type="button" style="display:none;">⬇️ Instalar</button>
+        <button class="btn" id="btnOpenChrome" type="button" style="display:none;">🌐 Abrir en Chrome</button>
+        <button class="btn" id="btnCopyLink" type="button" style="display:none;">🔗 Copiar enlace</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ MODALES + JS COMPLETO EN PARTE 2 y PARTE 3 -->
+
+<!-- ✅ PARTE 2/3 — MODALES + BASE JS (helpers/estado) -->
+
+  <style>
+    /* Extras de UI para el nuevo look (teclado PIN, toast, etc.) */
+    .toast{
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 88px;
+      background: rgba(17,24,39,.92);
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 13.5px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.25);
+      display:none;
+      z-index: 60;
+      max-width: min(560px, calc(100% - 24px));
+      width: fit-content;
+      text-align:center;
+    }
+    .toast.show{ display:block; }
+
+    .twoCol{ display:flex; gap: 10px; flex-wrap: wrap; }
+    .twoCol > *{ flex:1; min-width: 170px; }
+
+    .hint{
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.35;
+    }
+
+    .keypad{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .key{
+      height: 52px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      font-weight: 950;
+      font-size: 18px;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .key:active{ transform: translateY(1px); }
+    .key.primary{ background: var(--primarySoft); border-color: rgba(37,99,235,.22); color:#1E40AF; }
+    .key.danger{ background: var(--dangerSoft); border-color: rgba(220,38,38,.22); color:#991B1B; }
+
+    .pinDots{ display:flex; justify-content:center; gap: 10px; margin-top: 8px; }
+    .dot{
+      width: 12px; height: 12px;
+      border-radius: 999px;
+      border: 2px solid rgba(17,24,39,.22);
+      background: rgba(17,24,39,.08);
+    }
+    .dot.on{
+      background: rgba(37,99,235,.9);
+      border-color: rgba(37,99,235,.25);
+      box-shadow: 0 10px 26px rgba(37,99,235,.18);
+    }
+
+    .mono{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12.5px;
+      color: #111827;
+      background: #FAFAFB;
+      border: 1px solid rgba(229,231,235,.95);
+      padding: 10px 10px;
+      border-radius: 16px;
+      word-break: break-all;
+      white-space: pre-wrap;
+    }
+    .seg{
+      display:flex;
+      gap: 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      padding: 6px;
+    }
+    .seg button{
+      flex:1;
+      height: 34px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      background: transparent;
+      font-weight: 900;
+      cursor:pointer;
+    }
+    .seg button.active{
+      background: var(--surface);
+      border-color: rgba(229,231,235,.95);
+      box-shadow: var(--shadow2);
+      color: #111827;
+    }
+  </style>
 
   <!-- Modal Compromiso -->
   <div class="backdrop" id="backdrop" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="sheet">
-      <div class="sheetHead">
+    <div class="modal">
+      <div class="modalHead">
         <h3 id="modalTitle">Nuevo compromiso</h3>
-        <button class="close" id="btnClose">✕</button>
+        <button class="iconBtn" id="btnClose" type="button" aria-label="Cerrar">✕</button>
       </div>
 
-      <div class="sheetBody">
+      <div class="modalBody">
         <div class="field">
-          <label for="fContact">¿Con quién?</label>
+          <label class="label" for="fContact">¿Con quién?</label>
           <select id="fContact"></select>
-          <div class="hint" id="contactHint">Puedes elegir un contacto o escribir uno nuevo.</div>
+          <div class="hint" id="contactHint">Elige un amigo o escribe un nombre sin guardar.</div>
         </div>
 
         <div class="field" id="customWhoField" style="display:none">
-          <label for="fWho">Nombre (nuevo contacto)</label>
+          <label class="label" for="fWho">Nombre (sin guardar)</label>
           <input id="fWho" type="text" placeholder="Ej: Laura / Mamá / Juan (del trabajo)" autocomplete="off"/>
         </div>
 
         <div class="field">
-          <label for="fWhat">¿Qué se acordó?</label>
+          <label class="label" for="fWhat">¿Qué se acordó?</label>
           <textarea id="fWhat" placeholder="Ej: Te paso el PDF / Te devuelvo 20€ / Quedamos el jueves…"></textarea>
         </div>
 
         <div class="twoCol">
           <div class="field">
-            <label for="fWhen">¿Para cuándo?</label>
-            <input id="fWhen" type="datetime-local" />
+            <label class="label" for="fWhen">¿Para cuándo?</label>
+            <input id="fWhen" type="datetime-local"/>
             <div class="hint">Puedes dejarlo sin fecha.</div>
           </div>
 
           <div class="field">
-            <label for="fRemind">Recordatorio (por fecha)</label>
+            <label class="label" for="fRemind">Recordatorio (por fecha)</label>
             <select id="fRemind">
               <option value="0">Ninguno</option>
               <option value="5">5 min antes</option>
@@ -919,7 +935,7 @@
         </div>
 
         <div class="field">
-          <label for="fAfter">Avisar “desde ahora” (viaja en el enlace)</label>
+          <label class="label" for="fAfter">Avisar “desde ahora” (viaja en el enlace)</label>
           <select id="fAfter">
             <option value="0">No</option>
             <option value="5">En 5 minutos</option>
@@ -932,86 +948,89 @@
         </div>
 
         <div class="hint">
-          Al guardar, se abrirá el modal de <b>Compartir</b> (con copiar enlace directo).
+          Al guardar, se abrirá el modal de <b>Compartir</b> (con copiar enlace).
         </div>
       </div>
 
-      <div class="sheetFoot">
-        <button class="btn danger" id="btnCancel">Cancelar</button>
-        <button class="btn good" id="btnSave">Guardar</button>
+      <div class="modalFoot">
+        <button class="btn danger" id="btnCancel" type="button">Cancelar</button>
+        <button class="btn good" id="btnSave" type="button">Guardar</button>
       </div>
     </div>
   </div>
 
   <!-- Modal Contacto -->
   <div class="backdrop" id="cBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="sheet">
-      <div class="sheetHead">
-        <h3 id="cModalTitle">Nuevo contacto</h3>
-        <button class="close" id="cBtnClose">✕</button>
+    <div class="modal">
+      <div class="modalHead">
+        <h3 id="cModalTitle">Nuevo amigo</h3>
+        <button class="iconBtn" id="cBtnClose" type="button" aria-label="Cerrar">✕</button>
       </div>
 
-      <div class="sheetBody">
+      <div class="modalBody">
         <div class="field">
-          <label for="cName">Nombre</label>
+          <label class="label" for="cName">Nombre</label>
           <input id="cName" type="text" placeholder="Ej: Laura" autocomplete="off"/>
         </div>
         <div class="field">
-          <label for="cNote">Nota (opcional)</label>
+          <label class="label" for="cNote">Nota (opcional)</label>
           <input id="cNote" type="text" placeholder="Ej: Trabajo / Vecina / Familia" autocomplete="off"/>
         </div>
         <div class="hint">Esto solo se guarda en tu móvil.</div>
       </div>
 
-      <div class="sheetFoot">
-        <button class="btn danger" id="cBtnCancel">Cancelar</button>
-        <button class="btn good" id="cBtnSave">Guardar</button>
+      <div class="modalFoot">
+        <button class="btn danger" id="cBtnCancel" type="button">Cancelar</button>
+        <button class="btn good" id="cBtnSave" type="button">Guardar</button>
       </div>
     </div>
   </div>
 
   <!-- Modal PIN -->
   <div class="backdrop" id="pinBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="sheet">
-      <div class="sheetHead">
+    <div class="modal">
+      <div class="modalHead">
         <h3 id="pinTitle">Configurar PIN</h3>
-        <button class="close" id="pinClose">✕</button>
+        <button class="iconBtn" id="pinClose" type="button" aria-label="Cerrar">✕</button>
       </div>
-      <div class="sheetBody">
+
+      <div class="modalBody">
         <div class="hint" id="pinHint" style="margin-top:0"></div>
 
         <div class="field" id="pinOldWrap" style="display:none">
-          <label for="pinOld">PIN actual</label>
+          <label class="label" for="pinOld">PIN actual</label>
           <input id="pinOld" inputmode="numeric" autocomplete="off" pattern="[0-9]*" maxlength="4" placeholder="••••"/>
         </div>
 
         <div class="field" id="pinNewWrap">
-          <label for="pinNew">Nuevo PIN (4 dígitos)</label>
+          <label class="label" for="pinNew">Nuevo PIN (4 dígitos)</label>
           <input id="pinNew" inputmode="numeric" autocomplete="off" pattern="[0-9]*" maxlength="4" placeholder="••••"/>
         </div>
 
         <div class="field" id="pinNew2Wrap">
-          <label for="pinNew2">Repite el PIN</label>
+          <label class="label" for="pinNew2">Repite el PIN</label>
           <input id="pinNew2" inputmode="numeric" autocomplete="off" pattern="[0-9]*" maxlength="4" placeholder="••••"/>
         </div>
 
-        <div class="hint" id="pinHelp">Consejo: usa un PIN que solo tú sepas. Puedes desactivarlo en Ajustes.</div>
+        <div class="hint" id="pinHelp">Consejo: usa un PIN que solo tú sepas.</div>
       </div>
-      <div class="sheetFoot">
-        <button class="btn danger" id="pinCancel">Cancelar</button>
-        <button class="btn good" id="pinOk">Guardar</button>
+
+      <div class="modalFoot">
+        <button class="btn danger" id="pinCancel" type="button">Cancelar</button>
+        <button class="btn good" id="pinOk" type="button">Guardar</button>
       </div>
     </div>
   </div>
 
   <!-- Modal Compartir -->
   <div class="backdrop" id="shareBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="sheet">
-      <div class="sheetHead">
+    <div class="modal">
+      <div class="modalHead">
         <h3>Compartir paquete</h3>
-        <button class="close" id="shareClose">✕</button>
+        <button class="iconBtn" id="shareClose" type="button" aria-label="Cerrar">✕</button>
       </div>
-      <div class="sheetBody">
+
+      <div class="modalBody">
         <div class="hint" id="shareTitle" style="margin-top:0"></div>
 
         <div class="seg" role="tablist" aria-label="Formato">
@@ -1019,32 +1038,32 @@
           <button id="shareLong" type="button">Detallado</button>
         </div>
 
-        <div class="mono show" id="shareTextBox"></div>
+        <div class="mono" id="shareTextBox" style="margin-top:10px;"></div>
 
-        <div class="hint" style="margin-top:.125rem">
-          Enlace (puedes copiarlo directo):
-        </div>
-        <div class="mono show" id="shareUrlBox"></div>
+        <div class="hint" style="margin-top:10px;">Enlace (puedes copiarlo directo):</div>
+        <div class="mono" id="shareUrlBox" style="margin-top:8px;"></div>
 
         <div class="hint">Pulsa <b>Compartir</b> para enviarlo por WhatsApp/Telegram. Si no aparece, usa copiar.</div>
       </div>
-      <div class="sheetFoot">
-        <button class="btn" id="shareCopyUrl">🔗 Copiar enlace</button>
-        <button class="btn" id="shareCopyAll">📋 Copiar texto+enlace</button>
-        <button class="btn primary" id="shareSend">📤 Compartir</button>
-        <button class="btn danger" id="shareCancel">Hecho</button>
+
+      <div class="modalFoot">
+        <button class="btn" id="shareCopyUrl" type="button">🔗 Copiar enlace</button>
+        <button class="btn" id="shareCopyAll" type="button">📋 Copiar texto+enlace</button>
+        <button class="btn primary" id="shareSend" type="button">📤 Compartir</button>
+        <button class="btn danger" id="shareCancel" type="button">Hecho</button>
       </div>
     </div>
   </div>
 
   <!-- Overlay bloqueo -->
-  <div class="lockOverlay" id="lockOverlay" aria-hidden="true">
-    <div class="lockCard" role="dialog" aria-modal="true">
-      <div class="lockHead">
+  <div class="backdrop" id="lockOverlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modalHead">
         <h3>🔒 App bloqueada</h3>
-        <p>Introduce tu PIN para continuar.</p>
+        <button class="iconBtn" id="lockClose" type="button" aria-label="Cerrar">✕</button>
       </div>
-      <div class="lockBody">
+      <div class="modalBody">
+        <p class="hint" style="margin-top:0">Introduce tu PIN para continuar.</p>
         <div class="pinDots" aria-label="PIN">
           <div class="dot" id="d1"></div>
           <div class="dot" id="d2"></div>
@@ -1053,40 +1072,41 @@
         </div>
 
         <div class="keypad" id="keypad">
-          <button class="key" data-k="1">1</button>
-          <button class="key" data-k="2">2</button>
-          <button class="key" data-k="3">3</button>
-          <button class="key" data-k="4">4</button>
-          <button class="key" data-k="5">5</button>
-          <button class="key" data-k="6">6</button>
-          <button class="key" data-k="7">7</button>
-          <button class="key" data-k="8">8</button>
-          <button class="key" data-k="9">9</button>
-          <button class="key danger" data-k="del">⌫</button>
-          <button class="key" data-k="0">0</button>
-          <button class="key primary" data-k="ok">OK</button>
+          <button class="key" data-k="1" type="button">1</button>
+          <button class="key" data-k="2" type="button">2</button>
+          <button class="key" data-k="3" type="button">3</button>
+          <button class="key" data-k="4" type="button">4</button>
+          <button class="key" data-k="5" type="button">5</button>
+          <button class="key" data-k="6" type="button">6</button>
+          <button class="key" data-k="7" type="button">7</button>
+          <button class="key" data-k="8" type="button">8</button>
+          <button class="key" data-k="9" type="button">9</button>
+          <button class="key danger" data-k="del" type="button">⌫</button>
+          <button class="key" data-k="0" type="button">0</button>
+          <button class="key primary" data-k="ok" type="button">OK</button>
         </div>
-      </div>
-      <div class="lockFoot">
-        <button class="btn ghost" id="btnLockCopyLink">📋 Copiar enlace actual</button>
-        <button class="btn danger" id="btnLockReset">Borrar todo</button>
+
+        <div class="actions" style="margin-top:12px;">
+          <button class="btn" id="btnLockCopyLink" type="button">🔗 Copiar enlace actual</button>
+          <button class="btn danger" id="btnLockReset" type="button">🧹 Borrar todo</button>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- Modal Confirm (propio) -->
   <div class="backdrop" id="confirmBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="sheet">
-      <div class="sheetHead">
+    <div class="modal">
+      <div class="modalHead">
         <h3 id="confirmTitle">Confirmar</h3>
-        <button class="close" id="confirmClose">✕</button>
+        <button class="iconBtn" id="confirmClose" type="button" aria-label="Cerrar">✕</button>
       </div>
-      <div class="sheetBody">
-        <div class="confirmMsg" id="confirmMsg"></div>
+      <div class="modalBody">
+        <div id="confirmMsg" class="hint" style="margin-top:0; color:#111827;"></div>
       </div>
-      <div class="sheetFoot">
-        <button class="btn" id="confirmNo">Cancelar</button>
-        <button class="btn danger" id="confirmYes">Sí, continuar</button>
+      <div class="modalFoot">
+        <button class="btn" id="confirmNo" type="button">Cancelar</button>
+        <button class="btn danger" id="confirmYes" type="button">Sí, continuar</button>
       </div>
     </div>
   </div>
@@ -1099,6 +1119,9 @@
 
       const $ = (id) => document.getElementById(id);
 
+      /* =========================
+         Storage keys (mismos que tenías)
+         ========================= */
       const KEY = "compromisos_local_v5";
       const EVENTS_KEY = "compromisos_events_v5";
       const CONTACTS_KEY = "compromisos_contacts_v5";
@@ -1106,48 +1129,20 @@
       const REMIND_FIRED_KEY = "compromisos_remind_fired_v2";
       const AFTER_FIRED_KEY = "compromisos_after_fired_v1";
 
-      // ✅ Buzón para importación “desde in-app browser”
       const INBOX_PACK_KEY = "compromisos_inbox_pack_v1";
       const INBOX_TS_KEY   = "compromisos_inbox_ts_v1";
 
-      // ✅ Accesibilidad: texto grande
       const A11Y_KEY = "compromisos_a11y_v1";
 
-      // ✅ Manual plegable
-      const HELP_KEY = "compromisos_help_v1";
-
-      // ✅ Indicador local de notificaciones pendientes (recordatorios/avisos disparados)
       const PENDING_NOTIF_KEY = "compromisos_pending_notifs_v1";
-
-      // ✅ NUEVO: contador/registro de paquetes recibidos (importados)
       const RECEIVED_KEY = "compromisos_received_v1";
 
-      // Tipos numéricos para acortar paquetes
       const T = { CREATE:0, DONE:1, REOPEN:2, DELETE:3, EDIT:4 };
 
       function uid(){
         return "c" + Math.random().toString(16).slice(2) + Date.now().toString(16);
       }
       function pad2(n){ return String(n).padStart(2,"0"); }
-
-      function fmtDate(dt){
-        if(!dt) return "Sin fecha";
-        const d = new Date(dt);
-        if(Number.isNaN(d.getTime())) return "Sin fecha";
-        const now = new Date();
-        const sameYear = d.getFullYear() === now.getFullYear();
-        const day = pad2(d.getDate());
-        const mon = pad2(d.getMonth()+1);
-        const hh = pad2(d.getHours());
-        const mm = pad2(d.getMinutes());
-        return (sameYear ? `${day}/${mon}` : `${day}/${mon}/${d.getFullYear()}`) + ` ${hh}:${mm}`;
-      }
-      function isOverdue(dt){
-        if(!dt) return false;
-        const d = new Date(dt);
-        if(Number.isNaN(d.getTime())) return false;
-        return d.getTime() < Date.now();
-      }
 
       function toast(msg){
         const t = $("toast");
@@ -1166,17 +1161,6 @@
           .replaceAll("'","&#039;");
       }
 
-      // Base64URL (utf8-safe)
-      function b64urlEncode(str){
-        const b64 = btoa(unescape(encodeURIComponent(str)));
-        return b64.replaceAll("+","-").replaceAll("/","_").replaceAll("=","");
-      }
-      function b64urlDecode(b64url){
-        let b64 = b64url.replaceAll("-","+").replaceAll("_","/");
-        while(b64.length % 4) b64 += "=";
-        return decodeURIComponent(escape(atob(b64)));
-      }
-
       function load(key, fallback){
         try{
           const raw = localStorage.getItem(key);
@@ -1189,33 +1173,102 @@
         localStorage.setItem(key, JSON.stringify(value));
       }
 
-      // --------- Notificaciones pendientes (contador local) ----------
-      let pendingNotifs = load(PENDING_NOTIF_KEY, { c:0, at:0 });
-
-      function renderPendingBadge(){
-        const c = Math.max(0, Number(pendingNotifs?.c || 0));
-        const pill = $("btnNotifPend");
-        $("bNotifPend").textContent = String(c);
-        if(c > 0) pill.classList.remove("muted");
-        else pill.classList.add("muted");
+      function fmtDate(dt){
+        if(!dt) return "Sin fecha";
+        const d = new Date(dt);
+        if(Number.isNaN(d.getTime())) return "Sin fecha";
+        const now = new Date();
+        const sameYear = d.getFullYear() === now.getFullYear();
+        const day = pad2(d.getDate());
+        const mon = pad2(d.getMonth()+1);
+        const hh = pad2(d.getHours());
+        const mm = pad2(d.getMinutes());
+        return (sameYear ? `${day}/${mon}` : `${day}/${mon}/${d.getFullYear()}`) + ` ${hh}:${mm}`;
       }
 
-      function incPendingBadge(){
+      function isOverdue(dt){
+        if(!dt) return false;
+        const d = new Date(dt);
+        if(Number.isNaN(d.getTime())) return false;
+        return d.getTime() < Date.now();
+      }
+
+      // Base64URL (utf8-safe)
+      function b64urlEncode(str){
+        const b64 = btoa(unescape(encodeURIComponent(str)));
+        return b64.replaceAll("+","-").replaceAll("/","_").replaceAll("=","");
+      }
+      function b64urlDecode(b64url){
+        let b64 = b64url.replaceAll("-","+").replaceAll("_","/");
+        while(b64.length % 4) b64 += "=";
+        return decodeURIComponent(escape(atob(b64)));
+      }
+
+      /* =========================
+         Datos
+         ========================= */
+      let data = load(KEY, []);
+      let events = load(EVENTS_KEY, []);
+      let contacts = load(CONTACTS_KEY, []);
+      let firedMap = load(REMIND_FIRED_KEY, {});
+      let afterFired = load(AFTER_FIRED_KEY, {});
+
+      /* =========================
+         Notifs “pendientes” (contador local)
+         ========================= */
+      let pendingNotifs = load(PENDING_NOTIF_KEY, { c:0, at:0 });
+
+      function ensureNotifsPill(){
+        // ✅ Creamos una pill extra “Notifs” sin tocar la PARTE 1
+        const host = document.querySelector(".pills");
+        if(!host) return;
+        if($("btnNotifAlerts")) return;
+
+        const b = document.createElement("button");
+        b.className = "pillBtn";
+        b.id = "btnNotifAlerts";
+        b.type = "button";
+        b.title = "Notificaciones (recordatorios/avisos disparados)";
+        b.innerHTML = `
+          <span class="pillDot" aria-hidden="true"></span>
+          <span>Notifs</span>
+          <span class="pillCount" id="bNotifPend">0</span>
+        `;
+        host.prepend(b);
+      }
+
+      function renderNotifAlertsBadge(){
+        ensureNotifsPill();
+        const c = Math.max(0, Number(pendingNotifs?.c || 0));
+        const count = $("bNotifPend");
+        const pill = $("btnNotifAlerts");
+        if(count) count.textContent = String(c);
+
+        if(pill){
+          pill.classList.toggle("primary", c > 0);
+          pill.classList.toggle("good", false);
+          pill.classList.toggle("danger", false);
+        }
+      }
+
+      function incNotifAlerts(){
         pendingNotifs.c = Math.max(0, Number(pendingNotifs.c || 0)) + 1;
         pendingNotifs.at = Date.now();
         save(PENDING_NOTIF_KEY, pendingNotifs);
-        renderPendingBadge();
+        renderNotifAlertsBadge();
       }
 
-      function clearPendingBadge(){
+      function clearNotifAlerts(){
         pendingNotifs.c = 0;
         pendingNotifs.at = Date.now();
         save(PENDING_NOTIF_KEY, pendingNotifs);
-        renderPendingBadge();
-        toast("Notifs limpiadas");
+        renderNotifAlertsBadge();
+        toast("Notificaciones marcadas como leídas");
       }
 
-      // --------- NUEVO: Recibidos (contador local) ----------
+      /* =========================
+         Recibidos
+         ========================= */
       let received = load(RECEIVED_KEY, { c:0, last:0 });
 
       function incReceived(){
@@ -1230,40 +1283,16 @@
       }
       function renderReceivedBadge(){
         const c = Math.max(0, Number(received?.c || 0));
-        const pill = $("btnReceived");
         $("bReceived").textContent = String(c);
-        if(c > 0){
-          pill.classList.remove("muted");
-          pill.classList.add("good");
-        } else {
-          pill.classList.remove("good");
-          pill.classList.add("muted");
+        const pill = $("btnReceived");
+        if(pill){
+          pill.classList.toggle("good", c > 0);
         }
       }
 
-      // --------- Contadores de compromisos (pendientes/vencidos) ----------
-      function renderCommitBadges(pendingCount, overdueCount){
-        // Pendientes
-        $("bPendCommit").textContent = String(Math.max(0, Number(pendingCount||0)));
-        const pPill = $("btnPendCommit");
-        if(pendingCount > 0){
-          pPill.classList.remove("muted");
-        } else {
-          pPill.classList.add("muted");
-        }
-
-        // Vencidos
-        $("bOverdue").textContent = String(Math.max(0, Number(overdueCount||0)));
-        const oPill = $("btnOverdue");
-        oPill.classList.remove("bad","warn","muted");
-        if(overdueCount > 0){
-          oPill.classList.add("bad");
-        } else {
-          oPill.classList.add("muted");
-        }
-      }
-
-      // --------- Confirm modal (propio) ----------
+      /* =========================
+         Confirm modal (propio)
+         ========================= */
       const Confirm = (function(){
         let resolver = null;
 
@@ -1293,35 +1322,23 @@
         return { open };
       })();
 
-      // --------- Accesibilidad (texto grande) ----------
+      /* =========================
+         Accesibilidad (texto grande)
+         ========================= */
       function setTextScale(on){
         const isOn = !!on;
-        const root = document.documentElement;
-        root.style.setProperty("--fs-base", isOn ? "18px" : "16px");
-        const b = $("btnA11y");
-        b.classList.toggle("on", isOn);
-        $("a11yLabel").textContent = isOn ? "Grande" : "Texto";
+        document.body.style.fontSize = isOn ? "var(--fsBig)" : "var(--fs)";
         save(A11Y_KEY, { big: isOn });
+        $("btnA11y").textContent = isOn ? "🔎 Texto normal" : "🔎 Texto grande";
       }
       function toggleTextScale(){
         const s = load(A11Y_KEY, { big:false });
         setTextScale(!s.big);
       }
 
-      // --------- Manual plegable ----------
-      function setHelpVisible(on){
-        const show = !!on;
-        $("helpBox").style.display = show ? "" : "none";
-        $("helpToggleLabel").textContent = show ? "Ocultar guía rápida" : "Ver guía rápida";
-        $("helpToggleHint").textContent = show ? "Menos" : "Ayuda";
-        save(HELP_KEY, { show });
-      }
-      function toggleHelp(){
-        const s = load(HELP_KEY, { show:false });
-        setHelpVisible(!s.show);
-      }
-
-      // --------- Ajustes (PIN / notifs) ----------
+      /* =========================
+         Ajustes PIN / notifs (igual lógica)
+         ========================= */
       const defaultSettings = {
         notifEnabled: false,
         pinEnabled: false,
@@ -1353,18 +1370,15 @@
           return "fh_" + String(h);
         }
       }
-
       function normalizePin(pin){
         return String(pin||"").trim().replaceAll(/\D/g,"").slice(0,4);
       }
-
       async function verifyPin(pin){
         const p = normalizePin(pin);
         if(p.length !== 4) return false;
         const h = await sha256Base64Url("pin:" + p);
         return settings.pinHash && h === settings.pinHash;
       }
-
       async function setPin(pin){
         const p = normalizePin(pin);
         if(p.length !== 4) throw new Error("pin");
@@ -1393,6 +1407,16 @@
         save(SETTINGS_KEY, settings);
       }
 
+      function showLockOverlay(){
+        if(!settings.pinEnabled) return;
+        $("lockOverlay").classList.add("show");
+        $("lockOverlay").setAttribute("aria-hidden","false");
+      }
+      function hideLockOverlay(){
+        $("lockOverlay").classList.remove("show");
+        $("lockOverlay").setAttribute("aria-hidden","true");
+      }
+
       function forceLock(){
         if(!settings.pinEnabled) return;
         settings.unlockUntil = 0;
@@ -1402,31 +1426,12 @@
         showLockOverlay();
       }
 
-      function setPinEnabled(on){
-        settings.pinEnabled = !!on;
-        if(!settings.pinEnabled){
-          settings.pinHash = null;
-          settings.unlockUntil = 0;
-          sessionUnlocked = false;
-          lockAtTs = 0;
-        }
-        save(SETTINGS_KEY, settings);
-        updateSettingsUI();
-      }
-
-      function setNotifEnabled(on){
-        settings.notifEnabled = !!on;
-        save(SETTINGS_KEY, settings);
-        updateSettingsUI();
-      }
-
       function notifPermission(){
         try{ return Notification.permission; }catch(e){ return "unsupported"; }
       }
       function notifSupported(){
         return typeof Notification !== "undefined";
       }
-
       async function requestNotifPermission(){
         if(!notifSupported()){
           toast("Tu navegador no soporta notificaciones");
@@ -1434,7 +1439,6 @@
         }
         try{
           const p = await Notification.requestPermission();
-          updateSettingsUI();
           if(p === "granted"){ toast("Notificaciones permitidas ✅"); return true; }
           toast("Permiso no concedido");
           return false;
@@ -1444,71 +1448,97 @@
         }
       }
 
-      function updateSettingsUI(){
-        const swP = $("swPin");
-        swP.classList.toggle("on", !!settings.pinEnabled);
-        swP.setAttribute("aria-checked", settings.pinEnabled ? "true":"false");
-
-        const swN = $("swNotif");
-        swN.classList.toggle("on", !!settings.notifEnabled);
-        swN.setAttribute("aria-checked", settings.notifEnabled ? "true":"false");
-
-        $("selAutoLock").value = String(settings.autoLockMin ?? 0);
-        $("selRemember").value = String(settings.rememberMin ?? 10);
-
-        const hint = $("notifHint");
-        const perm = notifPermission();
-        const sup = notifSupported();
-        if(!sup){
-          hint.textContent = "⚠️ Este navegador no soporta notificaciones. Usa “📅 Calendario” en cada compromiso.";
-          $("btnNotifPerm").style.display = "none";
-        }else{
-          $("btnNotifPerm").style.display = "";
-          if(perm === "granted"){
-            hint.textContent = settings.notifEnabled
-              ? "✅ Notificaciones activadas."
-              : "ℹ️ Tienes permiso concedido, pero están desactivadas. Actívalas con el switch.";
-          } else if(perm === "denied"){
-            hint.textContent = "🚫 Notificaciones bloqueadas. Permítelas en Ajustes de Android/Chrome o reinstala la PWA. Usa Calendario como alternativa.";
-          } else {
-            hint.textContent = "ℹ️ Pulsa “Permitir” para recibir recordatorios. Si no, usa Calendario.";
+      function canNotify(){
+        if(!settings.notifEnabled) return false;
+        if(typeof Notification === "undefined") return false;
+        return Notification.permission === "granted";
+      }
+      function sendLocalNotification(title, body){
+        try{
+          if(canNotify()){
+            new Notification(title, { body });
+            return true;
           }
-        }
+        }catch(e){}
+        return false;
       }
 
-      // --------- Datos ----------
-      let data = load(KEY, []);
-      let events = load(EVENTS_KEY, []);
-      let contacts = load(CONTACTS_KEY, []);
-      let firedMap = load(REMIND_FIRED_KEY, {});
-      let afterFired = load(AFTER_FIRED_KEY, {});
-
-      let view = "pending";
-      let pane = "commitments";
-
-      function contactById(id){ return contacts.find(c => c.id === id) || null; }
-
-      function normalizedWho(item){
-        if(item.whoId){
-          const c = contactById(item.whoId);
-          if(c && c.name) return c.name;
-        }
-        return item.whoName || "Sin nombre";
-      }
-
-      function remindLabel(min){
-        const m = Number(min||0);
-        if(!m) return "";
-        if(m === 5) return "🔔 5m";
-        if(m === 15) return "🔔 15m";
-        if(m === 60) return "🔔 1h";
-        if(m === 1440) return "🔔 1d";
-        return "🔔";
-      }
-
-      // --------- Eventos + paquetes cortos ----------
+      /* =========================
+         Eventos / paquetes
+         ========================= */
       function makeEvent(type, payload){
         return { id: uid(), type, at: new Date().toISOString(), payload };
+      }
+
+      function packEvent(ev){
+        return { v:1, e:{ i: ev.id, t: ev.type, a: ev.at, p: ev.payload || {} } };
+      }
+      function unpackEvent(pack){
+        if(!pack || pack.v !== 1 || !pack.e) return null;
+        const e = pack.e;
+        if(!e.i || e.t == null || !e.a) return null;
+        return { id: e.i, type: e.t, at: e.a, payload: e.p || {} };
+      }
+      function makePackage(ev){
+        return b64urlEncode(JSON.stringify(packEvent(ev)));
+      }
+      function parsePackage(p){
+        const json = b64urlDecode(p);
+        return JSON.parse(json);
+      }
+      function baseFolderUrl(){
+        const path = location.pathname || "/";
+        const folder = path.replace(/\/[^\/]*$/, "/");
+        return location.origin + folder;
+      }
+      function baseFileUrl(){
+        return location.origin + location.pathname;
+      }
+      function makeLinkFromPackage(p){
+        return baseFolderUrl() + "compromisos.html#p=" + p;
+      }
+
+      /* ✅ FIN PARTE 2/3
+         En la PARTE 3 va TODO lo que falta:
+         - applyEvent completo + limpieza firedMaps
+         - render (compromisos/contacts) con tarjetas nuevas
+         - CLICK en tarjeta de amigo => abrir modal compromiso con su nombre ya seleccionado ✅
+         - tabs / tiles / nav
+         - sharing, import (hash + buzón), PWA banner
+         - checkReminders (incrementa notifs arriba)
+         - boot final
+      */
+/* =========================
+         applyEvent + limpieza firedMaps
+         ========================= */
+      function cleanupFiredMaps(){
+        const liveA = new Set();
+        const liveB = new Set();
+
+        for(const it of data){
+          if(it.done) continue;
+
+          if(it.when && Number(it.remindMin||0) > 0){
+            liveA.add(firedKey(it));
+          }
+          if(it.afterAt && Number(it.afterMin||0) > 0){
+            liveB.add(afterKey(it));
+          }
+        }
+
+        const nextA = {};
+        for(const k of Object.keys(firedMap||{})){
+          if(liveA.has(k)) nextA[k] = firedMap[k];
+        }
+        firedMap = nextA;
+        save(REMIND_FIRED_KEY, firedMap);
+
+        const nextB = {};
+        for(const k of Object.keys(afterFired||{})){
+          if(liveB.has(k)) nextB[k] = afterFired[k];
+        }
+        afterFired = nextB;
+        save(AFTER_FIRED_KEY, afterFired);
       }
 
       function applyEvent(ev){
@@ -1613,33 +1643,17 @@
         return changed;
       }
 
-      function packEvent(ev){
-        return { v:1, e:{ i: ev.id, t: ev.type, a: ev.at, p: ev.payload || {} } };
-      }
-      function unpackEvent(pack){
-        if(!pack || pack.v !== 1 || !pack.e) return null;
-        const e = pack.e;
-        if(!e.i || e.t == null || !e.a) return null;
-        return { id: e.i, type: e.t, at: e.a, payload: e.p || {} };
-      }
-      function makePackage(ev){
-        return b64urlEncode(JSON.stringify(packEvent(ev)));
-      }
-      function parsePackage(p){
-        const json = b64urlDecode(p);
-        return JSON.parse(json);
-      }
+      /* =========================
+         Helpers (compromisos / contactos)
+         ========================= */
+      function contactById(id){ return contacts.find(c => c.id === id) || null; }
 
-      function baseFolderUrl(){
-        const path = location.pathname || "/";
-        const folder = path.replace(/\/[^\/]*$/, "/");
-        return location.origin + folder;
-      }
-      function baseFileUrl(){
-        return location.origin + location.pathname;
-      }
-      function makeLinkFromPackage(p){
-        return baseFolderUrl() + "compromisos.html#p=" + p;
+      function normalizedWho(item){
+        if(item.whoId){
+          const c = contactById(item.whoId);
+          if(c && c.name) return c.name;
+        }
+        return item.whoName || "Sin nombre";
       }
 
       function shortPreview(text, n){
@@ -1648,427 +1662,149 @@
         return s.slice(0, n-1) + "…";
       }
 
-      // --------- Compartir (modal) ----------
-      let shareState = { title:"", shortText:"", longText:"", url:"", mode:"short" };
-
-      function openShareModal(){
-        $("shareBackdrop").classList.add("show");
-        $("shareBackdrop").setAttribute("aria-hidden","false");
-        updateShareUI();
-      }
-      function closeShareModal(){
-        $("shareBackdrop").classList.remove("show");
-        $("shareBackdrop").setAttribute("aria-hidden","true");
-      }
-      function updateShareUI(){
-        $("shareShort").classList.toggle("active", shareState.mode === "short");
-        $("shareLong").classList.toggle("active", shareState.mode === "long");
-        $("shareTitle").innerHTML = `<b>${escapeHtml(shareState.title || "Compartir")}</b>`;
-        const msg = (shareState.mode === "long") ? shareState.longText : shareState.shortText;
-        $("shareTextBox").textContent = msg || "";
-        $("shareUrlBox").textContent = shareState.url || "";
+      function remindLabel(min){
+        const m = Number(min||0);
+        if(!m) return "";
+        if(m === 5) return "🔔 5m";
+        if(m === 15) return "🔔 15m";
+        if(m === 60) return "🔔 1h";
+        if(m === 1440) return "🔔 1d";
+        return "🔔";
       }
 
-      async function copyToClipboard(text){
-        try{
-          await navigator.clipboard.writeText(text);
-          toast("Copiado ✅");
-          return true;
-        }catch(e){
-          prompt("Copia este texto:", text);
-          return true;
-        }
+      /* =========================
+         UI state / pestañas
+         ========================= */
+      let pane = "commitments";  // commitments | contacts | settings
+      let view = "pending";      // pending | done
+
+      function safeShow(el, show){
+        if(!el) return;
+        el.style.display = show ? "" : "none";
       }
 
-      async function doShare(){
-        const msg = (shareState.mode === "long") ? shareState.longText : shareState.shortText;
-        const payload = { title: shareState.title || "Compromisos", text: msg, url: shareState.url };
-
-        try{
-          if(navigator.share){
-            await navigator.share(payload);
-            toast("Enviado ✅");
-            closeShareModal();
-            return true;
-          }
-        }catch(e){}
-
-        const combined = (payload.title ? payload.title + "\n" : "") + (payload.text ? payload.text + "\n" : "") + payload.url;
-        await copyToClipboard(combined);
-        closeShareModal();
-        return true;
-      }
-
-      function eventTitle(type){
-        if(type === T.CREATE) return "📌 Nuevo/Actualizado";
-        if(type === T.EDIT) return "✍️ Compromiso editado";
-        if(type === T.DONE) return "✅ Compromiso finalizado";
-        if(type === T.REOPEN) return "↩️ Compromiso reabierto";
-        if(type === T.DELETE) return "🗑️ Compromiso eliminado";
-        return "📦 Paquete";
-      }
-
-      function buildShareMessages(ev, it){
-        const who = it ? normalizedWho(it) : (ev?.payload?.w || "Sin nombre");
-        const what = it ? shortPreview(it.what, 120) : shortPreview(ev?.payload?.s || "", 120);
-        const whenTxt = it?.when ? fmtDate(it.when) : (ev?.payload?.n ? fmtDate(ev.payload.n) : "Sin fecha");
-
-        const afterMin = Number(it?.afterMin || ev?.payload?.af || 0);
-        const afterTxt = afterMin ? `⏳ Aviso en: ${afterMin >= 1440 ? "24h" : (afterMin >= 60 ? (afterMin/60)+"h" : afterMin+"m")}` : "";
-
-        const title = eventTitle(ev.type);
-        const shortMsg =
-          `${title}\n` +
-          `👤 ${who}\n` +
-          (what ? `📝 ${shortPreview(what, 70)}\n` : "") +
-          (afterTxt ? `${afterTxt}\n` : "") +
-          `🔗 Abre el enlace para importar.`;
-
-        const longMsg =
-          `${title}\n` +
-          `👤 Con: ${who}\n` +
-          (what ? `📝 ${what}\n` : "") +
-          `⏰ Para: ${whenTxt}\n` +
-          (afterTxt ? `${afterTxt}\n` : "") +
-          `🔗 Abre el enlace para importar en la app.`;
-
-        return { title, shortMsg, longMsg };
-      }
-
-      async function prepareShare(ev, it){
-        const p = makePackage(ev);
-        const link = makeLinkFromPackage(p);
-
-        const msgs = buildShareMessages(ev, it);
-
-        shareState = {
-          title: msgs.title,
-          shortText: msgs.shortMsg,
-          longText: msgs.longMsg,
-          url: link,
-          mode: "short"
-        };
-
-        openShareModal();
-      }
-
-      // --------- Recordatorios (por fecha + desde ahora) ----------
-      function firedKey(it){
-        return `${it.id}|${it.when||""}|${Number(it.remindMin||0)}|${it.done?"1":"0"}`;
-      }
-      function afterKey(it){
-        return `${it.id}|${it.afterAt||""}|${Number(it.afterMin||0)}|${it.done?"1":"0"}`;
-      }
-
-      function cleanupFiredMaps(){
-        const liveA = new Set();
-        const liveB = new Set();
-
-        for(const it of data){
-          if(it.done) continue;
-
-          if(it.when && Number(it.remindMin||0) > 0){
-            liveA.add(firedKey(it));
-          }
-          if(it.afterAt && Number(it.afterMin||0) > 0){
-            liveB.add(afterKey(it));
-          }
-        }
-
-        const nextA = {};
-        for(const k of Object.keys(firedMap||{})){
-          if(liveA.has(k)) nextA[k] = firedMap[k];
-        }
-        firedMap = nextA;
-        save(REMIND_FIRED_KEY, firedMap);
-
-        const nextB = {};
-        for(const k of Object.keys(afterFired||{})){
-          if(liveB.has(k)) nextB[k] = afterFired[k];
-        }
-        afterFired = nextB;
-        save(AFTER_FIRED_KEY, afterFired);
-      }
-
-      function canNotify(){
-        if(!settings.notifEnabled) return false;
-        if(typeof Notification === "undefined") return false;
-        return Notification.permission === "granted";
-      }
-
-      function sendLocalNotification(title, body){
-        try{
-          if(canNotify()){
-            new Notification(title, { body });
-            return true;
-          }
-        }catch(e){}
-        return false;
-      }
-
-      function checkReminders(){
-        const now = Date.now();
-
-        // A) Por fecha (X min antes)
-        for(const it of data){
-          if(it.done) continue;
-          const rm = Number(it.remindMin||0);
-          if(!it.when || rm <= 0) continue;
-
-          const due = new Date(it.when).getTime();
-          if(Number.isNaN(due)) continue;
-
-          const trigger = due - rm*60*1000;
-          if(now < trigger) continue;
-          if(now > due + 30*60*1000) continue;
-
-          const k = firedKey(it);
-          if(firedMap && firedMap[k]) continue;
-
-          const who = normalizedWho(it);
-          const what = shortPreview(it.what, 80);
-          const dueTxt = fmtDate(it.when);
-
-          const title = `⏰ Compromiso: ${who}`;
-          const body = (what ? what + " · " : "") + `Para: ${dueTxt}`;
-
-          sendLocalNotification(title, body);
-          toast(`⏰ Recordatorio: ${who}`);
-
-          // ✅ sube contador local “notifs”
-          incPendingBadge();
-
-          firedMap[k] = now;
-          save(REMIND_FIRED_KEY, firedMap);
-        }
-
-        // B) Desde ahora (afterAt)
-        for(const it of data){
-          if(it.done) continue;
-          const am = Number(it.afterMin||0);
-          if(!it.afterAt || am <= 0) continue;
-
-          const at = new Date(it.afterAt).getTime();
-          if(Number.isNaN(at)) continue;
-
-          if(now < at) continue;
-          if(now > at + 30*60*1000) continue;
-
-          const k = afterKey(it);
-          if(afterFired && afterFired[k]) continue;
-
-          const who = normalizedWho(it);
-          const what = shortPreview(it.what, 80);
-
-          const title = `🔔 Aviso: ${who}`;
-          const body = what || "Tienes un compromiso pendiente.";
-
-          sendLocalNotification(title, body);
-          toast(`🔔 Aviso: ${who}`);
-
-          // ✅ sube contador local “notifs”
-          incPendingBadge();
-
-          afterFired[k] = now;
-          save(AFTER_FIRED_KEY, afterFired);
-        }
-      }
-
-      // --------- Calendario (.ics) ----------
-      function dtToICS(iso){
-        const d = new Date(iso);
-        if(Number.isNaN(d.getTime())) return null;
-        const y = d.getUTCFullYear();
-        const m = pad2(d.getUTCMonth()+1);
-        const da = pad2(d.getUTCDate());
-        const h = pad2(d.getUTCHours());
-        const mi = pad2(d.getUTCMinutes());
-        const s = pad2(d.getUTCSeconds());
-        return `${y}${m}${da}T${h}${mi}${s}Z`;
-      }
-      function makeICSForItem(it){
-        if(!it.when) return null;
-        const dtStart = dtToICS(it.when);
-        if(!dtStart) return null;
-        const startMs = new Date(it.when).getTime();
-        const endMs = startMs + 15*60*1000;
-        const dtEnd = dtToICS(new Date(endMs).toISOString());
-
-        const who = normalizedWho(it);
-        const summary = `Compromiso: ${who}`;
-        const desc = (it.what || "").replaceAll("\n","\\n");
-        const uidv = `${it.id}@compromisos.local`;
-        const stamp = dtToICS(new Date().toISOString());
-
-        return [
-          "BEGIN:VCALENDAR",
-          "VERSION:2.0",
-          "PRODID:-//Compromisos//Local//ES",
-          "CALSCALE:GREGORIAN",
-          "METHOD:PUBLISH",
-          "BEGIN:VEVENT",
-          `UID:${uidv}`,
-          `DTSTAMP:${stamp}`,
-          `DTSTART:${dtStart}`,
-          `DTEND:${dtEnd}`,
-          `SUMMARY:${summary}`,
-          `DESCRIPTION:${desc}`,
-          "END:VEVENT",
-          "END:VCALENDAR"
-        ].join("\r\n");
-      }
-      async function addToCalendar(itemId){
-        const it = data.find(x => x.id === itemId);
-        if(!it){ toast("No encontrado"); return; }
-        if(!it.when){ toast("Pon una fecha para usar calendario"); return; }
-
-        const ics = makeICSForItem(it);
-        if(!ics){ toast("No se pudo crear el evento"); return; }
-
-        const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
-        const filename = `compromiso_${itemId}.ics`;
-
-        try{
-          if(navigator.canShare && navigator.share){
-            const file = new File([blob], filename, { type: "text/calendar" });
-            if(navigator.canShare({ files: [file] })){
-              await navigator.share({ title: "Añadir al calendario", text: "Abre el archivo para añadirlo a tu calendario.", files: [file] });
-              toast("Evento listo ✅");
-              return;
-            }
-          }
-        }catch(e){}
-
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(()=> URL.revokeObjectURL(url), 1200);
-        toast("Descargado .ics ✅ (ábrelo)");
-      }
-
-      /* ✅ FIN PARTE 2/3: la parte 3 continúa aquí con:
-         - UI / Vistas (setPane, render...)
-         - contacto: botón/acción para “Crear compromiso” con el nombre del amigo precargado
-         - pills: navegación a pendientes/vencidos/recibidos
-         - import: suma "recibidos" y renderiza sus badges
-         - boot + handlers */
-
-<!-- ✅ PARTE 3/3 -->
-
-// --------- UI / Vistas ----------
       function setPane(newPane){
         pane = newPane;
-        $("tabCommitments").classList.toggle("active", pane==="commitments");
-        $("tabContacts").classList.toggle("active", pane==="contacts");
-        $("tabSettings").classList.toggle("active", pane==="settings");
 
-        $("commitmentsPane").style.display = (pane==="commitments") ? "" : "none";
-        $("contactsPane").style.display = (pane==="contacts") ? "" : "none";
-        $("settingsPane").style.display = (pane==="settings") ? "" : "none";
+        const tC = $("tabCommitments");
+        const tA = $("tabContacts");
+        const tS = $("tabSettings");
 
-        if(pane === "settings"){
-          $("fab").style.display = "none";
-        } else {
-          $("fab").style.display = "grid";
-          $("fab").setAttribute("aria-label", pane==="contacts" ? "Nuevo contacto" : "Nuevo compromiso");
+        if(tC) tC.classList.toggle("active", pane==="commitments");
+        if(tA) tA.classList.toggle("active", pane==="contacts");
+        if(tS) tS.classList.toggle("active", pane==="settings");
+
+        safeShow($("commitmentsPane"), pane==="commitments");
+        safeShow($("contactsPane"), pane==="contacts");
+        safeShow($("settingsPane"), pane==="settings");
+
+        const fab = $("fab");
+        if(fab){
+          if(pane === "settings") fab.style.display = "none";
+          else{
+            fab.style.display = "grid";
+            fab.setAttribute("aria-label", pane==="contacts" ? "Nuevo amigo" : "Nuevo compromiso");
+          }
         }
 
         renderAll();
+        try{ window.scrollTo({ top: 0, behavior: "smooth" }); }catch(e){ window.scrollTo(0,0); }
+      }
+
+      function setViewPending(){
+        view = "pending";
+        const a = $("tabPending");
+        const b = $("tabDone");
+        if(a) a.classList.add("active");
+        if(b) b.classList.remove("active");
+        renderCommitments();
+      }
+      function setViewDone(){
+        view = "done";
+        const a = $("tabDone");
+        const b = $("tabPending");
+        if(a) a.classList.add("active");
+        if(b) b.classList.remove("active");
+        renderCommitments();
+      }
+
+      /* =========================
+         Render (contadores + listas)
+         ========================= */
+      function updateTopBadges(){
+        // Cuenta pendientes + vencidos
+        const pending = data.filter(x => !x.done);
+        const overdueCount = pending.filter(x => isOverdue(x.when)).length;
+
+        // Pills del header (si existen en la PARTE 1)
+        const bPend = $("bPending") || $("bPendCommit");
+        if(bPend) bPend.textContent = String(pending.length);
+
+        const bOver = $("bOverdue");
+        if(bOver) bOver.textContent = String(overdueCount);
+
+        // Recibidos (pill existente)
+        if($("bReceived")) $("bReceived").textContent = String(Math.max(0, Number(received?.c || 0)));
+
+        // Notifs (pill dinámica)
+        renderNotifAlertsBadge();
+        renderReceivedBadge();
       }
 
       function renderCommitments(){
+        updateTopBadges();
+
         const list = $("list");
+        const empty = $("empty");
+        if(!list) return;
+
         list.innerHTML = "";
 
         const pending = data.filter(x => !x.done);
         const done = data.filter(x => x.done);
 
-        $("bPending").textContent = String(pending.length);
-        $("bDone").textContent = String(done.length);
-        $("bContacts").textContent = String(contacts.length);
+        // subtabs contadores si existen
+        if($("bPending")) $("bPending").textContent = String(pending.length);
+        if($("bDone")) $("bDone").textContent = String(done.length);
 
         const items = (view === "pending") ? pending : done;
-        $("empty").style.display = items.length ? "none" : "block";
 
-        // Contador vencidos (solo sobre pendientes)
-        const overdueCount = pending.filter(x => isOverdue(x.when)).length;
+        if(empty) empty.style.display = items.length ? "none" : "block";
 
-        // ✅ Actualiza “notificaciones” superiores
-        renderCommitBadges(pending.length, overdueCount);
-        renderPendingBadge();
-        renderReceivedBadge();
-
-        // ✅ Ya NO mostramos mensaje abajo tipo “Tienes X vencidos”
-        const k = $("statsKicker");
-        if(k){
-          k.style.display = "none";
-          k.textContent = "";
-        }
-
-        // Orden:
-        // - Pendientes: vencidos primero, luego por fecha
+        // Orden visual:
+        // - Pendientes: vencidos arriba, luego por fecha
         // - Hechos: por doneAt desc
         items
           .slice()
-          .sort((a,b) => {
+          .sort((a,b)=>{
             if(view === "pending"){
               const ao = isOverdue(a.when) ? 1 : 0;
               const bo = isOverdue(b.when) ? 1 : 0;
-              if(ao !== bo) return bo - ao; // vencidos arriba
+              if(ao !== bo) return bo - ao;
               const ta = a.when ? new Date(a.when).getTime() : Number.POSITIVE_INFINITY;
               const tb = b.when ? new Date(b.when).getTime() : Number.POSITIVE_INFINITY;
               if(ta !== tb) return ta - tb;
-              // último criterio: actualizado/creado (más nuevo arriba dentro de “sin fecha”)
               const ua = new Date(a.updatedAt || a.createdAt || 0).getTime();
               const ub = new Date(b.updatedAt || b.createdAt || 0).getTime();
               return ub - ua;
             }
             return (new Date(b.doneAt||0).getTime()) - (new Date(a.doneAt||0).getTime());
           })
-          .forEach((item, idx) => list.appendChild(renderCard(item, idx)));
+          .forEach((it, idx)=> list.appendChild(renderCommitmentCard(it, idx)));
       }
 
-      // ✅ Mejor contraste: las tarjetas van con un “tono” más claro que el resto
-      function applyCardTone(card, idx, kind){
-        // kind: "commit" | "contact"
-        const odd = (idx % 2) === 1;
-
-        // Fondo más diferenciado respecto a la app (más claro + borde algo más marcado)
-        const baseA = (kind === "contact") ? "rgba(255,255,255,.10)" : "rgba(255,255,255,.12)";
-        const baseB = (kind === "contact") ? "rgba(255,255,255,.04)" : "rgba(255,255,255,.05)";
-
-        const altA  = (kind === "contact") ? "rgba(107,91,255,.14)" : "rgba(107,91,255,.16)";
-        const altB  = (kind === "contact") ? "rgba(255,255,255,.04)" : "rgba(255,255,255,.05)";
-
-        card.style.background = odd
-          ? `linear-gradient(180deg, ${altA}, ${altB})`
-          : `linear-gradient(180deg, ${baseA}, ${baseB})`;
-
-        card.style.borderColor = odd
-          ? "rgba(107,91,255,.28)"
-          : "rgba(255,255,255,.18)";
-
-        // Sombra un pelín más marcada para separar tarjetas entre sí
-        card.style.boxShadow = odd
-          ? "0 1rem 2.5rem rgba(0,0,0,.34)"
-          : "0 .95rem 2.35rem rgba(0,0,0,.28)";
-      }
-
-      function renderCard(item, idx){
+      function renderCommitmentCard(item, idx){
         const card = document.createElement("div");
         card.className = "card";
 
-        // ✅ tono/contraste
-        applyCardTone(card, idx, "commit");
+        // ✅ Se distingue más del fondo: alternamos un tono suave
+        card.style.background = (idx % 2)
+          ? "linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.86))"
+          : "linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.90))";
 
         const who = normalizedWho(item);
         const dueText = item.when ? fmtDate(item.when) : "Sin fecha";
         const overdue = !item.done && isOverdue(item.when);
-        const dueClass = overdue ? "due bad" : "due";
 
         const chips = [
           `<span class="chip">📝 ${escapeHtml(fmtDate(item.createdAt))}</span>`,
@@ -2079,118 +1815,102 @@
         ].filter(Boolean).join("");
 
         card.innerHTML = `
-          <div class="cardTop">
-            <div class="who">
-              <p class="name">${escapeHtml(who)}</p>
-              <p class="meta">${chips}</p>
+          <div class="cardRow">
+            <div style="min-width:0">
+              <div class="title" title="${escapeHtml(who)}">${escapeHtml(who)}</div>
+              <div class="meta">${chips}</div>
             </div>
-            <div class="${dueClass}">⏰ ${escapeHtml(dueText)}${overdue ? " · Vencido" : ""}</div>
+            <div class="due ${overdue ? "danger" : ""}" style="white-space:nowrap;">
+              ⏰ ${escapeHtml(dueText)}${overdue ? " · Vencido" : ""}
+            </div>
           </div>
+
           <div class="desc">${escapeHtml(item.what || "—")}</div>
-          <div class="actions"></div>
+
+          <div class="actions" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn" type="button" data-act="cal">📅 Calendario</button>
+            <button class="btn primary" type="button" data-act="share">📦 Compartir</button>
+            ${item.done
+              ? `<button class="btn" type="button" data-act="reopen">↩️ Reabrir</button>`
+              : `<button class="btn good" type="button" data-act="done">✅ Hecho</button>`
+            }
+            <button class="btn" type="button" data-act="edit">✍️ Editar</button>
+            <button class="btn danger" type="button" data-act="del">🗑️ Eliminar</button>
+          </div>
         `;
 
-        const actions = card.querySelector(".actions");
-        actions.appendChild(mkBtn("📅 Calendario", "btn", () => addToCalendar(item.id)));
-        actions.appendChild(mkBtn("📦 Compartir", "btn primary", () => shareSnapshot(item.id)));
-
-        if(!item.done){
-          actions.appendChild(mkBtn("✅ Hecho", "btn good", () => markDone(item.id)));
-          actions.appendChild(mkBtn("✍️ Editar", "btn", () => openEditModal(item.id)));
-          actions.appendChild(mkBtn("🗑️ Eliminar", "btn danger", () => deleteItem(item.id)));
-        }else{
-          actions.appendChild(mkBtn("↩️ Reabrir", "btn", () => reopen(item.id)));
-          actions.appendChild(mkBtn("✍️ Editar", "btn", () => openEditModal(item.id)));
-          actions.appendChild(mkBtn("🗑️ Eliminar", "btn danger", () => deleteItem(item.id)));
-        }
+        card.querySelector('[data-act="cal"]').addEventListener("click", ()=> addToCalendar(item.id));
+        card.querySelector('[data-act="share"]').addEventListener("click", ()=> shareSnapshot(item.id));
+        card.querySelector('[data-act="edit"]').addEventListener("click", ()=> openEditModal(item.id));
+        card.querySelector('[data-act="del"]').addEventListener("click", ()=> deleteItem(item.id));
+        if(item.done) card.querySelector('[data-act="reopen"]').addEventListener("click", ()=> reopen(item.id));
+        else card.querySelector('[data-act="done"]').addEventListener("click", ()=> markDone(item.id));
 
         return card;
       }
 
-      function mkBtn(text, cls, onClick){
-        const b = document.createElement("button");
-        b.className = cls;
-        b.textContent = text;
-        b.addEventListener("click", onClick);
-        return b;
-      }
-
       function renderContacts(){
         const list = $("contactsList");
+        const empty = $("contactsEmpty");
+        if(!list) return;
+
         list.innerHTML = "";
-        $("bContacts").textContent = String(contacts.length);
-        $("contactsEmpty").style.display = contacts.length ? "none" : "block";
+        if(empty) empty.style.display = contacts.length ? "none" : "block";
 
         contacts
           .slice()
           .sort((a,b) => (a.name||"").localeCompare(b.name||"", "es"))
-          .forEach((c, idx) => list.appendChild(renderContactCard(c, idx)));
-      }
-
-      // ✅ NUEVO: crear compromiso con el contacto precargado
-      function openNewCommitmentForContact(contactId){
-        const c = contactById(contactId);
-        if(!c){ toast("Contacto no encontrado"); return; }
-
-        // ir a compromisos + abrir modal
-        setPane("commitments");
-        view = "pending";
-        $("tabPending").classList.add("active");
-        $("tabDone").classList.remove("active");
-
-        resetCommitmentForm();
-
-        // precarga el contacto
-        fillContactSelect();
-        $("fContact").value = c.id;
-        toggleCustomWho(false);
-        $("fWho").value = ""; // por si acaso
-
-        // texto + foco
-        $("modalTitle").textContent = "Nuevo compromiso";
-        openModal();
-        $("fWhat").focus();
-
-        toast(`Nuevo compromiso con: ${c.name}`);
+          .forEach((c, idx)=> list.appendChild(renderContactCard(c, idx)));
       }
 
       function renderContactCard(c, idx){
         const card = document.createElement("div");
-        card.className = "card contactCard";
-        card.dataset.id = c.id;
-
-        // ✅ tono/contraste (algo distinto al de compromisos)
-        applyCardTone(card, idx, "contact");
+        card.className = "card";
+        card.style.background = (idx % 2)
+          ? "linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.90))"
+          : "linear-gradient(180deg, rgba(255,255,255,.93), rgba(255,255,255,.86))";
 
         const note = c.note ? `<span class="chip">🛈 ${escapeHtml(c.note)}</span>` : "";
+
         card.innerHTML = `
-          <div class="cardTop">
-            <div class="who">
-              <p class="name">${escapeHtml(c.name || "Sin nombre")}</p>
-              <p class="meta">
+          <div class="cardRow">
+            <div style="min-width:0">
+              <div class="title">${escapeHtml(c.name || "Sin nombre")}</div>
+              <div class="meta">
                 <span class="chip">👥 Amigo</span>
                 ${note}
-              </p>
+              </div>
             </div>
-            <div class="due">👤</div>
+            <button class="btn primary" type="button" data-act="new" style="flex:0 0 auto;">➕ Compromiso</button>
           </div>
-          <div class="desc">${escapeHtml(c.note || "Contacto guardado en tu móvil.")}</div>
-          <div class="actions"></div>
+          <div class="desc">${escapeHtml(c.note || "Amigo guardado en tu móvil.")}</div>
+          <div class="actions" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn" type="button" data-act="edit">✍️ Editar</button>
+            <button class="btn danger" type="button" data-act="del">🗑️ Eliminar</button>
+          </div>
         `;
 
-        const actions = card.querySelector(".actions");
+        // ✅ Como pediste: al pulsar tarjeta O botón => abrir nuevo compromiso con ese amigo preseleccionado
+        const openCommitWithFriend = () => openNewCommitmentForContact(c.id);
 
-        // ✅ Botón directo para crear compromiso (rápido)
-        actions.appendChild(mkBtn("➕ Compromiso", "btn primary", () => openNewCommitmentForContact(c.id)));
-
-        actions.appendChild(mkBtn("✍️ Editar", "btn", () => openContactEdit(c.id)));
-        actions.appendChild(mkBtn("🗑️ Eliminar", "btn danger", () => deleteContact(c.id)));
-
-        // ✅ Además: tocar la tarjeta (no botones) también abre nuevo compromiso
-        card.addEventListener("click", (e) => {
-          if(e.target.closest("button")) return; // no interferir con botones
-          openNewCommitmentForContact(c.id);
+        card.addEventListener("click", (e)=>{
+          const inBtn = e.target.closest("button");
+          if(inBtn) return; // botones tienen su propio handler
+          openCommitWithFriend();
         });
+        card.style.cursor = "pointer";
+        card.setAttribute("role","button");
+        card.setAttribute("tabindex","0");
+        card.addEventListener("keydown",(e)=>{
+          if(e.key==="Enter" || e.key===" "){
+            e.preventDefault();
+            openCommitWithFriend();
+          }
+        });
+
+        card.querySelector('[data-act="new"]').addEventListener("click", openCommitWithFriend);
+        card.querySelector('[data-act="edit"]').addEventListener("click", ()=> openContactEdit(c.id));
+        card.querySelector('[data-act="del"]').addEventListener("click", ()=> deleteContact(c.id));
 
         return card;
       }
@@ -2200,11 +1920,13 @@
         renderContacts();
         fillContactSelect();
         updateSettingsUI();
-        renderPendingBadge();
+        renderNotifAlertsBadge();
         renderReceivedBadge();
       }
 
-      // --------- Modal compromiso ----------
+      /* =========================
+         Modal compromiso (nuevo/editar)
+         ========================= */
       let editingItemId = null;
 
       function openModal(){
@@ -2216,94 +1938,16 @@
         $("backdrop").setAttribute("aria-hidden","true");
       }
 
-      function resetCommitmentForm(){
-        editingItemId = null;
-        $("modalTitle").textContent = "Nuevo compromiso";
-        $("fWhat").value = "";
-        $("fWhen").value = "";
-        $("fWho").value = "";
-        $("fRemind").value = "0";
-        $("fAfter").value = "0";
-        fillContactSelect();
-        $("fContact").value = "__custom__";
-        toggleCustomWho(true);
-      }
-
       function toggleCustomWho(show){
-        $("customWhoField").style.display = show ? "" : "none";
+        const w = $("customWhoField");
+        if(!w) return;
+        w.style.display = show ? "" : "none";
       }
 
-      function toInputDatetimeLocal(iso){
-        if(!iso) return "";
-        const d = new Date(iso);
-        if(Number.isNaN(d.getTime())) return "";
-        const yyyy = d.getFullYear();
-        const mm = pad2(d.getMonth()+1);
-        const dd = pad2(d.getDate());
-        const hh = pad2(d.getHours());
-        const mi = pad2(d.getMinutes());
-        return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
-      }
-
-      function openEditModal(itemId){
-        const it = data.find(x => x.id === itemId);
-        if(!it){ toast("No encontrado"); return; }
-
-        editingItemId = itemId;
-        $("modalTitle").textContent = "Editar compromiso";
-
-        fillContactSelect();
-        if(it.whoId && contactById(it.whoId)){
-          $("fContact").value = it.whoId;
-          toggleCustomWho(false);
-          $("fWho").value = "";
-        } else {
-          $("fContact").value = "__custom__";
-          toggleCustomWho(true);
-          $("fWho").value = it.whoName || "";
-        }
-
-        $("fWhat").value = it.what || "";
-        $("fWhen").value = toInputDatetimeLocal(it.when);
-        $("fRemind").value = String(Number(it.remindMin||0));
-        $("fAfter").value = String(Number(it.afterMin||0));
-
-        openModal();
-        $("fWhat").focus();
-      }
-
-      // --------- Contactos modal ----------
-      let editingContactId = null;
-
-      function openContactModal(){
-        $("cBackdrop").classList.add("show");
-        $("cBackdrop").setAttribute("aria-hidden","false");
-      }
-      function closeContactModal(){
-        $("cBackdrop").classList.remove("show");
-        $("cBackdrop").setAttribute("aria-hidden","true");
-      }
-      function resetContactForm(){
-        editingContactId = null;
-        $("cModalTitle").textContent = "Nuevo contacto";
-        $("cName").value = "";
-        $("cNote").value = "";
-      }
-
-      function openContactEdit(id){
-        const c = contacts.find(x => x.id === id);
-        if(!c){ toast("Contacto no encontrado"); return; }
-        editingContactId = id;
-        $("cModalTitle").textContent = "Editar contacto";
-        $("cName").value = c.name || "";
-        $("cNote").value = c.note || "";
-        openContactModal();
-        $("cName").focus();
-      }
-
-      // --------- Contact select ----------
       function fillContactSelect(){
         const sel = $("fContact");
+        if(!sel) return;
+
         const current = sel.value;
         sel.innerHTML = "";
 
@@ -2331,7 +1975,7 @@
 
         const optNew = document.createElement("option");
         optNew.value = "__new_contact__";
-        optNew.textContent = "➕ Crear contacto…";
+        optNew.textContent = "➕ Crear amigo…";
         sel.appendChild(optNew);
 
         if(current){
@@ -2343,7 +1987,10 @@
       }
 
       function onContactSelectChanged(){
-        const v = $("fContact").value;
+        const sel = $("fContact");
+        if(!sel) return;
+        const v = sel.value;
+
         if(v === "__custom__"){
           toggleCustomWho(true);
           return;
@@ -2351,19 +1998,88 @@
         if(v === "__new_contact__"){
           resetContactForm();
           openContactModal();
-          $("cName").focus();
-          $("fContact").value = "__custom__";
+          try{ $("cName").focus(); }catch(e){}
+          sel.value = "__custom__";
           toggleCustomWho(true);
           return;
         }
+        // contacto existente
         toggleCustomWho(false);
-        $("fWho").value = "";
+        if($("fWho")) $("fWho").value = "";
       }
 
-      // --------- Compromisos acciones ----------
+      function resetCommitmentForm(){
+        editingItemId = null;
+        if($("modalTitle")) $("modalTitle").textContent = "Nuevo compromiso";
+        if($("fWhat")) $("fWhat").value = "";
+        if($("fWhen")) $("fWhen").value = "";
+        if($("fWho")) $("fWho").value = "";
+        if($("fRemind")) $("fRemind").value = "0";
+        if($("fAfter")) $("fAfter").value = "0";
+        fillContactSelect();
+        if($("fContact")) $("fContact").value = "__custom__";
+        toggleCustomWho(true);
+      }
+
+      function toInputDatetimeLocal(iso){
+        if(!iso) return "";
+        const d = new Date(iso);
+        if(Number.isNaN(d.getTime())) return "";
+        const yyyy = d.getFullYear();
+        const mm = pad2(d.getMonth()+1);
+        const dd = pad2(d.getDate());
+        const hh = pad2(d.getHours());
+        const mi = pad2(d.getMinutes());
+        return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+      }
+
+      function openEditModal(itemId){
+        const it = data.find(x => x.id === itemId);
+        if(!it){ toast("No encontrado"); return; }
+
+        editingItemId = itemId;
+        if($("modalTitle")) $("modalTitle").textContent = "Editar compromiso";
+
+        fillContactSelect();
+        if(it.whoId && contactById(it.whoId)){
+          $("fContact").value = it.whoId;
+          toggleCustomWho(false);
+          $("fWho").value = "";
+        } else {
+          $("fContact").value = "__custom__";
+          toggleCustomWho(true);
+          $("fWho").value = it.whoName || "";
+        }
+
+        $("fWhat").value = it.what || "";
+        $("fWhen").value = toInputDatetimeLocal(it.when);
+        $("fRemind").value = String(Number(it.remindMin||0));
+        $("fAfter").value = String(Number(it.afterMin||0));
+
+        openModal();
+        try{ $("fWhat").focus(); }catch(e){}
+      }
+
+      // ✅ Abrir “Nuevo compromiso” con un amigo ya seleccionado
+      function openNewCommitmentForContact(contactId){
+        const c = contactById(contactId);
+        if(!c){ toast("Amigo no encontrado"); return; }
+
+        setPane("commitments"); // nos aseguramos de estar en compromisos
+        setViewPending();
+
+        resetCommitmentForm();
+        fillContactSelect();
+        $("fContact").value = c.id;
+        toggleCustomWho(false);
+        if($("fWho")) $("fWho").value = "";
+        openModal();
+        try{ $("fWhat").focus(); }catch(e){}
+      }
+
       function createOrEditCommitment(){
         const contactSel = $("fContact").value;
-        const what = $("fWhat").value.trim();
+        const what = ($("fWhat").value || "").trim();
         const whenISO = $("fWhen").value ? new Date($("fWhen").value).toISOString() : null;
         const remindMin = Number($("fRemind").value || 0);
 
@@ -2372,7 +2088,7 @@
 
         if(!what){
           toast("Escribe qué se acordó");
-          $("fWhat").focus();
+          try{ $("fWhat").focus(); }catch(e){}
           return null;
         }
 
@@ -2381,21 +2097,21 @@
 
         if(contactSel && contactSel !== "__custom__" && contactSel !== "__new_contact__"){
           const c = contactById(contactSel);
-          if(!c){ toast("Contacto no válido"); return null; }
+          if(!c){ toast("Amigo no válido"); return null; }
           whoId = c.id;
           whoName = c.name || "Sin nombre";
         } else {
-          whoName = $("fWho").value.trim();
+          whoName = ($("fWho").value || "").trim();
           if(!whoName){
             toast("Pon con quién es el compromiso");
-            $("fWho").focus();
+            try{ $("fWho").focus(); }catch(e){}
             return null;
           }
         }
 
         if(remindMin > 0 && !whenISO){
           toast("Para recordatorio por fecha necesitas fecha");
-          $("fWhen").focus();
+          try{ $("fWhen").focus(); }catch(e){}
           return null;
         }
 
@@ -2471,7 +2187,7 @@
       async function deleteItem(itemId){
         const ok = await Confirm.open({
           title: "Eliminar compromiso",
-          msg: `¿Seguro que quieres eliminar este compromiso?<br><span class="dangerTxt">Esta acción no se puede deshacer.</span>`,
+          msg: `¿Seguro que quieres eliminar este compromiso?<br><b style="color:#B91C1C">Esta acción no se puede deshacer.</b>`,
           yesText: "Sí, eliminar",
           danger: true
         });
@@ -2488,7 +2204,187 @@
         }
       }
 
-      // 📦 Compartir “estado completo”
+      /* =========================
+         Contactos modal (nuevo/editar)
+         ========================= */
+      let editingContactId = null;
+
+      function openContactModal(){
+        $("cBackdrop").classList.add("show");
+        $("cBackdrop").setAttribute("aria-hidden","false");
+      }
+      function closeContactModal(){
+        $("cBackdrop").classList.remove("show");
+        $("cBackdrop").setAttribute("aria-hidden","true");
+      }
+      function resetContactForm(){
+        editingContactId = null;
+        if($("cModalTitle")) $("cModalTitle").textContent = "Nuevo amigo";
+        if($("cName")) $("cName").value = "";
+        if($("cNote")) $("cNote").value = "";
+      }
+      function openContactEdit(id){
+        const c = contacts.find(x => x.id === id);
+        if(!c){ toast("Amigo no encontrado"); return; }
+        editingContactId = id;
+        if($("cModalTitle")) $("cModalTitle").textContent = "Editar amigo";
+        $("cName").value = c.name || "";
+        $("cNote").value = c.note || "";
+        openContactModal();
+        try{ $("cName").focus(); }catch(e){}
+      }
+
+      function upsertContact(name, note){
+        const n = String(name||"").trim();
+        if(!n){ toast("Pon un nombre"); return null; }
+
+        if(!editingContactId){
+          const c = { id: uid(), name: n, note: String(note||"").trim(), createdAt: new Date().toISOString() };
+          contacts.push(c);
+          save(CONTACTS_KEY, contacts);
+          return c;
+        } else {
+          const c = contacts.find(x => x.id === editingContactId);
+          if(!c){ toast("No encontrado"); return null; }
+          c.name = n;
+          c.note = String(note||"").trim();
+          c.updatedAt = new Date().toISOString();
+          save(CONTACTS_KEY, contacts);
+          save(KEY, data);
+          return c;
+        }
+      }
+
+      async function deleteContact(id){
+        const ok = await Confirm.open({
+          title: "Eliminar amigo",
+          msg: `¿Eliminar este amigo?<br><b style="color:#B91C1C">Los compromisos quedarán con el nombre “guardado”.</b>`,
+          yesText: "Sí, eliminar",
+          danger: true
+        });
+        if(!ok) return;
+
+        // convertir referencias whoId a whoName
+        data.forEach(it => {
+          if(it.whoId === id){
+            it.whoName = normalizedWho(it);
+            it.whoId = null;
+          }
+        });
+        contacts = contacts.filter(x => x.id !== id);
+
+        save(CONTACTS_KEY, contacts);
+        save(KEY, data);
+
+        renderAll();
+        toast("Amigo eliminado");
+      }
+
+      /* =========================
+         Compartir
+         ========================= */
+      let shareState = { title:"", shortText:"", longText:"", url:"", mode:"short" };
+
+      function openShareModal(){
+        $("shareBackdrop").classList.add("show");
+        $("shareBackdrop").setAttribute("aria-hidden","false");
+        updateShareUI();
+      }
+      function closeShareModal(){
+        $("shareBackdrop").classList.remove("show");
+        $("shareBackdrop").setAttribute("aria-hidden","true");
+      }
+      function updateShareUI(){
+        $("shareShort").classList.toggle("active", shareState.mode === "short");
+        $("shareLong").classList.toggle("active", shareState.mode === "long");
+        $("shareTitle").innerHTML = `<b>${escapeHtml(shareState.title || "Compartir")}</b>`;
+        const msg = (shareState.mode === "long") ? shareState.longText : shareState.shortText;
+        $("shareTextBox").textContent = msg || "";
+        $("shareUrlBox").textContent = shareState.url || "";
+      }
+
+      async function copyToClipboard(text){
+        try{
+          await navigator.clipboard.writeText(text);
+          toast("Copiado ✅");
+          return true;
+        }catch(e){
+          // ✅ sin prompt del navegador: dejamos el texto visible en el modal
+          toast("Mantén pulsado para copiar (si no funciona el botón)");
+          return false;
+        }
+      }
+
+      async function doShare(){
+        const msg = (shareState.mode === "long") ? shareState.longText : shareState.shortText;
+        const payload = { title: shareState.title || "Compromisos", text: msg, url: shareState.url };
+
+        try{
+          if(navigator.share){
+            await navigator.share(payload);
+            toast("Enviado ✅");
+            closeShareModal();
+            return true;
+          }
+        }catch(e){}
+
+        const combined = (payload.title ? payload.title + "\n" : "") + (payload.text ? payload.text + "\n" : "") + payload.url;
+        await copyToClipboard(combined);
+        return true;
+      }
+
+      function eventTitle(type){
+        if(type === T.CREATE) return "📌 Nuevo/Actualizado";
+        if(type === T.EDIT) return "✍️ Compromiso editado";
+        if(type === T.DONE) return "✅ Compromiso finalizado";
+        if(type === T.REOPEN) return "↩️ Compromiso reabierto";
+        if(type === T.DELETE) return "🗑️ Compromiso eliminado";
+        return "📦 Paquete";
+      }
+
+      function buildShareMessages(ev, it){
+        const who = it ? normalizedWho(it) : (ev?.payload?.w || "Sin nombre");
+        const what = it ? shortPreview(it.what, 120) : shortPreview(ev?.payload?.s || "", 120);
+        const whenTxt = it?.when ? fmtDate(it.when) : (ev?.payload?.n ? fmtDate(ev.payload.n) : "Sin fecha");
+
+        const afterMin = Number(it?.afterMin || ev?.payload?.af || 0);
+        const afterTxt = afterMin ? `⏳ Aviso en: ${afterMin >= 1440 ? "24h" : (afterMin >= 60 ? (afterMin/60)+"h" : afterMin+"m")}` : "";
+
+        const title = eventTitle(ev.type);
+        const shortMsg =
+          `${title}\n` +
+          `👤 ${who}\n` +
+          (what ? `📝 ${shortPreview(what, 70)}\n` : "") +
+          (afterTxt ? `${afterTxt}\n` : "") +
+          `🔗 Abre el enlace para importar.`;
+
+        const longMsg =
+          `${title}\n` +
+          `👤 Con: ${who}\n` +
+          (what ? `📝 ${what}\n` : "") +
+          `⏰ Para: ${whenTxt}\n` +
+          (afterTxt ? `${afterTxt}\n` : "") +
+          `🔗 Abre el enlace para importar en la app.`;
+
+        return { title, shortMsg, longMsg };
+      }
+
+      async function prepareShare(ev, it){
+        const p = makePackage(ev);
+        const link = makeLinkFromPackage(p);
+        const msgs = buildShareMessages(ev, it);
+
+        shareState = {
+          title: msgs.title,
+          shortText: msgs.shortMsg,
+          longText: msgs.longMsg,
+          url: link,
+          mode: "short"
+        };
+
+        openShareModal();
+      }
+
       async function shareSnapshot(itemId){
         const it = data.find(x => x.id === itemId);
         if(!it){ toast("No encontrado"); return; }
@@ -2515,59 +2411,164 @@
         await prepareShare(ev, it);
       }
 
-      // --------- Contactos CRUD ----------
-      function upsertContact(name, note){
-        const n = String(name||"").trim();
-        if(!n){ toast("Pon un nombre"); return null; }
+      /* =========================
+         Recordatorios (por fecha + desde ahora)
+         ========================= */
+      function firedKey(it){
+        return `${it.id}|${it.when||""}|${Number(it.remindMin||0)}|${it.done?"1":"0"}`;
+      }
+      function afterKey(it){
+        return `${it.id}|${it.afterAt||""}|${Number(it.afterMin||0)}|${it.done?"1":"0"}`;
+      }
 
-        if(!editingContactId){
-          const c = { id: uid(), name: n, note: String(note||"").trim(), createdAt: new Date().toISOString() };
-          contacts.push(c);
-          save(CONTACTS_KEY, contacts);
-          return c;
-        } else {
-          const c = contacts.find(x => x.id === editingContactId);
-          if(!c){ toast("No encontrado"); return null; }
-          c.name = n;
-          c.note = String(note||"").trim();
-          c.updatedAt = new Date().toISOString();
-          save(CONTACTS_KEY, contacts);
-          save(KEY, data);
-          return c;
+      function checkReminders(){
+        const now = Date.now();
+
+        // A) Por fecha (X min antes)
+        for(const it of data){
+          if(it.done) continue;
+          const rm = Number(it.remindMin||0);
+          if(!it.when || rm <= 0) continue;
+
+          const due = new Date(it.when).getTime();
+          if(Number.isNaN(due)) continue;
+
+          const trigger = due - rm*60*1000;
+          if(now < trigger) continue;
+          if(now > due + 30*60*1000) continue;
+
+          const k = firedKey(it);
+          if(firedMap && firedMap[k]) continue;
+
+          const who = normalizedWho(it);
+          const what = shortPreview(it.what, 80);
+          const dueTxt = fmtDate(it.when);
+
+          const title = `⏰ Compromiso: ${who}`;
+          const body = (what ? what + " · " : "") + `Para: ${dueTxt}`;
+
+          sendLocalNotification(title, body);
+          incNotifAlerts(); // ✅ suma notificaciones arriba
+          firedMap[k] = now;
+          save(REMIND_FIRED_KEY, firedMap);
         }
+
+        // B) Desde ahora (afterAt)
+        for(const it of data){
+          if(it.done) continue;
+          const am = Number(it.afterMin||0);
+          if(!it.afterAt || am <= 0) continue;
+
+          const at = new Date(it.afterAt).getTime();
+          if(Number.isNaN(at)) continue;
+
+          if(now < at) continue;
+          if(now > at + 30*60*1000) continue;
+
+          const k = afterKey(it);
+          if(afterFired && afterFired[k]) continue;
+
+          const who = normalizedWho(it);
+          const what = shortPreview(it.what, 80);
+
+          const title = `🔔 Aviso: ${who}`;
+          const body = what || "Tienes un compromiso pendiente.";
+
+          sendLocalNotification(title, body);
+          incNotifAlerts(); // ✅ suma notificaciones arriba
+          afterFired[k] = now;
+          save(AFTER_FIRED_KEY, afterFired);
+        }
+
+        renderNotifAlertsBadge();
       }
 
-      async function deleteContact(id){
-        const ok = await Confirm.open({
-          title: "Eliminar contacto",
-          msg: `¿Eliminar este contacto?<br><span class="dangerTxt">Los compromisos quedarán con el nombre “guardado”.</span>`,
-          yesText: "Sí, eliminar",
-          danger: true
-        });
-        if(!ok) return;
+      /* =========================
+         Calendario (.ics)
+         ========================= */
+      function dtToICS(iso){
+        const d = new Date(iso);
+        if(Number.isNaN(d.getTime())) return null;
+        const y = d.getUTCFullYear();
+        const m = pad2(d.getUTCMonth()+1);
+        const da = pad2(d.getUTCDate());
+        const h = pad2(d.getUTCHours());
+        const mi = pad2(d.getUTCMinutes());
+        const s = pad2(d.getUTCSeconds());
+        return `${y}${m}${da}T${h}${mi}${s}Z`;
+      }
+      function makeICSForItem(it){
+        if(!it.when) return null;
+        const dtStart = dtToICS(it.when);
+        if(!dtStart) return null;
+        const startMs = new Date(it.when).getTime();
+        const endMs = startMs + 15*60*1000;
+        const dtEnd = dtToICS(new Date(endMs).toISOString());
 
-        data.forEach(it => {
-          if(it.whoId === id){
-            it.whoName = normalizedWho(it);
-            it.whoId = null;
+        const who = normalizedWho(it);
+        const summary = `Compromiso: ${who}`;
+        const desc = (it.what || "").replaceAll("\n","\\n");
+        const uidv = `${it.id}@compromisos.local`;
+        const stamp = dtToICS(new Date().toISOString());
+
+        return [
+          "BEGIN:VCALENDAR",
+          "VERSION:2.0",
+          "PRODID:-//Compromisos//Local//ES",
+          "CALSCALE:GREGORIAN",
+          "METHOD:PUBLISH",
+          "BEGIN:VEVENT",
+          `UID:${uidv}`,
+          `DTSTAMP:${stamp}`,
+          `DTSTART:${dtStart}`,
+          `DTEND:${dtEnd}`,
+          `SUMMARY:${summary}`,
+          `DESCRIPTION:${desc}`,
+          "END:VEVENT",
+          "END:VCALENDAR"
+        ].join("\r\n");
+      }
+      async function addToCalendar(itemId){
+        const it = data.find(x => x.id === itemId);
+        if(!it){ toast("No encontrado"); return; }
+        if(!it.when){ toast("Pon una fecha para usar calendario"); return; }
+
+        const ics = makeICSForItem(it);
+        if(!ics){ toast("No se pudo crear el evento"); return; }
+
+        const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+        const filename = `compromiso_${itemId}.ics`;
+
+        try{
+          if(navigator.canShare && navigator.share){
+            const file = new File([blob], filename, { type: "text/calendar" });
+            if(navigator.canShare({ files: [file] })){
+              await navigator.share({ title: "Añadir al calendario", text: "Abre el archivo para añadirlo a tu calendario.", files: [file] });
+              toast("Evento listo ✅");
+              return;
+            }
           }
-        });
-        contacts = contacts.filter(x => x.id !== id);
+        }catch(e){}
 
-        save(CONTACTS_KEY, contacts);
-        save(KEY, data);
-
-        renderAll();
-        toast("Contacto eliminado");
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(()=> URL.revokeObjectURL(url), 1200);
+        toast("Descargado .ics ✅ (ábrelo)");
       }
 
-      // --------- Import desde URL (robusto con “buzón”) ----------
+      /* =========================
+         Import (#p=... + buzón)
+         ========================= */
       function parsePackageFromHash(){
         const h = location.hash || "";
         const m = h.match(/#p=([A-Za-z0-9\-_]+)/);
         return m ? m[1] : null;
       }
-
       function clearHashToBase(){
         try{
           history.replaceState(null, "", baseFileUrl());
@@ -2576,7 +2577,6 @@
         }
       }
 
-      // --------- PWA banner ----------
       const isAndroid = /Android/i.test(navigator.userAgent || "");
       const isStandalone = window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
       const isIOSStandalone = !!navigator.standalone;
@@ -2589,102 +2589,38 @@
                ua.includes("whatsapp");
       })();
 
-      let deferredPrompt = null;
-
-      function showBanner(mode){
-        const banner = $("installBanner");
-        const title = $("installTitle");
-        const text = $("installText");
-        const bInstall = $("btnInstallBanner");
-        const bOpen = $("btnOpenChrome");
-        const bCopy = $("btnCopyLink");
-
-        bInstall.style.display = "none";
-        bOpen.style.display = "none";
-        bCopy.style.display = "none";
-
-        if(mode === "openchrome_import"){
-          title.textContent = "Importación pendiente";
-          text.innerHTML = "Has abierto el enlace desde un navegador interno. <b>Abre en Chrome</b> para importar el compromiso en la app (y poder instalar).";
-          bOpen.style.display = "flex";
-          bCopy.style.display = "flex";
-        } else if(mode === "openchrome"){
-          title.textContent = "Ábrelo en Chrome para instalarla";
-          text.innerHTML = "Estás en un navegador interno (WhatsApp/Telegram). Para instalar, toca <b>Abrir en Chrome</b>.";
-          bOpen.style.display = "flex";
-          bCopy.style.display = "flex";
-        } else if(mode === "install"){
-          title.textContent = "Instálala para usarla como app";
-          text.innerHTML = "Pulsa <b>Instalar</b>. Luego se abrirá como una app normal desde el icono.";
-          bInstall.style.display = "flex";
-        } else {
-          title.textContent = "Consejo";
-          text.innerHTML = "Si no ves “Instalar” en el menú, abre en <b>Chrome</b> o instala desde el menú <b>⋮</b>.";
-          bCopy.style.display = "flex";
-          if(isInAppBrowser) bOpen.style.display = "flex";
-        }
-
-        banner.classList.add("show");
-      }
-
-      function hideBanner(){ $("installBanner").classList.remove("show"); }
-
-      async function copyCurrentLink(){
+      function tryImportPackage(p){
         try{
-          await navigator.clipboard.writeText(location.href);
-          toast("Enlace copiado ✅");
+          const pack = parsePackage(p);
+          const ev = unpackEvent(pack);
+          if(!ev) throw new Error("bad");
+
+          const applied = applyEvent(ev);
+
+          if(applied){
+            incReceived();
+            renderReceivedBadge();
+          }
+          renderAll();
+          toast(applied ? "Paquete importado ✅" : "Paquete ya aplicado (o sin cambios)");
         }catch(e){
-          prompt("Copia este enlace:", location.href);
+          toast("No se pudo importar el paquete");
         }
       }
 
-      function openInChrome(){
-        const url = location.href;
-        if(isAndroid){
-          try{
-            const u = new URL(url);
-            const path = (u.pathname || "/") + (u.search || "") + (u.hash || "");
-            const intent = "intent://" + u.host + path + "#Intent;scheme=https;package=com.android.chrome;end";
-            location.href = intent;
-            return;
-          }catch(e){}
-        }
-        try{ window.open(url, "_blank"); }
-        catch(e){ copyCurrentLink(); toast("Copia el enlace y pégalo en Chrome"); }
-      }
+      /* =========================
+         Service worker (si existe sw.js)
+         ========================= */
+      (async function registerSW(){
+        if(!("serviceWorker" in navigator)) return;
+        try{
+          await navigator.serviceWorker.register("./sw.js", { scope: "./" });
+        }catch(e){}
+      })();
 
-      window.addEventListener("beforeinstallprompt", (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        $("btnInstall").style.display = "flex";
-      });
-
-      $("btnInstall").addEventListener("click", async () => {
-        if(!deferredPrompt){ showBanner(isInAppBrowser ? "openchrome" : "info"); return; }
-        deferredPrompt.prompt();
-        try{ await deferredPrompt.userChoice; }catch(e){}
-        deferredPrompt = null;
-        $("btnInstall").style.display = "none";
-      });
-
-      $("btnInstallBanner").addEventListener("click", async () => {
-        if(!deferredPrompt){
-          if(isInAppBrowser){ openInChrome(); return; }
-          showBanner("info");
-          return;
-        }
-        deferredPrompt.prompt();
-        try{ await deferredPrompt.userChoice; }catch(e){}
-        deferredPrompt = null;
-        $("btnInstall").style.display = "none";
-        hideBanner();
-      });
-
-      $("btnOpenChrome").addEventListener("click", openInChrome);
-      $("btnCopyLink").addEventListener("click", copyCurrentLink);
-      $("btnHideBanner").addEventListener("click", hideBanner);
-
-      // --------- PIN overlay / teclado ----------
+      /* =========================
+         PIN overlay (teclado)
+         ========================= */
       let pinBuf = "";
 
       function setDots(n){
@@ -2692,18 +2628,6 @@
         $("d2").classList.toggle("on", n>=2);
         $("d3").classList.toggle("on", n>=3);
         $("d4").classList.toggle("on", n>=4);
-      }
-
-      function showLockOverlay(){
-        if(!settings.pinEnabled) return;
-        pinBuf = "";
-        setDots(0);
-        $("lockOverlay").classList.add("show");
-        $("lockOverlay").setAttribute("aria-hidden","false");
-      }
-      function hideLockOverlay(){
-        $("lockOverlay").classList.remove("show");
-        $("lockOverlay").setAttribute("aria-hidden","true");
       }
 
       async function tryUnlockWithPin(pin){
@@ -2719,59 +2643,162 @@
         }
       }
 
-      $("keypad").addEventListener("click", async (e) => {
-        const btn = e.target.closest("button");
-        if(!btn) return;
-        const k = btn.getAttribute("data-k");
-        if(!k) return;
+      if($("keypad")){
+        $("keypad").addEventListener("click", async (e) => {
+          const btn = e.target.closest("button");
+          if(!btn) return;
+          const k = btn.getAttribute("data-k");
+          if(!k) return;
 
-        if(k === "del"){
-          pinBuf = pinBuf.slice(0, -1);
-          setDots(pinBuf.length);
-          return;
-        }
-        if(k === "ok"){
-          if(pinBuf.length !== 4){ toast("Introduce 4 dígitos"); return; }
-          await tryUnlockWithPin(pinBuf);
-          return;
-        }
-        if(/^\d$/.test(k)){
-          if(pinBuf.length >= 4) return;
-          pinBuf += k;
-          setDots(pinBuf.length);
-          if(pinBuf.length === 4){
+          if(k === "del"){
+            pinBuf = pinBuf.slice(0, -1);
+            setDots(pinBuf.length);
+            return;
+          }
+          if(k === "ok"){
+            if(pinBuf.length !== 4){ toast("Introduce 4 dígitos"); return; }
             await tryUnlockWithPin(pinBuf);
+            return;
+          }
+          if(/^\d$/.test(k)){
+            if(pinBuf.length >= 4) return;
+            pinBuf += k;
+            setDots(pinBuf.length);
+            if(pinBuf.length === 4){
+              await tryUnlockWithPin(pinBuf);
+            }
+          }
+        });
+      }
+
+      /* =========================
+         UI: handlers base
+         ========================= */
+      // Tabs
+      if($("tabCommitments")) $("tabCommitments").addEventListener("click", ()=> setPane("commitments"));
+      if($("tabContacts")) $("tabContacts").addEventListener("click", ()=> setPane("contacts"));
+      if($("tabSettings")) $("tabSettings").addEventListener("click", ()=> setPane("settings"));
+
+      // Subtabs
+      if($("tabPending")) $("tabPending").addEventListener("click", setViewPending);
+      if($("tabDone")) $("tabDone").addEventListener("click", setViewDone);
+
+      // FAB
+      if($("fab")){
+        $("fab").addEventListener("click", () => {
+          if(pane === "contacts"){
+            resetContactForm();
+            openContactModal();
+            try{ $("cName").focus(); }catch(e){}
+            return;
+          }
+          resetCommitmentForm();
+          openModal();
+          try{ $("fContact").focus(); }catch(e){}
+        });
+      }
+
+      // Modal Compromiso: cerrar
+      if($("btnClose")) $("btnClose").addEventListener("click", closeModal);
+      if($("btnCancel")) $("btnCancel").addEventListener("click", closeModal);
+      if($("backdrop")){
+        $("backdrop").addEventListener("click", (e)=>{ if(e.target === $("backdrop")) closeModal(); });
+      }
+
+      // Select contacto
+      if($("fContact")) $("fContact").addEventListener("change", onContactSelectChanged);
+
+      // Guardar compromiso
+      if($("btnSave")){
+        $("btnSave").addEventListener("click", async () => {
+          const res = createOrEditCommitment();
+          if(!res) return;
+
+          closeModal();
+          renderAll();
+
+          toast(editingItemId ? "Actualizado ✅" : "Guardado ✅");
+          await prepareShare(res.ev, data.find(x => x.id === res.itemId));
+        });
+      }
+
+      // Modal amigo: cerrar
+      if($("cBtnClose")) $("cBtnClose").addEventListener("click", closeContactModal);
+      if($("cBtnCancel")) $("cBtnCancel").addEventListener("click", closeContactModal);
+      if($("cBackdrop")){
+        $("cBackdrop").addEventListener("click", (e)=>{ if(e.target === $("cBackdrop")) closeContactModal(); });
+      }
+
+      // Guardar amigo
+      if($("cBtnSave")){
+        $("cBtnSave").addEventListener("click", () => {
+          const c = upsertContact($("cName").value, $("cNote").value);
+          if(!c) return;
+
+          closeContactModal();
+          renderAll();
+          toast("Amigo guardado ✅");
+        });
+      }
+
+      /* =========================
+         Ajustes (UI)
+         ========================= */
+      function updateSettingsUI(){
+        const swP = $("swPin");
+        const swN = $("swNotif");
+
+        if(swP){
+          swP.classList.toggle("on", !!settings.pinEnabled);
+          swP.setAttribute("aria-checked", settings.pinEnabled ? "true":"false");
+        }
+        if(swN){
+          swN.classList.toggle("on", !!settings.notifEnabled);
+          swN.setAttribute("aria-checked", settings.notifEnabled ? "true":"false");
+        }
+
+        if($("selAutoLock")) $("selAutoLock").value = String(settings.autoLockMin ?? 0);
+        if($("selRemember")) $("selRemember").value = String(settings.rememberMin ?? 10);
+
+        const hint = $("notifHint");
+        if(hint){
+          const perm = notifPermission();
+          const sup = notifSupported();
+          if(!sup){
+            hint.textContent = "⚠️ Este navegador no soporta notificaciones. Usa “📅 Calendario”.";
+            if($("btnNotifPerm")) $("btnNotifPerm").style.display = "none";
+          }else{
+            if($("btnNotifPerm")) $("btnNotifPerm").style.display = "";
+            if(perm === "granted"){
+              hint.textContent = settings.notifEnabled ? "✅ Notificaciones activadas." : "ℹ️ Permiso OK, pero desactivadas. Actívalas con el switch.";
+            } else if(perm === "denied"){
+              hint.textContent = "🚫 Notificaciones bloqueadas. Permítelas en Ajustes del móvil o reinstala la PWA.";
+            } else {
+              hint.textContent = "ℹ️ Pulsa “Permitir” para recibir recordatorios.";
+            }
           }
         }
-      });
+      }
 
-      $("btnLockCopyLink").addEventListener("click", copyCurrentLink);
-      $("btnLockReset").addEventListener("click", async () => {
-        const ok = await Confirm.open({
-          title: "Borrar todo",
-          msg: `Esto borrará <b>TODO</b> (compromisos, contactos y PIN).<br><span class="dangerTxt">No se puede deshacer.</span>`,
-          yesText: "Sí, borrar todo",
-          danger: true
-        });
-        if(!ok) return;
-        localStorage.clear();
-        location.replace(baseFolderUrl() + "compromisos.html");
-      });
-
-      document.addEventListener("visibilitychange", () => {
-        if(!settings.pinEnabled) return;
-        if(document.visibilityState === "hidden"){
-          const m = Number(settings.autoLockMin || 0);
-          lockAtTs = (m === 0) ? Date.now() : (Date.now() + m*60*1000);
-        } else {
-          if(lockAtTs && Date.now() >= lockAtTs){
-            forceLock();
-          }
+      function setPinEnabled(on){
+        settings.pinEnabled = !!on;
+        if(!settings.pinEnabled){
+          settings.pinHash = null;
+          settings.unlockUntil = 0;
+          sessionUnlocked = false;
           lockAtTs = 0;
         }
-      });
+        save(SETTINGS_KEY, settings);
+        updateSettingsUI();
+      }
 
-      // --------- Modal PIN config ----------
+      function setNotifEnabled(on){
+        settings.notifEnabled = !!on;
+        save(SETTINGS_KEY, settings);
+        updateSettingsUI();
+      }
+
+      // PIN modal
       let pinMode = "enable";
       function openPinModal(mode){
         pinMode = mode;
@@ -2812,94 +2839,83 @@
         $("pinBackdrop").setAttribute("aria-hidden","true");
       }
 
-      function clampPinInput(el){
-        el.value = normalizePin(el.value);
-      }
+      function clampPinInput(el){ el.value = normalizePin(el.value); }
       ["pinOld","pinNew","pinNew2"].forEach(id => {
-        $(id).addEventListener("input", () => clampPinInput($(id)));
+        if($(id)) $(id).addEventListener("input", () => clampPinInput($(id)));
       });
 
-      $("pinClose").addEventListener("click", closePinModal);
-      $("pinCancel").addEventListener("click", closePinModal);
-      $("pinBackdrop").addEventListener("click", (e)=>{ if(e.target === $("pinBackdrop")) closePinModal(); });
+      if($("pinClose")) $("pinClose").addEventListener("click", closePinModal);
+      if($("pinCancel")) $("pinCancel").addEventListener("click", closePinModal);
+      if($("pinBackdrop")){
+        $("pinBackdrop").addEventListener("click", (e)=>{ if(e.target === $("pinBackdrop")) closePinModal(); });
+      }
 
-      $("pinOk").addEventListener("click", async () => {
-        try{
-          if(pinMode === "enable"){
-            const p1 = normalizePin($("pinNew").value);
-            const p2 = normalizePin($("pinNew2").value);
-            if(p1.length !== 4) { toast("PIN inválido"); return; }
-            if(p1 !== p2) { toast("Los PIN no coinciden"); return; }
-            await setPin(p1);
-            settings.pinEnabled = true;
-            settings.unlockUntil = 0;
-            sessionUnlocked = false;
-            save(SETTINGS_KEY, settings);
-            updateSettingsUI();
-            closePinModal();
-            toast("PIN activado ✅");
-            forceLock();
-            return;
+      if($("pinOk")){
+        $("pinOk").addEventListener("click", async () => {
+          try{
+            if(pinMode === "enable"){
+              const p1 = normalizePin($("pinNew").value);
+              const p2 = normalizePin($("pinNew2").value);
+              if(p1.length !== 4) { toast("PIN inválido"); return; }
+              if(p1 !== p2) { toast("Los PIN no coinciden"); return; }
+              await setPin(p1);
+              settings.pinEnabled = true;
+              settings.unlockUntil = 0;
+              sessionUnlocked = false;
+              save(SETTINGS_KEY, settings);
+              updateSettingsUI();
+              closePinModal();
+              toast("PIN activado ✅");
+              forceLock();
+              return;
+            }
+
+            if(pinMode === "change"){
+              const oldp = normalizePin($("pinOld").value);
+              if(oldp.length !== 4) { toast("PIN actual inválido"); return; }
+              const ok = await verifyPin(oldp);
+              if(!ok){ toast("PIN actual incorrecto"); return; }
+
+              const p1 = normalizePin($("pinNew").value);
+              const p2 = normalizePin($("pinNew2").value);
+              if(p1.length !== 4) { toast("Nuevo PIN inválido"); return; }
+              if(p1 !== p2) { toast("Los PIN no coinciden"); return; }
+
+              await setPin(p1);
+              settings.pinEnabled = true;
+              settings.unlockUntil = 0;
+              sessionUnlocked = false;
+              save(SETTINGS_KEY, settings);
+              updateSettingsUI();
+              closePinModal();
+              toast("PIN cambiado ✅");
+              forceLock();
+              return;
+            }
+
+            if(pinMode === "disable"){
+              const oldp = normalizePin($("pinOld").value);
+              if(oldp.length !== 4) { toast("PIN inválido"); return; }
+              const ok = await verifyPin(oldp);
+              if(!ok){ toast("PIN incorrecto"); return; }
+
+              setPinEnabled(false);
+              closePinModal();
+              hideLockOverlay();
+              toast("PIN desactivado");
+              return;
+            }
+          }catch(e){
+            toast("No se pudo aplicar el PIN");
           }
-
-          if(pinMode === "change"){
-            const oldp = normalizePin($("pinOld").value);
-            if(oldp.length !== 4) { toast("PIN actual inválido"); return; }
-            const ok = await verifyPin(oldp);
-            if(!ok){ toast("PIN actual incorrecto"); return; }
-
-            const p1 = normalizePin($("pinNew").value);
-            const p2 = normalizePin($("pinNew2").value);
-            if(p1.length !== 4) { toast("Nuevo PIN inválido"); return; }
-            if(p1 !== p2) { toast("Los PIN no coinciden"); return; }
-
-            await setPin(p1);
-            settings.pinEnabled = true;
-            settings.unlockUntil = 0;
-            sessionUnlocked = false;
-            save(SETTINGS_KEY, settings);
-            updateSettingsUI();
-            closePinModal();
-            toast("PIN cambiado ✅");
-            forceLock();
-            return;
-          }
-
-          if(pinMode === "disable"){
-            const oldp = normalizePin($("pinOld").value);
-            if(oldp.length !== 4) { toast("PIN inválido"); return; }
-            const ok = await verifyPin(oldp);
-            if(!ok){ toast("PIN incorrecto"); return; }
-
-            setPinEnabled(false);
-            closePinModal();
-            hideLockOverlay();
-            toast("PIN desactivado");
-            return;
-          }
-        }catch(e){
-          toast("No se pudo aplicar el PIN");
-        }
-      });
+        });
+      }
 
       function toggleSwitchPin(){
-        if(settings.pinEnabled){ openPinModal("disable"); }
-        else { openPinModal("enable"); }
+        if(settings.pinEnabled) openPinModal("disable");
+        else openPinModal("enable");
       }
 
-      async function resetAll(){
-        const ok = await Confirm.open({
-          title: "Borrar todo",
-          msg: `Esto borrará <b>TODO</b> (compromisos, contactos y ajustes).<br><span class="dangerTxt">No se puede deshacer.</span>`,
-          yesText: "Sí, borrar todo",
-          danger: true
-        });
-        if(!ok) return;
-        localStorage.clear();
-        location.replace(baseFolderUrl() + "compromisos.html");
-      }
-
-      // --------- Notif switch ----------
       function toggleSwitchNotif(){
         if(!settings.notifEnabled){
           if(notifSupported() && notifPermission() !== "granted"){
@@ -2915,155 +2931,86 @@
         }
       }
 
-      // --------- Service worker ----------
-      (async function registerSW(){
-        if(!("serviceWorker" in navigator)) return;
-        try{
-          await navigator.serviceWorker.register("./sw.js", { scope: "./" });
-        }catch(e){}
-      })();
+      if($("swPin")){
+        $("swPin").addEventListener("click", toggleSwitchPin);
+        $("swPin").addEventListener("keydown", (e)=>{ if(e.key==="Enter" || e.key===" "){ e.preventDefault(); toggleSwitchPin(); } });
+      }
+      if($("swNotif")){
+        $("swNotif").addEventListener("click", toggleSwitchNotif);
+        $("swNotif").addEventListener("keydown", (e)=>{ if(e.key==="Enter" || e.key===" "){ e.preventDefault(); toggleSwitchNotif(); } });
+      }
 
-      // --------- Modal compartir handlers ----------
-      $("shareClose").addEventListener("click", closeShareModal);
-      $("shareCancel").addEventListener("click", closeShareModal);
-      $("shareBackdrop").addEventListener("click", (e)=>{ if(e.target === $("shareBackdrop")) closeShareModal(); });
+      if($("btnNotifPerm")) $("btnNotifPerm").addEventListener("click", requestNotifPermission);
 
-      $("shareShort").addEventListener("click", ()=>{ shareState.mode="short"; updateShareUI(); });
-      $("shareLong").addEventListener("click", ()=>{ shareState.mode="long"; updateShareUI(); });
+      if($("selAutoLock")){
+        $("selAutoLock").addEventListener("change", () => {
+          settings.autoLockMin = Number($("selAutoLock").value || 0);
+          save(SETTINGS_KEY, settings);
+          toast("Auto-bloqueo actualizado");
+        });
+      }
+      if($("selRemember")){
+        $("selRemember").addEventListener("change", () => {
+          settings.rememberMin = Number($("selRemember").value || 0);
+          save(SETTINGS_KEY, settings);
+          toast("Recordar desbloqueo actualizado");
+        });
+      }
 
-      $("shareCopyUrl").addEventListener("click", async ()=> {
-        await copyToClipboard(shareState.url || "");
-      });
-      $("shareCopyAll").addEventListener("click", async ()=> {
-        const msg = (shareState.mode === "long") ? shareState.longText : shareState.shortText;
-        const combined = (shareState.title ? shareState.title + "\n" : "") + (msg ? msg + "\n" : "") + shareState.url;
-        await copyToClipboard(combined);
-      });
+      if($("btnChangePin")){
+        $("btnChangePin").addEventListener("click", () => {
+          if(!settings.pinEnabled){ toast("Activa primero el PIN"); return; }
+          openPinModal("change");
+        });
+      }
 
-      $("shareSend").addEventListener("click", doShare);
+      if($("btnLockNow")){
+        $("btnLockNow").addEventListener("click", () => {
+          if(!settings.pinEnabled){ toast("Activa el PIN para bloquear"); setPane("settings"); return; }
+          forceLock();
+        });
+      }
 
-      // --------- UI eventos ----------
-      $("tabCommitments").addEventListener("click", ()=> setPane("commitments"));
-      $("tabContacts").addEventListener("click", ()=> setPane("contacts"));
-      $("tabSettings").addEventListener("click", ()=> setPane("settings"));
+      async function resetAll(){
+        const ok = await Confirm.open({
+          title: "Borrar todo",
+          msg: `Esto borrará <b>TODO</b> (compromisos, amigos y ajustes).<br><b style="color:#B91C1C">No se puede deshacer.</b>`,
+          yesText: "Sí, borrar todo",
+          danger: true
+        });
+        if(!ok) return;
+        localStorage.clear();
+        location.replace(baseFolderUrl() + "compromisos.html");
+      }
+      if($("btnResetAll")) $("btnResetAll").addEventListener("click", resetAll);
 
-      $("tabPending").addEventListener("click", () => {
-        view = "pending";
-        $("tabPending").classList.add("active");
-        $("tabDone").classList.remove("active");
-        renderCommitments();
-      });
-      $("tabDone").addEventListener("click", () => {
-        view = "done";
-        $("tabDone").classList.add("active");
-        $("tabPending").classList.remove("active");
-        renderCommitments();
-      });
+      // Texto grande
+      if($("btnA11y")) $("btnA11y").addEventListener("click", toggleTextScale);
 
-      $("fab").addEventListener("click", () => {
-        if(pane === "contacts"){
-          resetContactForm();
-          openContactModal();
-          $("cName").focus();
-          return;
-        }
-        resetCommitmentForm();
-        openModal();
-        $("fContact").focus();
-      });
-
-      $("btnClose").addEventListener("click", closeModal);
-      $("btnCancel").addEventListener("click", closeModal);
-      $("backdrop").addEventListener("click", (e)=>{ if(e.target === $("backdrop")) closeModal(); });
-
-      $("fContact").addEventListener("change", onContactSelectChanged);
-
-      $("btnSave").addEventListener("click", async () => {
-        const res = createOrEditCommitment();
-        if(!res) return;
-
-        closeModal();
-        renderAll();
-
-        toast(editingItemId ? "Actualizado ✅" : "Guardado ✅");
-        await prepareShare(res.ev, data.find(x => x.id === res.itemId));
-      });
-
-      // Contact modal
-      $("cBtnClose").addEventListener("click", closeContactModal);
-      $("cBtnCancel").addEventListener("click", closeContactModal);
-      $("cBackdrop").addEventListener("click", (e)=>{ if(e.target === $("cBackdrop")) closeContactModal(); });
-
-      $("cBtnSave").addEventListener("click", () => {
-        const c = upsertContact($("cName").value, $("cNote").value);
-        if(!c) return;
-
-        closeContactModal();
-        renderAll();
-        toast("Contacto guardado ✅");
-        // ✅ ya NO abrimos automáticamente aquí; ahora puedes tocar la tarjeta o “➕ Compromiso”
-      });
-
-      // Ajustes
-      $("swPin").addEventListener("click", toggleSwitchPin);
-      $("swPin").addEventListener("keydown", (e)=>{ if(e.key==="Enter" || e.key===" "){ e.preventDefault(); toggleSwitchPin(); } });
-
-      $("swNotif").addEventListener("click", toggleSwitchNotif);
-      $("swNotif").addEventListener("keydown", (e)=>{ if(e.key==="Enter" || e.key===" "){ e.preventDefault(); toggleSwitchNotif(); } });
-
-      $("btnNotifPerm").addEventListener("click", requestNotifPermission);
-
-      $("selAutoLock").addEventListener("change", () => {
-        settings.autoLockMin = Number($("selAutoLock").value || 0);
-        save(SETTINGS_KEY, settings);
-        toast("Auto-bloqueo actualizado");
-      });
-      $("selRemember").addEventListener("change", () => {
-        settings.rememberMin = Number($("selRemember").value || 0);
-        save(SETTINGS_KEY, settings);
-        toast("Recordar desbloqueo actualizado");
-      });
-
-      $("btnChangePin").addEventListener("click", () => {
-        if(!settings.pinEnabled){ toast("Activa primero el PIN"); return; }
-        openPinModal("change");
-      });
-
-      $("btnLockNow").addEventListener("click", () => {
-        if(!settings.pinEnabled){ toast("Activa el PIN para bloquear"); setPane("settings"); return; }
-        forceLock();
-      });
-
-      $("btnResetAll").addEventListener("click", resetAll);
-
-      // ✅ Texto grande (en hero)
-      $("btnA11y").addEventListener("click", toggleTextScale);
-
-      // ✅ Manual plegable
-      $("btnHelpToggle").addEventListener("click", toggleHelp);
-
-      // --------- Píldoras superiores: navegación de notificaciones ----------
+      /* =========================
+         Pills/tiles: navegación rápida (si existen)
+         ========================= */
       function goToCommitmentsPending(){
         setPane("commitments");
-        view = "pending";
-        $("tabPending").classList.add("active");
-        $("tabDone").classList.remove("active");
-        renderCommitments();
+        setViewPending();
         try{ window.scrollTo({ top: 0, behavior: "smooth" }); }catch(e){ window.scrollTo(0,0); }
       }
-
       function scrollToFirstOverdue(){
         const list = $("list");
-        const first = list ? list.querySelector(".due.bad") : null;
+        if(!list) return;
+        const first = list.querySelector(".due.danger");
         if(first){
-          try{
-            const card = first.closest(".card");
-            if(card) card.scrollIntoView({ behavior:"smooth", block:"start" });
-          }catch(e){}
+          const card = first.closest(".card");
+          if(card){
+            try{ card.scrollIntoView({ behavior:"smooth", block:"start" }); }catch(e){}
+          }
         }
       }
 
-      $("btnNotifPend").addEventListener("click", async () => {
+      // Notifs pill dinámica
+      document.addEventListener("click", async (e)=>{
+        const b = e.target.closest("#btnNotifAlerts");
+        if(!b) return;
         const c = Math.max(0, Number(pendingNotifs?.c || 0));
         const alreadyThere = (pane === "commitments" && view === "pending");
         if(!alreadyThere){
@@ -3074,66 +3021,121 @@
         if(c <= 0){ toast("Sin notificaciones"); return; }
 
         const ok = await Confirm.open({
-          title: "Notificaciones pendientes",
-          msg: `Tienes <b>${c}</b> notificación(es) pendiente(s).<br>¿Marcar como leídas y limpiar el contador?`,
+          title: "Notificaciones",
+          msg: `Tienes <b>${c}</b> notificación(es).<br>¿Marcar como leídas y limpiar el contador?`,
           yesText: "Sí, limpiar",
           danger: false
         });
-        if(ok) clearPendingBadge();
+        if(ok) clearNotifAlerts();
       });
 
-      $("btnReceived").addEventListener("click", async () => {
-        const c = Math.max(0, Number(received?.c || 0));
-        const alreadyThere = (pane === "commitments" && view === "pending");
-        if(!alreadyThere){
-          goToCommitmentsPending();
-          toast(c > 0 ? "📥 Paquetes recibidos" : "Sin recibidos");
-          return;
-        }
-        if(c <= 0){ toast("Sin recibidos"); return; }
+      // Recibidos pill (si existe)
+      if($("btnReceived")){
+        $("btnReceived").addEventListener("click", async () => {
+          const c = Math.max(0, Number(received?.c || 0));
+          const alreadyThere = (pane === "commitments" && view === "pending");
+          if(!alreadyThere){
+            goToCommitmentsPending();
+            toast(c > 0 ? "📥 Paquetes recibidos" : "Sin recibidos");
+            return;
+          }
+          if(c <= 0){ toast("Sin recibidos"); return; }
 
-        const ok = await Confirm.open({
-          title: "Recibidos",
-          msg: `Has recibido <b>${c}</b> paquete(s) desde la última vez.<br>¿Marcar como vistos y poner el contador a 0?`,
-          yesText: "Sí, marcar vistos",
-          danger: false
+          const ok = await Confirm.open({
+            title: "Recibidos",
+            msg: `Has recibido <b>${c}</b> paquete(s).<br>¿Marcar como vistos y poner el contador a 0?`,
+            yesText: "Sí, marcar vistos",
+            danger: false
+          });
+          if(ok){
+            clearReceived();
+            renderReceivedBadge();
+            toast("Recibidos marcados ✅");
+          }
         });
-        if(ok){
-          clearReceived();
-          renderReceivedBadge();
-          toast("Recibidos marcados ✅");
-        }
-      });
+      }
 
-      $("btnPendCommit").addEventListener("click", () => {
-        goToCommitmentsPending();
-        toast("📝 Mostrando pendientes");
-      });
-
-      $("btnOverdue").addEventListener("click", () => {
+      // Pendientes / vencidos pills (si existen)
+      if($("btnPendCommit")) $("btnPendCommit").addEventListener("click", ()=>{ goToCommitmentsPending(); toast("📝 Mostrando pendientes"); });
+      if($("btnOverdue")) $("btnOverdue").addEventListener("click", ()=>{
         goToCommitmentsPending();
         const overdueCount = data.filter(x => !x.done && isOverdue(x.when)).length;
         if(overdueCount > 0){
           toast(`⏰ ${overdueCount} vencido(s)`);
           setTimeout(scrollToFirstOverdue, 250);
+        } else toast("Sin vencidos ✅");
+      });
+
+      /* =========================
+         Share modal handlers
+         ========================= */
+      if($("shareClose")) $("shareClose").addEventListener("click", closeShareModal);
+      if($("shareCancel")) $("shareCancel").addEventListener("click", closeShareModal);
+      if($("shareBackdrop")){
+        $("shareBackdrop").addEventListener("click", (e)=>{ if(e.target === $("shareBackdrop")) closeShareModal(); });
+      }
+      if($("shareShort")) $("shareShort").addEventListener("click", ()=>{ shareState.mode="short"; updateShareUI(); });
+      if($("shareLong")) $("shareLong").addEventListener("click", ()=>{ shareState.mode="long"; updateShareUI(); });
+
+      if($("shareCopyUrl")){
+        $("shareCopyUrl").addEventListener("click", async ()=> {
+          await copyToClipboard(shareState.url || "");
+        });
+      }
+      if($("shareCopyAll")){
+        $("shareCopyAll").addEventListener("click", async ()=> {
+          const msg = (shareState.mode === "long") ? shareState.longText : shareState.shortText;
+          const combined = (shareState.title ? shareState.title + "\n" : "") + (msg ? msg + "\n" : "") + shareState.url;
+          await copyToClipboard(combined);
+        });
+      }
+      if($("shareSend")) $("shareSend").addEventListener("click", doShare);
+
+      /* =========================
+         Lock overlay extra buttons
+         ========================= */
+      async function copyCurrentLink(){
+        try{
+          await navigator.clipboard.writeText(location.href);
+          toast("Enlace copiado ✅");
+        }catch(e){
+          toast("No se pudo copiar automáticamente");
+        }
+      }
+
+      if($("btnLockCopyLink")) $("btnLockCopyLink").addEventListener("click", copyCurrentLink);
+      if($("btnLockReset")){
+        $("btnLockReset").addEventListener("click", resetAll);
+      }
+      if($("lockClose")){
+        $("lockClose").addEventListener("click", ()=>{ /* no cerramos si está bloqueada */ toast("Introduce tu PIN"); });
+      }
+
+      document.addEventListener("visibilitychange", () => {
+        if(!settings.pinEnabled) return;
+        if(document.visibilityState === "hidden"){
+          const m = Number(settings.autoLockMin || 0);
+          lockAtTs = (m === 0) ? Date.now() : (Date.now() + m*60*1000);
         } else {
-          toast("Sin vencidos ✅");
+          if(lockAtTs && Date.now() >= lockAtTs){
+            forceLock();
+          }
+          lockAtTs = 0;
         }
       });
 
-      // --------- Boot ----------
+      /* =========================
+         Boot
+         ========================= */
+      // Preferencia texto
       const a11y = load(A11Y_KEY, { big:false });
       setTextScale(!!a11y.big);
 
-      const helpPref = load(HELP_KEY, { show:false });
-      setHelpVisible(!!helpPref.show);
-
       updateSettingsUI();
       renderAll();
-      renderPendingBadge();
-      renderReceivedBadge();
 
-      (function tryImportFromUrl(){
+      // Import desde hash
+      (function(){
         const p = parsePackageFromHash();
         if(!p) return;
 
@@ -3143,63 +3145,30 @@
             localStorage.setItem(INBOX_TS_KEY, String(Date.now()));
           }catch(e){}
           clearHashToBase();
-          showBanner("openchrome_import");
           toast("Para importar: abre en Chrome");
           return;
         }
 
-        try{
-          const pack = parsePackage(p);
-          const ev = unpackEvent(pack);
-          if(!ev) throw new Error("bad");
-          const applied = applyEvent(ev);
-
-          if(applied){
-            incReceived();
-            renderReceivedBadge();
-          }
-
-          renderAll();
-          toast(applied ? "Paquete importado ✅" : "Paquete ya aplicado (o sin cambios)");
-        }catch(e){
-          toast("No se pudo importar el paquete");
-        }
-
+        tryImportPackage(p);
         clearHashToBase();
       })();
 
-      (function tryImportFromInbox(){
+      // Import desde buzón
+      (function(){
         if(isInAppBrowser) return;
         try{
           const p = localStorage.getItem(INBOX_PACK_KEY);
           if(!p) return;
           localStorage.removeItem(INBOX_PACK_KEY);
           localStorage.removeItem(INBOX_TS_KEY);
-
           toast("Importando paquete pendiente…");
-          const pack = parsePackage(p);
-          const ev = unpackEvent(pack);
-          if(!ev) throw new Error("bad");
-          const applied = applyEvent(ev);
-
-          if(applied){
-            incReceived();
-            renderReceivedBadge();
-          }
-
-          renderAll();
-          toast(applied ? "Paquete importado ✅" : "Paquete ya aplicado (o sin cambios)");
+          tryImportPackage(p);
         }catch(e){}
       })();
 
       cleanupFiredMaps();
 
-      setTimeout(() => {
-        if(isStandalone || isIOSStandalone) return;
-        if(isInAppBrowser) showBanner("openchrome");
-        else showBanner(deferredPrompt ? "install" : "info");
-      }, 650);
-
+      // Demo inicial
       if(data.length === 0){
         const now = new Date().toISOString();
         const ev = {
@@ -3224,6 +3193,8 @@
 
       if(settings.pinEnabled && !isUnlockedNow()){
         showLockOverlay();
+      } else {
+        hideLockOverlay();
       }
 
       setInterval(() => {
