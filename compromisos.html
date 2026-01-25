@@ -83,28 +83,26 @@
       box-shadow: var(--shadow);
     }
 
-    /* ✅ Barra superior del hero (izq: indicadores, der: texto grande) */
+    /* ✅ Barra superior del hero (izq: pills + avisos, der: texto grande) */
     .heroBar{
       display:flex;
-      align-items:center;
+      align-items:flex-start;
       justify-content:space-between;
       gap:.625rem;
     }
     .heroLeft{
       display:flex;
-      align-items:center;
+      flex-direction:column;
       gap:.5rem;
       min-width:0;
       flex:1;
-
-      /* ✅ para que quepan varios “avisos” arriba como en tu captura */
-      overflow-x:auto;
-      overflow-y:hidden;
-      -webkit-overflow-scrolling: touch;
-      padding-bottom: .125rem;
-      scrollbar-width: none;
     }
-    .heroLeft::-webkit-scrollbar{ display:none; }
+    .pillRow{
+      display:flex;
+      align-items:center;
+      gap:.5rem;
+      flex-wrap:wrap;
+    }
 
     .pill{
       display:inline-flex; align-items:center; gap:.5rem;
@@ -116,36 +114,43 @@
       font-size: .8125rem;
       font-weight: 850;
       white-space:nowrap;
-      flex: 0 0 auto;
+      user-select:none;
     }
 
     /* ✅ pill clicable */
     .pill.btnPill{
       cursor:pointer;
-      user-select:none;
       transition: transform .08s ease, background .15s ease, border-color .15s ease;
     }
     .pill.btnPill:active{ transform: scale(.99); }
-    .pill.btnPill .badge{
-      margin-left:.25rem;
+
+    .pill .badge{
+      margin-left:.125rem;
       min-width: 1.375rem;
       padding: .125rem .5rem;
       font-size: .78125rem;
       background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.14);
     }
-    .pill.btnPill.muted{
+
+    /* ✅ estados visuales */
+    .pill.muted{
       background: rgba(255,255,255,.06);
       color: var(--muted);
       border-color: rgba(255,255,255,.12);
     }
-    .pill.btnPill.warn{
-      background: rgba(255,204,102,.10);
-      border-color: rgba(255,204,102,.25);
+    .pill.warn{
+      background: rgba(255,204,102,.12);
+      border-color: rgba(255,204,102,.28);
     }
-    .pill.btnPill.info{
-      background: rgba(255,255,255,.05);
-      border-color: rgba(255,255,255,.14);
-      color: var(--text);
+    .pill.bad{
+      background: rgba(255,92,122,.12);
+      border-color: rgba(255,92,122,.30);
+    }
+    .pill.good{
+      background: rgba(54,211,153,.14);
+      border-color: rgba(54,211,153,.28);
+      color:#eafff6;
     }
 
     .hero h2{
@@ -262,37 +267,35 @@
       border-color: rgba(255,255,255,.10);
     }
 
-    .list{ margin-top: .875rem; display:flex; flex-direction:column; gap: .75rem; } /* ✅ más separación */
+    .list{ margin-top: .875rem; display:flex; flex-direction:column; gap: .75rem; }
+
+    /* ✅ Tarjetas con más separación visual */
     .card{
       border-radius: var(--r);
-      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02)); /* ✅ más contraste */
-      border:1px solid rgba(255,255,255,.14); /* ✅ borde un pelín más visible */
-      padding: .75rem;
-      box-shadow: 0 .85rem 2.05rem rgba(0,0,0,.26); /* ✅ más separación visual */
+      background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.035));
+      border:1px solid rgba(255,255,255,.14);
+      padding: .85rem .85rem .8rem;
+      box-shadow: 0 .85rem 2.1rem rgba(0,0,0,.24);
       position:relative;
       overflow:hidden;
     }
-    /* ✅ alterna tono para diferenciar tarjetas */
-    .card.alt{
-      background: linear-gradient(180deg, rgba(107,91,255,.10), rgba(255,255,255,.02));
+    /* Alterna ligeramente el fondo para diferenciar inicio/fin */
+    .list .card:nth-child(odd){
+      background: linear-gradient(180deg, rgba(255,255,255,.11), rgba(255,255,255,.04));
       border-color: rgba(255,255,255,.16);
     }
-    /* ✅ “línea” superior sutil para que se note inicio/fin */
+    /* Barra lateral */
     .card::before{
       content:"";
       position:absolute;
-      left: .75rem;
-      right:.75rem;
-      top: .55rem;
-      height: 1px;
-      background: rgba(255,255,255,.08);
-      pointer-events:none;
+      left:0; top:.65rem; bottom:.65rem;
+      width:.3rem;
+      border-radius: 999px;
+      background: rgba(107,91,255,.75);
+      box-shadow: 0 .625rem 1.25rem rgba(107,91,255,.18);
     }
-    /* ✅ resalte sutil para vencidos al saltar desde el pill */
-    .card.flash{
-      box-shadow: 0 0 0 1px rgba(255,92,122,.40), 0 1.0rem 2.3rem rgba(0,0,0,.28);
-      border-color: rgba(255,92,122,.35);
-    }
+    .card.overdue::before{ background: rgba(255,92,122,.85); box-shadow: 0 .625rem 1.25rem rgba(255,92,122,.18); }
+    .card.done::before{ background: rgba(54,211,153,.85); box-shadow: 0 .625rem 1.25rem rgba(54,211,153,.18); }
 
     .cardTop{ display:flex; justify-content:space-between; gap:.625rem; align-items:flex-start; }
     .who{ min-width:0; }
@@ -323,16 +326,17 @@
       color: var(--text);
       white-space:nowrap;
     }
-    .due.bad{ background: rgba(255,92,122,.14); border-color: rgba(255,92,122,.25); }
+    .due.bad{ background: rgba(255,92,122,.14); border-color: rgba(255,92,122,.30); }
     .desc{
-      margin: .625rem 0 0;
-      font-size: .9375rem;
-      line-height:1.35;
+      margin: .7rem 0 0;
+      font-size: .95rem;
+      line-height:1.38;
       color: var(--text);
-      opacity: .96;
+      opacity: .97;
       word-break: break-word;
+      padding-left: .15rem;
     }
-    .actions{ margin-top: .625rem; display:flex; gap: .625rem; flex-wrap:wrap; }
+    .actions{ margin-top: .7rem; display:flex; gap: .625rem; flex-wrap:wrap; }
     .empty{
       padding: 1.125rem .875rem;
       border-radius: var(--r);
@@ -429,7 +433,7 @@
       line-height:1.35;
     }
 
-    .sheetFoot{ padding: .75rem .875rem .875rem; display:flex; gap: .625rem; flex-wrap:wrap; }
+    .sheetFoot{ padding: .75rem .875rem .875rem; display:flex; gap:.625rem; flex-wrap:wrap; }
 
     .toast{
       position: fixed;
@@ -465,10 +469,12 @@
     }
     .mono.show{ display:block; }
 
+    /* 🔻 statsKicker ya no se usa abajo (todo arriba en pills) */
     .kicker{
       font-size: .8125rem;
       color: var(--muted);
       margin: .625rem 0 0;
+      display:none !important;
     }
 
     .rowline{
@@ -616,11 +622,8 @@
     }
 
     /* ✅ Manual plegable */
-    .helpWrap{ margin-top:.625rem; } /* ✅ un pelín más compacto */
-    .helpMiniBtn{
-      width:100%;
-      justify-content:space-between;
-    }
+    .helpWrap{ margin-top:.625rem; }
+    .helpMiniBtn{ width:100%; justify-content:space-between; }
     .helpBox{
       margin-top:.625rem;
       padding:.75rem;
@@ -646,11 +649,8 @@
     .contactCard{
       cursor:pointer;
       user-select:none;
-      transition: transform .08s ease;
     }
-    .contactCard:active{
-      transform: scale(.995);
-    }
+    .contactCard:active{ transform: scale(.995); }
   </style>
 </head>
 
@@ -672,33 +672,40 @@
     </header>
 
     <section class="hero">
-      <!-- ✅ Arriba: TODO lo “tipo notificación” (pendientes/recibidos/vencidos/avisos) -->
+      <!-- ✅ TODO lo de “notificaciones/pendientes/recibidos/vencidos” arriba -->
       <div class="heroBar">
-        <div class="heroLeft" aria-label="Indicadores">
-          <div class="pill btnPill muted" id="btnNotifPend" title="Avisos pendientes (toca para limpiar)">
-            🔔 Avisos <span class="badge" id="bNotifPend">0</span>
-          </div>
+        <div class="heroLeft">
+          <div class="pillRow" aria-label="Avisos y notificaciones">
+            <div class="pill btnPill muted" id="btnNotifPend" title="Avisos pendientes (toca para limpiar)">
+              🔔 Avisos <span class="badge" id="bNotifPend">0</span>
+            </div>
 
-          <div class="pill btnPill info" id="btnPendCom" title="Compromisos pendientes (toca para ver)">
-            📝 Pendientes <span class="badge" id="bPendCom">0</span>
-          </div>
+            <div class="pill btnPill muted" id="btnPendingTop" title="Compromisos pendientes (toca para ir)">
+              📝 Pendientes <span class="badge" id="bPendingTop">0</span>
+            </div>
 
-          <div class="pill btnPill warn muted" id="btnOverdue" title="Compromisos vencidos (toca para ir a ellos)">
-            ⏰ Vencidos <span class="badge" id="bOverdue">0</span>
-          </div>
+            <div class="pill btnPill muted" id="btnOverdueTop" title="Compromisos vencidos (toca para ver)">
+              ⏰ Vencidos <span class="badge" id="bOverdueTop">0</span>
+            </div>
 
-          <div class="pill btnPill muted" id="btnReceived" title="Compromisos recibidos por enlace (toca para limpiar)">
-            📥 Recibidos <span class="badge" id="bReceived">0</span>
+            <div class="pill btnPill muted" id="btnReceivedTop" title="Cambios/compromisos recibidos (toca para limpiar)">
+              📥 Recibidos <span class="badge" id="bReceivedTop">0</span>
+            </div>
+
+            <div class="pill btnPill muted" id="btnInboxTop" title="Paquete pendiente de importar (toca para abrir banner)" style="display:none">
+              📦 Importación <span class="badge" id="bInboxTop">1</span>
+            </div>
           </div>
         </div>
 
+        <!-- ✅ Zona derecha (círculo rojo en tu captura): texto grande -->
         <button class="iconbtn tgl" id="btnA11y" title="Texto grande">👓 <small id="a11yLabel">Texto</small></button>
       </div>
 
       <h2>Comparte cambios como un enlace (sin cuentas).</h2>
       <p>Ahora puedes enviar un compromiso con un <b>aviso “desde ahora”</b> (5 min / 1 hora…) que se programa al importar.</p>
 
-      <!-- ✅ Manual plegable (limpia pantalla) -->
+      <!-- ✅ Manual plegable -->
       <div class="helpWrap">
         <button class="iconbtn helpMiniBtn" id="btnHelpToggle" title="Guía rápida">
           📘 <span id="helpToggleLabel" style="font-weight:950">Ver guía rápida</span>
@@ -716,7 +723,7 @@
         </div>
       </div>
 
-      <!-- (Se deja oculto; ahora los avisos se muestran arriba en pills) -->
+      <!-- ya no se usa: se mantiene por compat, pero oculto por CSS -->
       <div class="kicker" id="statsKicker" style="display:none"></div>
     </section>
 
@@ -1090,10 +1097,10 @@
       // ✅ Manual plegable
       const HELP_KEY = "compromisos_help_v1";
 
-      // ✅ Indicador local de avisos pendientes (recordatorios)
+      // ✅ Avisos locales (notifs disparadas)
       const PENDING_NOTIF_KEY = "compromisos_pending_notifs_v1";
 
-      // ✅ Indicador local de “recibidos” (importados por enlace)
+      // ✅ Recibidos (cambios importados)
       const RECEIVED_KEY = "compromisos_received_v1";
 
       // Tipos numéricos para acortar paquetes
@@ -1163,56 +1170,70 @@
         localStorage.setItem(key, JSON.stringify(value));
       }
 
-      // --------- Avisos pendientes (recordatorios) ----------
+      // --------- Estado “avisos” arriba ----------
+      // A) Avisos (notificaciones disparadas) -> ya lo tenías, lo mantenemos
       let pendingNotifs = load(PENDING_NOTIF_KEY, { c:0, at:0 });
 
-      function renderPendingBadge(){
-        const c = Math.max(0, Number(pendingNotifs?.c || 0));
-        const pill = $("btnNotifPend");
-        $("bNotifPend").textContent = String(c);
+      // B) Recibidos (importaciones / cambios aplicados por link)
+      let received = load(RECEIVED_KEY, { c:0, at:0 });
 
-        if(c > 0) pill.classList.remove("muted");
-        else pill.classList.add("muted");
+      function setPillState(el, count, kind){
+        const c = Math.max(0, Number(count || 0));
+        el.classList.toggle("muted", c <= 0);
+        el.classList.toggle("warn", kind === "warn" && c > 0);
+        el.classList.toggle("bad",  kind === "bad"  && c > 0);
+        el.classList.toggle("good", kind === "good" && c > 0);
+      }
+
+      function renderTopPills(){
+        // Avisos
+        const a = Math.max(0, Number(pendingNotifs?.c || 0));
+        $("bNotifPend").textContent = String(a);
+        setPillState($("btnNotifPend"), a, "good");
+
+        // Recibidos
+        const r = Math.max(0, Number(received?.c || 0));
+        $("bReceivedTop").textContent = String(r);
+        setPillState($("btnReceivedTop"), r, "good");
+
+        // Pendientes / Vencidos se actualizan desde renderCommitments()
+        // Inbox (paquete pendiente)
+        let hasInbox = false;
+        try{ hasInbox = !!localStorage.getItem(INBOX_PACK_KEY); }catch(e){ hasInbox = false; }
+        $("btnInboxTop").style.display = hasInbox ? "" : "none";
+        if(hasInbox){
+          $("bInboxTop").textContent = "1";
+          setPillState($("btnInboxTop"), 1, "warn");
+        }
       }
 
       function incPendingBadge(){
         pendingNotifs.c = Math.max(0, Number(pendingNotifs.c || 0)) + 1;
         pendingNotifs.at = Date.now();
         save(PENDING_NOTIF_KEY, pendingNotifs);
-        renderPendingBadge();
+        renderTopPills();
       }
 
       function clearPendingBadge(){
         pendingNotifs.c = 0;
         pendingNotifs.at = Date.now();
         save(PENDING_NOTIF_KEY, pendingNotifs);
-        renderPendingBadge();
+        renderTopPills();
         toast("Avisos limpiados");
       }
 
-      // --------- Recibidos (importados) ----------
-      let received = load(RECEIVED_KEY, { c:0, at:0 });
-
-      function renderReceivedBadge(){
-        const c = Math.max(0, Number(received?.c || 0));
-        const pill = $("btnReceived");
-        $("bReceived").textContent = String(c);
-        if(c > 0) pill.classList.remove("muted");
-        else pill.classList.add("muted");
-      }
-
-      function incReceivedBadge(){
+      function incReceived(){
         received.c = Math.max(0, Number(received.c || 0)) + 1;
         received.at = Date.now();
         save(RECEIVED_KEY, received);
-        renderReceivedBadge();
+        renderTopPills();
       }
 
-      function clearReceivedBadge(){
+      function clearReceived(){
         received.c = 0;
         received.at = Date.now();
         save(RECEIVED_KEY, received);
-        renderReceivedBadge();
+        renderTopPills();
         toast("Recibidos limpiados");
       }
 
@@ -1250,6 +1271,7 @@
       function setTextScale(on){
         const isOn = !!on;
         const root = document.documentElement;
+
         root.style.setProperty("--fs-base", isOn ? "18px" : "16px");
 
         const b = $("btnA11y");
@@ -1461,439 +1483,25 @@
         return "🔔";
       }
 
-      // --------- Eventos + paquetes cortos ----------
-      function makeEvent(type, payload){
-        return { id: uid(), type, at: new Date().toISOString(), payload };
+        function baseUrl(){
+        const h = location.href.split("#")[0];
+        return h.split("?")[0];
       }
 
-      function applyEvent(ev){
-        if(!ev || ev.type == null) return false;
-        if(events.some(x => x.id === ev.id)) return false;
-
-        let changed = false;
-
-        if(ev.type === T.CREATE){
-          const p = ev.payload || {};
-          const itemId = p.i || uid();
-
-          const afterMin = Number(p.af || 0);
-          const afterAt = p.aa || null;
-
-          if(!data.some(x => x.id === itemId)){
-            data.push({
-              id: itemId,
-              whoId: p.c || null,
-              whoName: p.w || "Sin nombre",
-              what: p.s || "",
-              when: p.n || null,
-              remindMin: Number(p.r || 0),
-
-              afterMin: afterMin,
-              afterAt: afterAt,
-
-              done: false,
-              createdAt: p.ca || ev.at,
-              doneAt: null,
-              updatedAt: null
-            });
-            changed = true;
-          } else {
-            const it = data.find(x => x.id === itemId);
-            if(it){
-              const before = JSON.stringify(it);
-              it.whoId = p.c || null;
-              it.whoName = p.w || it.whoName;
-              it.what = p.s ?? it.what;
-              it.when = (p.n ?? it.when) || null;
-              it.remindMin = Number(p.r ?? it.remindMin ?? 0);
-
-              if(p.af != null) it.afterMin = afterMin;
-              if(p.aa != null) it.afterAt = afterAt;
-
-              it.updatedAt = ev.at;
-              changed = (JSON.stringify(it) !== before);
-            }
-          }
-        }
-        else if(ev.type === T.DONE){
-          const p = ev.payload || {};
-          const it = data.find(x => x.id === p.i);
-          if(it && !it.done){
-            it.done = true;
-            it.doneAt = ev.at;
-            it.updatedAt = ev.at;
-            changed = true;
-          }
-        }
-        else if(ev.type === T.REOPEN){
-          const p = ev.payload || {};
-          const it = data.find(x => x.id === p.i);
-          if(it && it.done){
-            it.done = false;
-            it.doneAt = null;
-            it.updatedAt = ev.at;
-            changed = true;
-          }
-        }
-        else if(ev.type === T.DELETE){
-          const p = ev.payload || {};
-          const before = data.length;
-          data = data.filter(x => x.id !== p.i);
-          changed = (data.length !== before);
-        }
-        else if(ev.type === T.EDIT){
-          const p = ev.payload || {};
-          const it = data.find(x => x.id === p.i);
-          if(it){
-            const before = JSON.stringify(it);
-            if(p.w != null) it.whoName = p.w;
-            if(p.c != null) it.whoId = p.c || null;
-            if(p.s != null) it.what = p.s;
-            if(p.n != null) it.when = p.n || null;
-            if(p.r != null) it.remindMin = Number(p.r || 0);
-
-            if(p.af != null) it.afterMin = Number(p.af || 0);
-            if(p.aa != null) it.afterAt = p.aa || null;
-
-            it.updatedAt = ev.at;
-            changed = (JSON.stringify(it) !== before);
-          }
-        }
-
-        events.push(ev);
-        save(EVENTS_KEY, events);
-        save(KEY, data);
-
-        cleanupFiredMaps();
-        return changed;
+      function detectInAppBrowser(){
+        const ua = navigator.userAgent || "";
+        // Heurística simple: WhatsApp/Telegram/Facebook/Instagram webviews
+        return /WhatsApp|FBAN|FBAV|Instagram|Telegram|Line|Twitter|TikTok|Snapchat/i.test(ua);
       }
 
-      function packEvent(ev){
-        return { v:1, e:{ i: ev.id, t: ev.type, a: ev.at, p: ev.payload || {} } };
-      }
-      function unpackEvent(pack){
-        if(!pack || pack.v !== 1 || !pack.e) return null;
-        const e = pack.e;
-        if(!e.i || e.t == null || !e.a) return null;
-        return { id: e.i, type: e.t, at: e.a, payload: e.p || {} };
-      }
-      function makePackage(ev){
-        return b64urlEncode(JSON.stringify(packEvent(ev)));
-      }
-      function parsePackage(p){
-        const json = b64urlDecode(p);
-        return JSON.parse(json);
+      function safeClipboardWrite(text){
+        return (navigator.clipboard && navigator.clipboard.writeText)
+          ? navigator.clipboard.writeText(text)
+          : Promise.reject(new Error("no-clipboard"));
       }
 
-      function baseFolderUrl(){
-        const path = location.pathname || "/";
-        const folder = path.replace(/\/[^\/]*$/, "/");
-        return location.origin + folder;
-      }
-      function baseFileUrl(){
-        return location.origin + location.pathname;
-      }
-      function makeLinkFromPackage(p){
-        return baseFolderUrl() + "compromisos.html#p=" + p;
-      }
-
-      function shortPreview(text, n){
-        const s = String(text||"").trim();
-        if(s.length <= n) return s;
-        return s.slice(0, n-1) + "…";
-      }
-
-      // --------- Compartir (modal) ----------
-      let shareState = { title:"", shortText:"", longText:"", url:"", mode:"short" };
-
-      function openShareModal(){
-        $("shareBackdrop").classList.add("show");
-        $("shareBackdrop").setAttribute("aria-hidden","false");
-        updateShareUI();
-      }
-      function closeShareModal(){
-        $("shareBackdrop").classList.remove("show");
-        $("shareBackdrop").setAttribute("aria-hidden","true");
-      }
-      function updateShareUI(){
-        $("shareShort").classList.toggle("active", shareState.mode === "short");
-        $("shareLong").classList.toggle("active", shareState.mode === "long");
-        $("shareTitle").innerHTML = `<b>${escapeHtml(shareState.title || "Compartir")}</b>`;
-        const msg = (shareState.mode === "long") ? shareState.longText : shareState.shortText;
-        $("shareTextBox").textContent = msg || "";
-        $("shareUrlBox").textContent = shareState.url || "";
-      }
-
-      async function copyToClipboard(text){
-        try{
-          await navigator.clipboard.writeText(text);
-          toast("Copiado ✅");
-          return true;
-        }catch(e){
-          prompt("Copia este texto:", text);
-          return true;
-        }
-      }
-
-      async function doShare(){
-        const msg = (shareState.mode === "long") ? shareState.longText : shareState.shortText;
-        const payload = { title: shareState.title || "Compromisos", text: msg, url: shareState.url };
-
-        try{
-          if(navigator.share){
-            await navigator.share(payload);
-            toast("Enviado ✅");
-            closeShareModal();
-            return true;
-          }
-        }catch(e){}
-
-        const combined = (payload.title ? payload.title + "\n" : "") + (payload.text ? payload.text + "\n" : "") + payload.url;
-        await copyToClipboard(combined);
-        closeShareModal();
-        return true;
-      }
-
-      function eventTitle(type){
-        if(type === T.CREATE) return "📌 Nuevo/Actualizado";
-        if(type === T.EDIT) return "✍️ Compromiso editado";
-        if(type === T.DONE) return "✅ Compromiso finalizado";
-        if(type === T.REOPEN) return "↩️ Compromiso reabierto";
-        if(type === T.DELETE) return "🗑️ Compromiso eliminado";
-        return "📦 Paquete";
-      }
-
-      function buildShareMessages(ev, it){
-        const who = it ? normalizedWho(it) : (ev?.payload?.w || "Sin nombre");
-        const what = it ? shortPreview(it.what, 120) : shortPreview(ev?.payload?.s || "", 120);
-        const whenTxt = it?.when ? fmtDate(it.when) : (ev?.payload?.n ? fmtDate(ev.payload.n) : "Sin fecha");
-
-        const afterMin = Number(it?.afterMin || ev?.payload?.af || 0);
-        const afterTxt = afterMin ? `⏳ Aviso en: ${afterMin >= 1440 ? "24h" : (afterMin >= 60 ? (afterMin/60)+"h" : afterMin+"m")}` : "";
-
-        const title = eventTitle(ev.type);
-        const shortMsg =
-          `${title}\n` +
-          `👤 ${who}\n` +
-          (what ? `📝 ${shortPreview(what, 70)}\n` : "") +
-          (afterTxt ? `${afterTxt}\n` : "") +
-          `🔗 Abre el enlace para importar.`;
-
-        const longMsg =
-          `${title}\n` +
-          `👤 Con: ${who}\n` +
-          (what ? `📝 ${what}\n` : "") +
-          `⏰ Para: ${whenTxt}\n` +
-          (afterTxt ? `${afterTxt}\n` : "") +
-          `🔗 Abre el enlace para importar en la app.`;
-
-        return { title, shortMsg, longMsg };
-      }
-
-      async function prepareShare(ev, it){
-        const p = makePackage(ev);
-        const link = makeLinkFromPackage(p);
-
-        const msgs = buildShareMessages(ev, it);
-
-        shareState = {
-          title: msgs.title,
-          shortText: msgs.shortMsg,
-          longText: msgs.longMsg,
-          url: link,
-          mode: "short"
-        };
-
-        openShareModal();
-      }
-
-      // --------- Recordatorios (por fecha + desde ahora) ----------
-      function firedKey(it){
-        return `${it.id}|${it.when||""}|${Number(it.remindMin||0)}|${it.done?"1":"0"}`;
-      }
-      function afterKey(it){
-        return `${it.id}|${it.afterAt||""}|${Number(it.afterMin||0)}|${it.done?"1":"0"}`;
-      }
-
-      function cleanupFiredMaps(){
-        const liveA = new Set();
-        const liveB = new Set();
-
-        for(const it of data){
-          if(it.done) continue;
-
-          if(it.when && Number(it.remindMin||0) > 0){
-            liveA.add(firedKey(it));
-          }
-          if(it.afterAt && Number(it.afterMin||0) > 0){
-            liveB.add(afterKey(it));
-          }
-        }
-
-        const nextA = {};
-        for(const k of Object.keys(firedMap||{})){
-          if(liveA.has(k)) nextA[k] = firedMap[k];
-        }
-        firedMap = nextA;
-        save(REMIND_FIRED_KEY, firedMap);
-
-        const nextB = {};
-        for(const k of Object.keys(afterFired||{})){
-          if(liveB.has(k)) nextB[k] = afterFired[k];
-        }
-        afterFired = nextB;
-        save(AFTER_FIRED_KEY, afterFired);
-      }
-
-      function canNotify(){
-        if(!settings.notifEnabled) return false;
-        if(typeof Notification === "undefined") return false;
-        return Notification.permission === "granted";
-      }
-
-      function sendLocalNotification(title, body){
-        try{
-          if(canNotify()){
-            new Notification(title, { body });
-            return true;
-          }
-        }catch(e){}
-        return false;
-      }
-
-      function checkReminders(){
-        const now = Date.now();
-
-        // A) Por fecha (X min antes)
-        for(const it of data){
-          if(it.done) continue;
-          const rm = Number(it.remindMin||0);
-          if(!it.when || rm <= 0) continue;
-
-          const due = new Date(it.when).getTime();
-          if(Number.isNaN(due)) continue;
-
-          const trigger = due - rm*60*1000;
-          if(now < trigger) continue;
-          if(now > due + 30*60*1000) continue;
-
-          const k = firedKey(it);
-          if(firedMap && firedMap[k]) continue;
-
-          const who = normalizedWho(it);
-          const what = shortPreview(it.what, 80);
-          const dueTxt = fmtDate(it.when);
-
-          const title = `⏰ Compromiso: ${who}`;
-          const body = (what ? what + " · " : "") + `Para: ${dueTxt}`;
-
-          sendLocalNotification(title, body);
-          toast(`⏰ Recordatorio: ${who}`);
-
-          // ✅ sube contador local “avisos”
-          incPendingBadge();
-
-          firedMap[k] = now;
-          save(REMIND_FIRED_KEY, firedMap);
-        }
-
-        // B) Desde ahora (afterAt)
-        for(const it of data){
-          if(it.done) continue;
-          const am = Number(it.afterMin||0);
-          if(!it.afterAt || am <= 0) continue;
-
-          const at = new Date(it.afterAt).getTime();
-          if(Number.isNaN(at)) continue;
-
-          if(now < at) continue;
-          if(now > at + 30*60*1000) continue;
-
-          const k = afterKey(it);
-          if(afterFired && afterFired[k]) continue;
-
-          const who = normalizedWho(it);
-          const what = shortPreview(it.what, 80);
-
-          const title = `🔔 Aviso: ${who}`;
-          const body = what || "Tienes un compromiso pendiente.";
-
-          sendLocalNotification(title, body);
-          toast(`🔔 Aviso: ${who}`);
-
-          // ✅ sube contador local “avisos”
-          incPendingBadge();
-
-          afterFired[k] = now;
-          save(AFTER_FIRED_KEY, afterFired);
-        }
-      }
-
-      // --------- Calendario (.ics) ----------
-      function dtToICS(iso){
-        const d = new Date(iso);
-        if(Number.isNaN(d.getTime())) return null;
-        const y = d.getUTCFullYear();
-        const m = pad2(d.getUTCMonth()+1);
-        const da = pad2(d.getUTCDate());
-        const h = pad2(d.getUTCHours());
-        const mi = pad2(d.getUTCMinutes());
-        const s = pad2(d.getUTCSeconds());
-        return `${y}${m}${da}T${h}${mi}${s}Z`;
-      }
-      function makeICSForItem(it){
-        if(!it.when) return null;
-        const dtStart = dtToICS(it.when);
-        if(!dtStart) return null;
-        const startMs = new Date(it.when).getTime();
-        const endMs = startMs + 15*60*1000;
-        const dtEnd = dtToICS(new Date(endMs).toISOString());
-
-        const who = normalizedWho(it);
-        const summary = `Compromiso: ${who}`;
-        const desc = (it.what || "").replaceAll("\n","\\n");
-        const uidv = `${it.id}@compromisos.local`;
-        const stamp = dtToICS(new Date().toISOString());
-
-        return [
-          "BEGIN:VCALENDAR",
-          "VERSION:2.0",
-          "PRODID:-//Compromisos//Local//ES",
-          "CALSCALE:GREGORIAN",
-          "METHOD:PUBLISH",
-          "BEGIN:VEVENT",
-          `UID:${uidv}`,
-          `DTSTAMP:${stamp}`,
-          `DTSTART:${dtStart}`,
-          `DTEND:${dtEnd}`,
-          `SUMMARY:${summary}`,
-          `DESCRIPTION:${desc}`,
-          "END:VEVENT",
-          "END:VCALENDAR"
-        ].join("\r\n");
-      }
-      async function addToCalendar(itemId){
-        const it = data.find(x => x.id === itemId);
-        if(!it){ toast("No encontrado"); return; }
-        if(!it.when){ toast("Pon una fecha para usar calendario"); return; }
-
-        const ics = makeICSForItem(it);
-        if(!ics){ toast("No se pudo crear el evento"); return; }
-
-        const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
-        const filename = `compromiso_${itemId}.ics`;
-
-        try{
-          if(navigator.canShare && navigator.share){
-            const file = new File([blob], filename, { type: "text/calendar" });
-            if(navigator.canShare({ files: [file] })){
-              await navigator.share({ title: "Añadir al calendario", text: "Abre el archivo para añadirlo a tu calendario.", files: [file] });
-              toast("Evento listo ✅");
-              return;
-            }
-          }
-        }catch(e){}
-
+      function downloadText(filename, text){
+        const blob = new Blob([text], { type:"text/plain;charset=utf-8" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -1901,245 +1509,12 @@
         document.body.appendChild(a);
         a.click();
         a.remove();
-        setTimeout(()=> URL.revokeObjectURL(url), 1200);
-        toast("Descargado .ics ✅ (ábrelo)");
+        setTimeout(()=> URL.revokeObjectURL(url), 500);
       }
 
-      // --------- UI / Vistas ----------
-      function setPane(newPane){
-        pane = newPane;
-        $("tabCommitments").classList.toggle("active", pane==="commitments");
-        $("tabContacts").classList.toggle("active", pane==="contacts");
-        $("tabSettings").classList.toggle("active", pane==="settings");
-
-        $("commitmentsPane").style.display = (pane==="commitments") ? "" : "none";
-        $("contactsPane").style.display = (pane==="contacts") ? "" : "none";
-        $("settingsPane").style.display = (pane==="settings") ? "" : "none";
-
-        if(pane === "settings"){
-          $("fab").style.display = "none";
-        } else {
-          $("fab").style.display = "grid";
-          $("fab").setAttribute("aria-label", pane==="contacts" ? "Nuevo contacto" : "Nuevo compromiso");
-        }
-
-        renderAll();
-      }
-
-      function updateTopIndicators(){
-        const pending = data.filter(x => !x.done);
-        const overdue = pending.filter(x => isOverdue(x.when)).length;
-
-        $("bPendCom").textContent = String(pending.length);
-        $("bOverdue").textContent = String(overdue);
-
-        const pillPend = $("btnPendCom");
-        if(pending.length > 0) pillPend.classList.remove("muted");
-        else pillPend.classList.add("muted");
-
-        const pillOver = $("btnOverdue");
-        pillOver.classList.toggle("muted", overdue <= 0);
-      }
-
-      function flashOverdueCards(){
-        // marca tarjetas vencidas durante un momento para ubicarlas visualmente
-        const cards = Array.from(document.querySelectorAll(".card[data-overdue='1']"));
-        if(!cards.length){
-          toast("No hay vencidos");
-          return;
-        }
-        cards.forEach(c => c.classList.add("flash"));
-        try{
-          cards[0].scrollIntoView({ behavior:"smooth", block:"start" });
-        }catch(e){}
-        setTimeout(()=> cards.forEach(c => c.classList.remove("flash")), 1200);
-      }
-
-      function renderCommitments(){
-        const list = $("list");
-        list.innerHTML = "";
-
-        const pending = data.filter(x => !x.done);
-        const done = data.filter(x => x.done);
-
-        $("bPending").textContent = String(pending.length);
-        $("bDone").textContent = String(done.length);
-        $("bContacts").textContent = String(contacts.length);
-
-        const items = (view === "pending") ? pending : done;
-
-        $("empty").style.display = items.length ? "none" : "block";
-
-        items
-          .slice()
-          .sort((a,b) => {
-            const ta = a.when ? new Date(a.when).getTime() : (view==="pending" ? Number.POSITIVE_INFINITY : 0);
-            const tb = b.when ? new Date(b.when).getTime() : (view==="pending" ? Number.POSITIVE_INFINITY : 0);
-            if(view === "pending") return ta - tb;
-            return (new Date(b.doneAt||0).getTime()) - (new Date(a.doneAt||0).getTime());
-          })
-          .forEach((item, idx) => list.appendChild(renderCard(item, idx)));
-
-        // ✅ ahora el mensaje “tienes vencidos” va arriba en pill (no aquí)
-        $("statsKicker").style.display = "none";
-      }
-
-      function renderCard(item, idx){
-        const card = document.createElement("div");
-        card.className = "card" + (idx % 2 ? " alt" : "");
-        card.dataset.id = item.id;
-
-        const who = normalizedWho(item);
-        const dueText = item.when ? fmtDate(item.when) : "Sin fecha";
-        const overdue = !item.done && isOverdue(item.when);
-        card.dataset.overdue = overdue ? "1" : "0";
-        const dueClass = overdue ? "due bad" : "due";
-
-        const chips = [
-          `<span class="chip">📝 ${escapeHtml(fmtDate(item.createdAt))}</span>`,
-          item.updatedAt ? `<span class="chip">✍️ ${escapeHtml(fmtDate(item.updatedAt))}</span>` : "",
-          item.done ? `<span class="chip">✅ ${escapeHtml(fmtDate(item.doneAt))}</span>` : "",
-          item.when && Number(item.remindMin||0) > 0 ? `<span class="chip">${escapeHtml(remindLabel(item.remindMin))}</span>` : "",
-          item.afterAt && Number(item.afterMin||0) > 0 ? `<span class="chip">⏳ ${escapeHtml(item.afterMin>=60 ? (item.afterMin/60)+"h" : item.afterMin+"m")}</span>` : ""
-        ].filter(Boolean).join("");
-
-        card.innerHTML = `
-          <div class="cardTop">
-            <div class="who">
-              <p class="name">${escapeHtml(who)}</p>
-              <p class="meta">${chips}</p>
-            </div>
-            <div class="${dueClass}">⏰ ${escapeHtml(dueText)}${overdue ? " · Vencido" : ""}</div>
-          </div>
-          <div class="desc">${escapeHtml(item.what || "—")}</div>
-          <div class="actions"></div>
-        `;
-
-        const actions = card.querySelector(".actions");
-        actions.appendChild(mkBtn("📅 Calendario", "btn", () => addToCalendar(item.id)));
-        actions.appendChild(mkBtn("📦 Compartir", "btn primary", () => shareSnapshot(item.id)));
-        if(!item.done){
-          actions.appendChild(mkBtn("✅ Hecho", "btn good", () => markDone(item.id)));
-          actions.appendChild(mkBtn("✍️ Editar", "btn", () => openEditModal(item.id)));
-          actions.appendChild(mkBtn("🗑️ Eliminar", "btn danger", () => deleteItem(item.id)));
-        }else{
-          actions.appendChild(mkBtn("↩️ Reabrir", "btn", () => reopen(item.id)));
-          actions.appendChild(mkBtn("✍️ Editar", "btn", () => openEditModal(item.id)));
-          actions.appendChild(mkBtn("🗑️ Eliminar", "btn danger", () => deleteItem(item.id)));
-        }
-
-        return card;
-      }
-
-      function mkBtn(text, cls, onClick){
-        const b = document.createElement("button");
-        b.className = cls;
-        b.textContent = text;
-        b.addEventListener("click", onClick);
-        return b;
-      }
-
-      function renderContacts(){
-        const list = $("contactsList");
-        list.innerHTML = "";
-        $("bContacts").textContent = String(contacts.length);
-        $("contactsEmpty").style.display = contacts.length ? "none" : "block";
-
-        contacts
-          .slice()
-          .sort((a,b) => (a.name||"").localeCompare(b.name||"", "es"))
-          .forEach(c => list.appendChild(renderContactCard(c)));
-      }
-
-      function openNewCommitmentForContact(contactId){
-        const c = contactById(contactId);
-        if(!c){ toast("Contacto no encontrado"); return; }
-
-        setPane("commitments");
-        resetCommitmentForm();
-        fillContactSelect();
-        $("fContact").value = c.id;
-        toggleCustomWho(false);
-        $("fWho").value = "";
-        openModal();
-        $("fWhat").focus();
-      }
-
-      function renderContactCard(c){
-        const card = document.createElement("div");
-        card.className = "card contactCard";
-        card.dataset.id = c.id;
-
-        const note = c.note ? `<span class="chip">🛈 ${escapeHtml(c.note)}</span>` : "";
-        card.innerHTML = `
-          <div class="cardTop">
-            <div class="who">
-              <p class="name">${escapeHtml(c.name || "Sin nombre")}</p>
-              <p class="meta">
-                <span class="chip">👥 Contacto</span>
-                ${note}
-              </p>
-            </div>
-            <div class="due">➕</div>
-          </div>
-          <div class="desc">${escapeHtml(c.note || "Pulsa para crear un compromiso con esta persona.")}</div>
-          <div class="actions"></div>
-        `;
-
-        const actions = card.querySelector(".actions");
-        actions.appendChild(mkBtn("✍️ Editar", "btn", () => openContactEdit(c.id)));
-        actions.appendChild(mkBtn("🗑️ Eliminar", "btn danger", () => deleteContact(c.id)));
-
-        card.addEventListener("click", (e) => {
-          if(e.target.closest("button")) return;
-          openNewCommitmentForContact(c.id);
-        });
-
-        return card;
-      }
-
-      function renderAll(){
-        renderCommitments();
-        renderContacts();
-        fillContactSelect();
-        updateSettingsUI();
-        renderPendingBadge();
-        renderReceivedBadge();
-        renderTopCounters();
-      }
-
-      // --------- Modal compromiso ----------
-      let editingItemId = null;
-
-      function openModal(){
-        $("backdrop").classList.add("show");
-        $("backdrop").setAttribute("aria-hidden","false");
-      }
-      function closeModal(){
-        $("backdrop").classList.remove("show");
-        $("backdrop").setAttribute("aria-hidden","true");
-      }
-
-      function resetCommitmentForm(){
-        editingItemId = null;
-        $("modalTitle").textContent = "Nuevo compromiso";
-        $("fWhat").value = "";
-        $("fWhen").value = "";
-        $("fWho").value = "";
-        $("fRemind").value = "0";
-        $("fAfter").value = "0";
-        fillContactSelect();
-        $("fContact").value = "__custom__";
-        toggleCustomWho(true);
-      }
-
-      function toggleCustomWho(show){
-        $("customWhoField").style.display = show ? "" : "none";
-      }
-
-      function toInputDatetimeLocal(iso){
-        if(!iso) return "";
-        const d = new Date(iso);
+      function toLocalDateTimeValue(dt){
+        if(!dt) return "";
+        const d = new Date(dt);
         if(Number.isNaN(d.getTime())) return "";
         const yyyy = d.getFullYear();
         const mm = pad2(d.getMonth()+1);
@@ -2149,447 +1524,938 @@
         return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
       }
 
-      function openEditModal(itemId){
-        const it = data.find(x => x.id === itemId);
-        if(!it){ toast("No encontrado"); return; }
+      function fromLocalDateTimeValue(v){
+        const s = String(v||"").trim();
+        if(!s) return "";
+        const d = new Date(s);
+        if(Number.isNaN(d.getTime())) return "";
+        return d.toISOString();
+      }
 
-        editingItemId = itemId;
+      function normalizeText(s, max){
+        let x = String(s ?? "").trim();
+        if(max && x.length > max) x = x.slice(0, max);
+        return x;
+      }
+
+      function nowIso(){ return new Date().toISOString(); }
+
+      function upsertContactByName(name){
+        const n = normalizeText(name, 80);
+        if(!n) return null;
+        const exists = contacts.find(c => (c.name||"").trim().toLowerCase() === n.toLowerCase());
+        if(exists) return exists;
+        const c = { id: uid(), name: n, note:"", createdAt: nowIso(), updatedAt: nowIso(), _ts: Date.now() };
+        contacts.unshift(c);
+        save(CONTACTS_KEY, contacts);
+        return c;
+      }
+
+      function upsertContact(contact){
+        if(!contact || !contact.id) return null;
+        const ts = Number(contact._ts || contact.ts || Date.now());
+        const idx = contacts.findIndex(c => c.id === contact.id);
+        if(idx >= 0){
+          const cur = contacts[idx];
+          const curTs = Number(cur._ts || 0);
+          if(ts >= curTs){
+            contacts[idx] = Object.assign({}, cur, contact, { _ts: ts, updatedAt: contact.updatedAt || nowIso() });
+          }
+        }else{
+          contacts.unshift(Object.assign({}, contact, { _ts: ts }));
+        }
+        save(CONTACTS_KEY, contacts);
+        return contact;
+      }
+
+      function upsertCommitment(item){
+        if(!item || !item.id) return null;
+        const ts = Number(item._ts || item.ts || Date.now());
+        const idx = data.findIndex(x => x.id === item.id);
+        if(idx >= 0){
+          const cur = data[idx];
+          const curTs = Number(cur._ts || 0);
+          if(ts >= curTs){
+            data[idx] = Object.assign({}, cur, item, { _ts: ts, updatedAt: item.updatedAt || nowIso() });
+          }
+        }else{
+          data.unshift(Object.assign({}, item, { _ts: ts }));
+        }
+        save(KEY, data);
+        return item;
+      }
+
+      function removeCommitment(id){
+        data = data.filter(x => x.id !== id);
+        save(KEY, data);
+      }
+
+      function removeContact(id){
+        contacts = contacts.filter(x => x.id !== id);
+        // Además, desvincula compromisos que usaban ese contacto
+        data = data.map(it => it.whoId === id ? Object.assign({}, it, { whoId:null, whoName: it.whoName || "Contacto" }) : it);
+        save(CONTACTS_KEY, contacts);
+        save(KEY, data);
+      }
+
+      // =======================
+      // UI / pestañas
+      // =======================
+      function setPane(name){
+        pane = name;
+        $("commitmentsPane").style.display = (pane==="commitments") ? "" : "none";
+        $("contactsPane").style.display    = (pane==="contacts") ? "" : "none";
+        $("settingsPane").style.display    = (pane==="settings") ? "" : "none";
+
+        $("tabCommitments").classList.toggle("active", pane==="commitments");
+        $("tabContacts").classList.toggle("active", pane==="contacts");
+        $("tabSettings").classList.toggle("active", pane==="settings");
+
+        // FAB
+        $("fab").style.display = (pane==="settings") ? "none" : "";
+
+        renderAll();
+      }
+
+      function setView(v){
+        view = v;
+        $("tabPending").classList.toggle("active", view==="pending");
+        $("tabDone").classList.toggle("active", view==="done");
+        renderCommitments();
+      }
+
+      // =======================
+      // Modal Compromiso
+      // =======================
+      let editingId = null;
+
+      function openModalForNew(){
+        editingId = null;
+        $("modalTitle").textContent = "Nuevo compromiso";
+        $("fWhat").value = "";
+        $("fWhen").value = "";
+        $("fRemind").value = "0";
+        $("fAfter").value = "0";
+        $("customWhoField").style.display = "none";
+        $("fWho").value = "";
+
+        populateContactSelect(null);
+        openBackdrop($("backdrop"));
+      }
+
+      function openModalForEdit(id){
+        const it = data.find(x => x.id === id);
+        if(!it) return;
+
+        editingId = id;
         $("modalTitle").textContent = "Editar compromiso";
+        $("fWhat").value = it.what || "";
+        $("fWhen").value = toLocalDateTimeValue(it.when);
+        $("fRemind").value = String(it.remindMin || 0);
+        $("fAfter").value = String(it.afterMin || 0);
 
-        fillContactSelect();
-        if(it.whoId && contactById(it.whoId)){
-          $("fContact").value = it.whoId;
-          toggleCustomWho(false);
-          $("fWho").value = "";
-        } else {
-          $("fContact").value = "__custom__";
-          toggleCustomWho(true);
-          $("fWho").value = it.whoName || "";
+        populateContactSelect(it.whoId || null, it.whoName || "");
+        openBackdrop($("backdrop"));
+      }
+
+      function closeModal(){
+        closeBackdrop($("backdrop"));
+      }
+
+      function populateContactSelect(selectedId, fallbackName){
+        // Opciones: (nuevo) + lista contactos
+        const sel = $("fContact");
+        sel.innerHTML = "";
+
+        const optNew = document.createElement("option");
+        optNew.value = "__new__";
+        optNew.textContent = "➕ Nuevo contacto (escribir nombre)";
+        sel.appendChild(optNew);
+
+        const optNone = document.createElement("option");
+        optNone.value = "__none__";
+        optNone.textContent = "— Sin contacto —";
+        sel.appendChild(optNone);
+
+        if(contacts.length){
+          const grp = document.createElement("optgroup");
+          grp.label = "Contactos";
+          contacts
+            .slice()
+            .sort((a,b)=> (a.name||"").localeCompare(b.name||"", "es", { sensitivity:"base" }))
+            .forEach(c=>{
+              const o = document.createElement("option");
+              o.value = c.id;
+              o.textContent = c.name + (c.note ? ` · ${c.note}` : "");
+              grp.appendChild(o);
+            });
+          sel.appendChild(grp);
         }
 
-        $("fWhat").value = it.what || "";
-        $("fWhen").value = toInputDatetimeLocal(it.when);
-        $("fRemind").value = String(Number(it.remindMin||0));
-        $("fAfter").value = String(Number(it.afterMin||0));
+        // Selección
+        if(selectedId && contacts.some(c=>c.id===selectedId)){
+          sel.value = selectedId;
+          $("customWhoField").style.display = "none";
+          $("fWho").value = "";
+        } else if(fallbackName){
+          // Si no hay whoId pero hay nombre, selecciona none y muestra el nombre como "nuevo" si el usuario quiere
+          sel.value = "__none__";
+          $("customWhoField").style.display = "none";
+          $("fWho").value = "";
+        } else {
+          sel.value = "__none__";
+          $("customWhoField").style.display = "none";
+          $("fWho").value = "";
+        }
 
-        openModal();
-        $("fWhat").focus();
+        updateCustomWhoField();
       }
 
-      // --------- Contactos modal ----------
+      function updateCustomWhoField(){
+        const v = $("fContact").value;
+        const show = (v === "__new__");
+        $("customWhoField").style.display = show ? "" : "none";
+        if(!show) $("fWho").value = "";
+      }
+
+      function buildCommitmentFromForm(){
+        const what = normalizeText($("fWhat").value, 1000);
+        if(!what){
+          toast("Escribe qué se acordó");
+          return null;
+        }
+
+        const sel = $("fContact").value;
+        let whoId = null;
+        let whoName = "";
+
+        if(sel === "__new__"){
+          const nm = normalizeText($("fWho").value, 80);
+          if(!nm){
+            toast("Escribe el nombre del nuevo contacto");
+            return null;
+          }
+          const c = upsertContactByName(nm);
+          whoId = c ? c.id : null;
+          whoName = c ? c.name : nm;
+        }else if(sel === "__none__"){
+          whoId = null;
+          whoName = "Sin contacto";
+        }else{
+          whoId = sel;
+          const c = contactById(sel);
+          whoName = c?.name || "Contacto";
+        }
+
+        const whenIso = fromLocalDateTimeValue($("fWhen").value);
+        const remindMin = Number($("fRemind").value || 0) || 0;
+        const afterMin  = Number($("fAfter").value || 0) || 0;
+
+        // afterAt: si se selecciona "desde ahora", se programa ya para este móvil
+        let afterAt = "";
+        if(afterMin > 0){
+          afterAt = new Date(Date.now() + afterMin*60*1000).toISOString();
+        }
+
+        const base = {
+          whoId,
+          whoName,
+          what,
+          when: whenIso || "",
+          remindMin,
+          afterMin,
+          afterAt,
+          status: "pending"
+        };
+        return base;
+      }
+
+      function commitSaveAndShare(createdOrEdited){
+        // abre modal compartir automáticamente
+        openShareForCommitment(createdOrEdited.id);
+      }
+
+      // =======================
+      // Modal Contacto
+      // =======================
       let editingContactId = null;
 
-      function openContactModal(){
-        $("cBackdrop").classList.add("show");
-        $("cBackdrop").setAttribute("aria-hidden","false");
-      }
-      function closeContactModal(){
-        $("cBackdrop").classList.remove("show");
-        $("cBackdrop").setAttribute("aria-hidden","true");
-      }
-      function resetContactForm(){
+      function openContactModalNew(){
         editingContactId = null;
         $("cModalTitle").textContent = "Nuevo contacto";
         $("cName").value = "";
         $("cNote").value = "";
+        openBackdrop($("cBackdrop"));
       }
 
-      function openContactEdit(id){
+      function openContactModalEdit(id){
         const c = contacts.find(x => x.id === id);
-        if(!c){ toast("Contacto no encontrado"); return; }
+        if(!c) return;
         editingContactId = id;
         $("cModalTitle").textContent = "Editar contacto";
         $("cName").value = c.name || "";
         $("cNote").value = c.note || "";
-        openContactModal();
-        $("cName").focus();
+        openBackdrop($("cBackdrop"));
       }
 
-      // --------- Contact select ----------
-      function fillContactSelect(){
-        const sel = $("fContact");
-        const current = sel.value;
-        sel.innerHTML = "";
-
-        const optCustom = document.createElement("option");
-        optCustom.value = "__custom__";
-        optCustom.textContent = "✍️ Escribir un nombre (sin guardar)";
-        sel.appendChild(optCustom);
-
-        if(contacts.length){
-          const sep = document.createElement("option");
-          sep.disabled = true;
-          sep.textContent = "──────────";
-          sel.appendChild(sep);
-
-          contacts
-            .slice()
-            .sort((a,b) => (a.name||"").localeCompare(b.name||"", "es"))
-            .forEach(c => {
-              const o = document.createElement("option");
-              o.value = c.id;
-              o.textContent = "👤 " + (c.name || "Sin nombre");
-              sel.appendChild(o);
-            });
-        }
-
-        const optNew = document.createElement("option");
-        optNew.value = "__new_contact__";
-        optNew.textContent = "➕ Crear contacto…";
-        sel.appendChild(optNew);
-
-        if(current){
-          sel.value = current;
-          if(sel.value !== current) sel.value = "__custom__";
-        } else {
-          sel.value = "__custom__";
-        }
+      function closeContactModal(){
+        closeBackdrop($("cBackdrop"));
       }
 
-      function onContactSelectChanged(){
-        const v = $("fContact").value;
-        if(v === "__custom__"){
-          toggleCustomWho(true);
-          return;
-        }
-        if(v === "__new_contact__"){
-          resetContactForm();
-          openContactModal();
-          $("cName").focus();
-          $("fContact").value = "__custom__";
-          toggleCustomWho(true);
-          return;
-        }
-        toggleCustomWho(false);
-        $("fWho").value = "";
+      // =======================
+      // Modal Compartir
+      // =======================
+      let shareMode = "short";
+      let currentSharePack = null;
+
+      function setShareMode(mode){
+        shareMode = mode;
+        $("shareShort").classList.toggle("active", shareMode==="short");
+        $("shareLong").classList.toggle("active",  shareMode==="long");
+        renderShareBoxes();
       }
 
-      // --------- Compromisos acciones ----------
-      function createOrEditCommitment(){
-        const contactSel = $("fContact").value;
-        const what = $("fWhat").value.trim();
-        const whenISO = $("fWhen").value ? new Date($("fWhen").value).toISOString() : null;
-        const remindMin = Number($("fRemind").value || 0);
+      function buildPackForCommitment(id){
+        const it = data.find(x => x.id === id);
+        if(!it) return null;
 
-        const afterMin = Number($("fAfter").value || 0);
-        const afterAt = afterMin > 0 ? new Date(Date.now() + afterMin*60*1000).toISOString() : null;
+        const c = it.whoId ? contactById(it.whoId) : null;
 
-        if(!what){
-          toast("Escribe qué se acordó");
-          $("fWhat").focus();
-          return null;
-        }
-
-        let whoId = null;
-        let whoName = "";
-
-        if(contactSel && contactSel !== "__custom__" && contactSel !== "__new_contact__"){
-          const c = contactById(contactSel);
-          if(!c){ toast("Contacto no válido"); return null; }
-          whoId = c.id;
-          whoName = c.name || "Sin nombre";
-        } else {
-          whoName = $("fWho").value.trim();
-          if(!whoName){
-            toast("Pon con quién es el compromiso");
-            $("fWho").focus();
-            return null;
-          }
-        }
-
-        if(remindMin > 0 && !whenISO){
-          toast("Para recordatorio por fecha necesitas fecha");
-          $("fWhen").focus();
-          return null;
-        }
-
-        const now = new Date().toISOString();
-
-        if(!editingItemId){
-          const itemId = uid();
-          const ev = {
-            id: uid(),
-            type: T.CREATE,
-            at: now,
-            payload: {
-              i: itemId,
-              c: whoId || null,
-              w: whoName,
-              s: what,
-              n: whenISO || null,
-              r: remindMin || 0,
-              af: afterMin || 0,
-              aa: afterAt || null,
-              ca: now
-            }
-          };
-          const changed = applyEvent(ev);
-          if(!changed){ toast("No se pudo guardar"); return null; }
-          return { itemId, ev };
-        } else {
-          const it = data.find(x => x.id === editingItemId);
-          if(!it){ toast("No encontrado"); return null; }
-
-          const ev = {
-            id: uid(),
-            type: T.EDIT,
-            at: now,
-            payload: {
-              i: editingItemId,
-              c: whoId || null,
-              w: whoName,
-              s: what,
-              n: whenISO || null,
-              r: remindMin || 0,
-              af: afterMin || 0,
-              aa: afterAt || null
-            }
-          };
-
-          const changed = applyEvent(ev);
-          if(!changed){ toast("Sin cambios"); return null; }
-          return { itemId: editingItemId, ev };
-        }
-      }
-
-      async function markDone(itemId){
-        const ev = makeEvent(T.DONE, { i: itemId });
-        const changed = applyEvent(ev);
-        renderAll();
-        if(changed){
-          toast("Marcado como hecho ✅");
-          await prepareShare(ev, data.find(x => x.id === itemId));
-        } else toast("Sin cambios");
-      }
-
-      async function reopen(itemId){
-        const ev = makeEvent(T.REOPEN, { i: itemId });
-        const changed = applyEvent(ev);
-        renderAll();
-        if(changed){
-          toast("Reabierto");
-          await prepareShare(ev, data.find(x => x.id === itemId));
-        } else toast("Sin cambios");
-      }
-
-      async function deleteItem(itemId){
-        const ok = await Confirm.open({
-          title: "Eliminar compromiso",
-          msg: `¿Seguro que quieres eliminar este compromiso?<br><span class="dangerTxt">Esta acción no se puede deshacer.</span>`,
-          yesText: "Sí, eliminar",
-          danger: true
-        });
-        if(!ok) return;
-
-        const ev = makeEvent(T.DELETE, { i: itemId });
-        const changed = applyEvent(ev);
-        renderAll();
-        if(changed){
-          toast("Eliminado");
-          await prepareShare(ev, { id:itemId, whoName:"(eliminado)", what:"", when:null, remindMin:0, afterMin:0, afterAt:null, done:false });
-        } else {
-          toast("Sin cambios");
-        }
-      }
-
-      // 📦 Compartir “estado completo”
-      async function shareSnapshot(itemId){
-        const it = data.find(x => x.id === itemId);
-        if(!it){ toast("No encontrado"); return; }
-
-        const af = Number(it.afterMin || 0);
-        const aa = af > 0 ? new Date(Date.now() + af*60*1000).toISOString() : null;
-
-        const ev = {
-          id: uid(),
-          type: T.CREATE,
-          at: new Date().toISOString(),
-          payload: {
-            i: it.id,
-            c: it.whoId || null,
-            w: normalizedWho(it),
-            s: it.what || "",
-            n: it.when || null,
-            r: Number(it.remindMin || 0),
-            af: af || 0,
-            aa: aa,
-            ca: it.createdAt || new Date().toISOString()
-          }
+        // Para importación, el receptor recalcula afterAt si afterMin>0
+        const pack = {
+          v: 1,
+          kind: "commitment",
+          at: Date.now(),
+          commitment: Object.assign({}, it),
+          contact: c ? Object.assign({}, c) : null
         };
-        await prepareShare(ev, it);
+
+        return pack;
       }
 
-      // --------- Contactos CRUD ----------
-      function upsertContact(name, note){
-        const n = String(name||"").trim();
-        if(!n){ toast("Pon un nombre"); return null; }
+      function packToUrl(pack){
+        const enc = b64urlEncode(JSON.stringify(pack));
+        return baseUrl() + "?p=" + enc;
+      }
 
-        if(!editingContactId){
-          const c = { id: uid(), name: n, note: String(note||"").trim(), createdAt: new Date().toISOString() };
-          contacts.push(c);
-          save(CONTACTS_KEY, contacts);
-          return c;
+      function renderShareBoxes(){
+        if(!currentSharePack) return;
+
+        const it = currentSharePack.commitment || {};
+        const who = normalizedWho(it);
+        const whenTxt = it.when ? fmtDate(it.when) : "Sin fecha";
+        const afterTxt = it.afterMin ? ` · ⏳ Desde ahora: ${it.afterMin} min` : "";
+        const remindTxt = (it.when && it.remindMin) ? ` · ${remindLabel(it.remindMin)} antes` : "";
+
+        const url = packToUrl(currentSharePack);
+
+        const shortMsg =
+`📝 Compromiso
+👤 ${who}
+📌 ${it.what || ""}
+📅 ${whenTxt}${afterTxt}${remindTxt}
+
+🔗 Abrir e importar:
+${url}`;
+
+        const longMsg =
+`📝 COMPROMISO (detallado)
+👤 Con: ${who}
+📌 Texto: ${it.what || ""}
+📅 Fecha: ${whenTxt}
+🔔 Recordatorio (por fecha): ${it.remindMin ? `${it.remindMin} min antes` : "No"}
+⏳ Aviso “desde ahora”: ${it.afterMin ? `Sí, en ${it.afterMin} min` : "No"}
+✅ Estado: ${it.status === "done" ? "Hecho" : "Pendiente"}
+
+🔗 Enlace de importación:
+${url}`;
+
+        $("shareTextBox").textContent = (shareMode==="short") ? shortMsg : longMsg;
+        $("shareUrlBox").textContent  = url;
+
+        $("shareTitle").innerHTML = `Comparte este compromiso con <b>${escapeHtml(who)}</b>.`;
+      }
+
+      function openShareForCommitment(id){
+        const pack = buildPackForCommitment(id);
+        if(!pack){
+          toast("No se pudo preparar el paquete");
+          return;
+        }
+        currentSharePack = pack;
+        setShareMode("short");
+        openBackdrop($("shareBackdrop"));
+      }
+
+      function closeShare(){
+        closeBackdrop($("shareBackdrop"));
+        currentSharePack = null;
+      }
+
+      // =======================
+      // Backdrops helpers
+      // =======================
+      function openBackdrop(el){
+        if(settings.pinEnabled && !isUnlockedNow()){
+          showLockOverlay();
+          return;
+        }
+        el.classList.add("show");
+        el.setAttribute("aria-hidden","false");
+      }
+      function closeBackdrop(el){
+        el.classList.remove("show");
+        el.setAttribute("aria-hidden","true");
+      }
+
+      // =======================
+      // Render compromisos
+      // =======================
+      function renderCommitments(){
+        const list = $("list");
+        list.innerHTML = "";
+
+        const pending = data.filter(x => (x.status||"pending") !== "done");
+        const done    = data.filter(x => (x.status||"pending") === "done");
+
+        const pendingCount = pending.length;
+        const doneCount = done.length;
+
+        // Vencidos: pendientes con fecha y ya pasó
+        const overdueCount = pending.filter(x => x.when && isOverdue(x.when)).length;
+
+        $("bPending").textContent = String(pendingCount);
+        $("bDone").textContent = String(doneCount);
+
+        // Top pills
+        $("bPendingTop").textContent = String(pendingCount);
+        $("bOverdueTop").textContent = String(overdueCount);
+
+        setPillState($("btnPendingTop"), pendingCount, "good");
+        setPillState($("btnOverdueTop"), overdueCount, "bad");
+
+        const arr = (view==="pending") ? pending : done;
+
+        if(arr.length === 0){
+          $("empty").style.display = "";
         } else {
-          const c = contacts.find(x => x.id === editingContactId);
-          if(!c){ toast("No encontrado"); return null; }
-          c.name = n;
-          c.note = String(note||"").trim();
-          c.updatedAt = new Date().toISOString();
-          save(CONTACTS_KEY, contacts);
-          save(KEY, data);
-          return c;
+          $("empty").style.display = "none";
         }
-      }
 
-      async function deleteContact(id){
-        const ok = await Confirm.open({
-          title: "Eliminar contacto",
-          msg: `¿Eliminar este contacto?<br><span class="dangerTxt">Los compromisos quedarán con el nombre “guardado”.</span>`,
-          yesText: "Sí, eliminar",
-          danger: true
-        });
-        if(!ok) return;
-
-        data.forEach(it => {
-          if(it.whoId === id){
-            it.whoName = normalizedWho(it);
-            it.whoId = null;
+        // Orden: pendientes por fecha asc (sin fecha al final). Hechos por doneAt desc.
+        const sorted = arr.slice().sort((a,b)=>{
+          if(view==="done"){
+            return (new Date(b.doneAt||0).getTime() - new Date(a.doneAt||0).getTime());
           }
+          const aw = a.when ? new Date(a.when).getTime() : Infinity;
+          const bw = b.when ? new Date(b.when).getTime() : Infinity;
+          if(aw !== bw) return aw - bw;
+          return (new Date(b.updatedAt||0).getTime() - new Date(a.updatedAt||0).getTime());
         });
-        contacts = contacts.filter(x => x.id !== id);
 
-        save(CONTACTS_KEY, contacts);
-        save(KEY, data);
+        sorted.forEach(it=>{
+          const card = document.createElement("div");
+          const overdue = (it.status!=="done" && it.when && isOverdue(it.when));
+          card.className = "card" + (overdue ? " overdue" : "") + (it.status==="done" ? " done" : "");
 
-        renderAll();
-        toast("Contacto eliminado");
+          const who = normalizedWho(it);
+          const metaBits = [];
+          if(it.when) metaBits.push(`<span class="chip">📅 ${escapeHtml(fmtDate(it.when))}</span>`);
+          if(it.when && it.remindMin) metaBits.push(`<span class="chip">${escapeHtml(remindLabel(it.remindMin))}</span>`);
+          if(it.afterMin) metaBits.push(`<span class="chip">⏳ ${escapeHtml(String(it.afterMin))}m</span>`);
+          if(it.status==="done") metaBits.push(`<span class="chip">✅ Hecho</span>`);
+          if(overdue) metaBits.push(`<span class="chip" style="border-color:rgba(255,92,122,.35); background: rgba(255,92,122,.10); color: rgba(255,230,235,.95)">⏰ Vencido</span>`);
+
+          const duePill = it.when
+            ? `<div class="due ${overdue ? "bad" : ""}">${overdue ? "⏰ Vencido" : "📅 Con fecha"}</div>`
+            : `<div class="due" style="background: rgba(255,255,255,.06); color: var(--muted);">Sin fecha</div>`;
+
+          card.innerHTML = `
+            <div class="cardTop">
+              <div class="who">
+                <p class="name">${escapeHtml(who)}</p>
+                <div class="meta">${metaBits.join("")}</div>
+              </div>
+              ${duePill}
+            </div>
+            <div class="desc">${escapeHtml(it.what || "")}</div>
+            <div class="actions"></div>
+          `;
+
+          const actions = card.querySelector(".actions");
+
+          function addBtn(txt, cls, onClick){
+            const b = document.createElement("button");
+            b.className = "btn " + (cls||"");
+            b.type = "button";
+            b.textContent = txt;
+            b.addEventListener("click", onClick);
+            actions.appendChild(b);
+          }
+
+          if(it.status==="done"){
+            addBtn("↩️ Reabrir", "", async ()=>{
+              const ok = await Confirm.open({
+                title: "Reabrir compromiso",
+                msg: `¿Reabrir este compromiso con <b>${escapeHtml(who)}</b>?`,
+                yesText: "Reabrir",
+                danger: false
+              });
+              if(!ok) return;
+              it.status = "pending";
+              it.doneAt = "";
+              it.updatedAt = nowIso();
+              it._ts = Date.now();
+              upsertCommitment(it);
+              renderAll();
+              toast("Reabierto");
+            });
+          }else{
+            addBtn("✅ Hecho", "good", async ()=>{
+              const ok = await Confirm.open({
+                title: "Marcar como hecho",
+                msg: `¿Marcar como hecho el compromiso con <b>${escapeHtml(who)}</b>?`,
+                yesText: "Sí, hecho",
+                danger: false
+              });
+              if(!ok) return;
+              it.status = "done";
+              it.doneAt = nowIso();
+              it.updatedAt = nowIso();
+              it._ts = Date.now();
+              upsertCommitment(it);
+              renderAll();
+              toast("Marcado como hecho");
+            });
+          }
+
+          addBtn("✏️ Editar", "", ()=>{
+            openModalForEdit(it.id);
+          });
+
+          addBtn("📤 Compartir", "primary", ()=>{
+            openShareForCommitment(it.id);
+          });
+
+          // Calendario (ICS)
+          addBtn("📅 Calendario", "", ()=>{
+            if(!it.when){
+              toast("Pon una fecha para exportar");
+              return;
+            }
+            const dt = new Date(it.when);
+            if(Number.isNaN(dt.getTime())){
+              toast("Fecha inválida");
+              return;
+            }
+            const end = new Date(dt.getTime() + 30*60*1000); // 30 min
+            const ics = buildICS({
+              title: `Compromiso: ${normalizedWho(it)}`,
+              desc: it.what || "",
+              start: dt,
+              end
+            });
+            downloadText("compromiso.ics", ics);
+            toast("ICS descargado");
+          });
+
+          addBtn("🗑️ Eliminar", "danger", async ()=>{
+            const ok = await Confirm.open({
+              title: "Eliminar",
+              msg: `<span class="dangerTxt">Esta acción no se puede deshacer.</span><br><br>¿Eliminar el compromiso con <b>${escapeHtml(who)}</b>?`,
+              yesText: "Eliminar",
+              danger: true
+            });
+            if(!ok) return;
+
+            // limpiar disparos asociados
+            delete firedMap[it.id + "|remind"];
+            delete firedMap[it.id + "|due"];
+            delete afterFired[it.id];
+
+            save(REMIND_FIRED_KEY, firedMap);
+            save(AFTER_FIRED_KEY, afterFired);
+
+            removeCommitment(it.id);
+            renderAll();
+            toast("Eliminado");
+          });
+
+          list.appendChild(card);
+        });
+
+        // También en contactos tab badge
+        $("bContacts").textContent = String(contacts.length);
+
+        // Pills superiores (las otras)
+        renderTopPills();
       }
 
-      // --------- Import desde URL (robusto con “buzón”) ----------
-      function parsePackageFromHash(){
-        const h = location.hash || "";
-        const m = h.match(/#p=([A-Za-z0-9\-_]+)/);
-        return m ? m[1] : null;
+      function renderContacts(){
+        const list = $("contactsList");
+        list.innerHTML = "";
+
+        $("bContacts").textContent = String(contacts.length);
+
+        if(!contacts.length){
+          $("contactsEmpty").style.display = "";
+        }else{
+          $("contactsEmpty").style.display = "none";
+        }
+
+        const sorted = contacts.slice().sort((a,b)=> (a.name||"").localeCompare(b.name||"", "es", { sensitivity:"base" }));
+        sorted.forEach(c=>{
+          const card = document.createElement("div");
+          card.className = "card contactCard";
+          card.innerHTML = `
+            <div class="cardTop">
+              <div class="who">
+                <p class="name">${escapeHtml(c.name||"")}</p>
+                <div class="meta">
+                  ${c.note ? `<span class="chip">📝 ${escapeHtml(c.note)}</span>` : `<span class="chip">Sin nota</span>`}
+                  <span class="chip">👥 Contacto</span>
+                </div>
+              </div>
+              <div class="due" style="background: rgba(255,255,255,.06); color: var(--muted);">Amigo</div>
+            </div>
+            <div class="desc" style="color: var(--muted);">Toca para editar · o mantén para borrar</div>
+          `;
+
+          // click -> editar
+          card.addEventListener("click", ()=>{
+            openContactModalEdit(c.id);
+          });
+
+          // long press -> borrar (sencillo: contextmenu)
+          card.addEventListener("contextmenu", async (e)=>{
+            e.preventDefault();
+            const ok = await Confirm.open({
+              title: "Eliminar contacto",
+              msg: `<span class="dangerTxt">Esta acción no se puede deshacer.</span><br><br>¿Eliminar a <b>${escapeHtml(c.name||"")}</b>?<br><small style="color:var(--muted)">Los compromisos vinculados quedarán como “sin contacto”.</small>`,
+              yesText: "Eliminar",
+              danger: true
+            });
+            if(!ok) return;
+            removeContact(c.id);
+            renderAll();
+            toast("Contacto eliminado");
+          });
+
+          list.appendChild(card);
+        });
+
+        renderTopPills();
       }
 
-      function clearHashToBase(){
-        try{
-          history.replaceState(null, "", baseFileUrl());
-        }catch(e){
-          location.hash = "";
+      function renderAll(){
+        if(pane==="commitments"){
+          renderCommitments();
+        }else if(pane==="contacts"){
+          renderContacts();
+        }else{
+          // settings
+          updateSettingsUI();
+          renderTopPills();
         }
       }
 
-      // --------- PWA banner ----------
-      const isAndroid = /Android/i.test(navigator.userAgent || "");
-      const isStandalone = window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
-      const isIOSStandalone = !!navigator.standalone;
-      const isInAppBrowser = (function(){
-        const ua = (navigator.userAgent || "").toLowerCase();
-        return ua.includes("wv") || ua.includes("webview") ||
-               ua.includes("instagram") ||
-               ua.includes("fbav") || ua.includes("fb_iab") ||
-               ua.includes("telegram") ||
-               ua.includes("whatsapp");
-      })();
+      // =======================
+      // Importación por URL
+      // =======================
+      function getPackFromUrl(){
+        try{
+          const u = new URL(location.href);
+          const p = u.searchParams.get("p");
+          if(!p) return null;
+          const json = b64urlDecode(p);
+          const pack = JSON.parse(json);
+          if(!pack || !pack.v) return null;
+          return pack;
+        }catch(e){ return null; }
+      }
 
+      function clearUrlParamP(){
+        try{
+          const u = new URL(location.href);
+          if(!u.searchParams.has("p")) return;
+          u.searchParams.delete("p");
+          history.replaceState({}, "", u.toString());
+        }catch(e){}
+      }
+
+      function storeInboxPack(pack){
+        try{
+          localStorage.setItem(INBOX_PACK_KEY, JSON.stringify(pack));
+          localStorage.setItem(INBOX_TS_KEY, String(Date.now()));
+        }catch(e){}
+      }
+
+      function readInboxPack(){
+        try{
+          const raw = localStorage.getItem(INBOX_PACK_KEY);
+          if(!raw) return null;
+          return JSON.parse(raw);
+        }catch(e){ return null; }
+      }
+
+      function clearInboxPack(){
+        try{
+          localStorage.removeItem(INBOX_PACK_KEY);
+          localStorage.removeItem(INBOX_TS_KEY);
+        }catch(e){}
+      }
+
+      function applyPack(pack){
+        if(!pack) return false;
+        if(pack.kind !== "commitment") return false;
+
+        // Upsert contacto si viene
+        if(pack.contact && pack.contact.id){
+          upsertContact(pack.contact);
+        }
+
+        // Upsert compromiso
+        if(pack.commitment && pack.commitment.id){
+          const it = Object.assign({}, pack.commitment);
+
+          // Recalcula afterAt en el receptor si afterMin>0
+          const afterMin = Number(it.afterMin || 0) || 0;
+          if(afterMin > 0){
+            it.afterAt = new Date(Date.now() + afterMin*60*1000).toISOString();
+          }else{
+            it.afterAt = it.afterAt || "";
+          }
+
+          // Asegura campos mínimos
+          it.status = (it.status==="done") ? "done" : "pending";
+          it.updatedAt = nowIso();
+          it._ts = Date.now();
+
+          upsertCommitment(it);
+        }
+
+        incReceived();
+        renderAll();
+        return true;
+      }
+
+      // =======================
+      // Banner dinámico: instalar / abrir en chrome / importar
+      // =======================
       let deferredPrompt = null;
 
-      function showBanner(mode){
+      function ensureImportButton(){
+        let btn = $("btnImportNow");
+        if(btn) return btn;
+
+        btn = document.createElement("button");
+        btn.className = "btn good";
+        btn.id = "btnImportNow";
+        btn.textContent = "📥 Importar ahora";
+
+        // insertarlo en la fila del banner
+        const row = $("installBanner").querySelector(".row");
+        row.insertBefore(btn, $("btnHideBanner"));
+
+        btn.addEventListener("click", ()=>{
+          const pack = readInboxPack();
+          if(!pack){
+            toast("No hay paquete pendiente");
+            renderTopPills();
+            return;
+          }
+          const ok = applyPack(pack);
+          if(ok){
+            clearInboxPack();
+            $("installBanner").classList.remove("show");
+            renderTopPills();
+            toast("Importado ✅");
+          }else{
+            toast("No se pudo importar");
+          }
+        });
+
+        return btn;
+      }
+
+      function showInstallBanner(reason){
+        // reason: "install" | "openChrome" | "inbox"
         const banner = $("installBanner");
-        const title = $("installTitle");
-        const text = $("installText");
-        const bInstall = $("btnInstallBanner");
-        const bOpen = $("btnOpenChrome");
-        const bCopy = $("btnCopyLink");
 
-        bInstall.style.display = "none";
-        bOpen.style.display = "none";
-        bCopy.style.display = "none";
+        // reset
+        $("btnInstallBanner").style.display = "none";
+        $("btnOpenChrome").style.display = "none";
+        $("btnCopyLink").style.display = "none";
+        const imp = ensureImportButton();
+        imp.style.display = "none";
 
-        if(mode === "openchrome_import"){
-          title.textContent = "Importación pendiente";
-          text.innerHTML = "Has abierto el enlace desde un navegador interno. <b>Abre en Chrome</b> para importar el compromiso en la app (y poder instalar).";
-          bOpen.style.display = "flex";
-          bCopy.style.display = "flex";
-        } else if(mode === "openchrome"){
-          title.textContent = "Ábrelo en Chrome para instalarla";
-          text.innerHTML = "Estás en un navegador interno (WhatsApp/Telegram). Para instalar, toca <b>Abrir en Chrome</b>.";
-          bOpen.style.display = "flex";
-          bCopy.style.display = "flex";
-        } else if(mode === "install"){
-          title.textContent = "Instálala para usarla como app";
-          text.innerHTML = "Pulsa <b>Instalar</b>. Luego se abrirá como una app normal desde el icono.";
-          bInstall.style.display = "flex";
+        if(reason === "inbox"){
+          $("installTitle").textContent = "📦 Paquete pendiente de importar";
+          $("installText").innerHTML = `Tienes un paquete listo. Pulsa <b>Importar ahora</b>. Si estás dentro de una app (WhatsApp/Telegram), mejor <b>Abrir en Chrome</b>.`;
+          imp.style.display = "";
+          $("btnOpenChrome").style.display = detectInAppBrowser() ? "" : "none";
+          $("btnCopyLink").style.display = detectInAppBrowser() ? "" : "none";
+        } else if(reason === "openChrome"){
+          $("installTitle").textContent = "🌐 Abre en Chrome";
+          $("installText").innerHTML = `Si estás dentro de WhatsApp/Telegram, toca <b>Abrir en Chrome</b> (o “Abrir en navegador”) para que la instalación/importación funcione mejor.`;
+          $("btnOpenChrome").style.display = "";
+          $("btnCopyLink").style.display = "";
         } else {
-          title.textContent = "Consejo";
-          text.innerHTML = "Si no ves “Instalar” en el menú, abre en <b>Chrome</b> o instala desde el menú <b>⋮</b>.";
-          bCopy.style.display = "flex";
-          if(isInAppBrowser) bOpen.style.display = "flex";
+          $("installTitle").textContent = "Instálala para usarla como app";
+          $("installText").innerHTML = `Recomendado para recordatorios y para importar enlaces sin fallos.`;
+          $("btnInstallBanner").style.display = deferredPrompt ? "" : "none";
+          $("btnCopyLink").style.display = detectInAppBrowser() ? "" : "none";
+          $("btnOpenChrome").style.display = detectInAppBrowser() ? "" : "none";
         }
 
         banner.classList.add("show");
       }
 
-      function hideBanner(){ $("installBanner").classList.remove("show"); }
-
-      async function copyCurrentLink(){
-        try{
-          await navigator.clipboard.writeText(location.href);
-          toast("Enlace copiado ✅");
-        }catch(e){
-          prompt("Copia este enlace:", location.href);
-        }
-      }
-
-      function openInChrome(){
-        const url = location.href;
-        if(isAndroid){
-          try{
-            const u = new URL(url);
-            const path = (u.pathname || "/") + (u.search || "") + (u.hash || "");
-            const intent = "intent://" + u.host + path + "#Intent;scheme=https;package=com.android.chrome;end";
-            location.href = intent;
-            return;
-          }catch(e){}
-        }
-        try{ window.open(url, "_blank"); }
-        catch(e){ copyCurrentLink(); toast("Copia el enlace y pégalo en Chrome"); }
-      }
-
-      window.addEventListener("beforeinstallprompt", (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        $("btnInstall").style.display = "flex";
-      });
-
-      $("btnInstall").addEventListener("click", async () => {
-        if(!deferredPrompt){ showBanner(isInAppBrowser ? "openchrome" : "info"); return; }
-        deferredPrompt.prompt();
-        try{ await deferredPrompt.userChoice; }catch(e){}
-        deferredPrompt = null;
-        $("btnInstall").style.display = "none";
-      });
-
-      $("btnInstallBanner").addEventListener("click", async () => {
-        if(!deferredPrompt){
-          if(isInAppBrowser){ openInChrome(); return; }
-          showBanner("info");
+      function maybeShowBanner(){
+        // prioridad: inbox
+        const inbox = !!localStorage.getItem(INBOX_PACK_KEY);
+        if(inbox){
+          showInstallBanner("inbox");
           return;
         }
-        deferredPrompt.prompt();
-        try{ await deferredPrompt.userChoice; }catch(e){}
-        deferredPrompt = null;
-        $("btnInstall").style.display = "none";
-        hideBanner();
-      });
+        // si está en in-app browser, aconseja abrir en chrome
+        if(detectInAppBrowser()){
+          showInstallBanner("openChrome");
+          return;
+        }
+        // si hay install prompt, sugiere instalación
+        if(deferredPrompt){
+          showInstallBanner("install");
+        }
+      }
 
-      $("btnOpenChrome").addEventListener("click", openInChrome);
-      $("btnCopyLink").addEventListener("click", copyCurrentLink);
-      $("btnHideBanner").addEventListener("click", hideBanner);
+      // =======================
+      // Notificaciones / recordatorios
+      // =======================
+      function showNotification(title, body){
+        // siempre toast como fallback
+        toast(title);
 
-      // --------- PIN overlay / teclado ----------
-      let pinBuf = "";
+        if(!settings.notifEnabled) return;
+        if(!notifSupported()) return;
+        if(notifPermission() !== "granted") return;
+
+        try{
+          const n = new Notification(title, { body: body || "" });
+          setTimeout(()=>{ try{ n.close(); }catch(e){} }, 7000);
+        }catch(e){}
+      }
+
+      function checkAndFireReminders(){
+        const now = Date.now();
+
+        // PIN: si está bloqueado, no molestamos con notifs internas (pero los push del sistema sí)
+        // Aun así contamos vencidos para pills, etc.
+        data.forEach(it=>{
+          if(it.status === "done") return;
+
+          // A) Recordatorio por fecha
+          if(it.when && it.remindMin){
+            const when = new Date(it.when).getTime();
+            if(!Number.isFinite(when)) return;
+
+            const remindAt = when - Number(it.remindMin)*60*1000;
+            const key = it.id + "|remind";
+            if(remindAt <= now && !firedMap[key]){
+              firedMap[key] = now;
+              save(REMIND_FIRED_KEY, firedMap);
+
+              const who = normalizedWho(it);
+              showNotification(`🔔 Recordatorio (${who})`, it.what || "");
+              incPendingBadge();
+            }
+          }
+
+          // B) Aviso “desde ahora” (afterAt)
+          if(it.afterAt){
+            const at = new Date(it.afterAt).getTime();
+            if(Number.isFinite(at) && at <= now && !afterFired[it.id]){
+              afterFired[it.id] = now;
+              save(AFTER_FIRED_KEY, afterFired);
+
+              const who = normalizedWho(it);
+              showNotification(`⏳ Aviso (${who})`, it.what || "");
+              incPendingBadge();
+            }
+          }
+
+          // C) Vencido (una sola vez)
+          if(it.when){
+            const when = new Date(it.when).getTime();
+            const key2 = it.id + "|due";
+            if(Number.isFinite(when) && when <= now && !firedMap[key2]){
+              // solo si han pasado al menos 1 min para no duplicar con recordatorio
+              if(now - when >= 60*1000){
+                firedMap[key2] = now;
+                save(REMIND_FIRED_KEY, firedMap);
+
+                const who = normalizedWho(it);
+                showNotification(`⏰ Compromiso vencido (${who})`, it.what || "");
+                incPendingBadge();
+              }
+            }
+          }
+        });
+
+        // refresca pills (vencidos/pending)
+        if(pane==="commitments") renderCommitments();
+        else renderTopPills();
+      }
+
+      // =======================
+      // ICS (Calendario)
+      // =======================
+      function icsDate(d){
+        const z = (n)=> String(n).padStart(2,"0");
+        return d.getUTCFullYear()
+          + z(d.getUTCMonth()+1)
+          + z(d.getUTCDate())
+          + "T"
+          + z(d.getUTCHours())
+          + z(d.getUTCMinutes())
+          + z(d.getUTCSeconds())
+          + "Z";
+      }
+
+      function buildICS({title, desc, start, end}){
+        const uidv = uid() + "@local";
+        const dtstamp = icsDate(new Date());
+        const dtstart = icsDate(start);
+        const dtend = icsDate(end);
+
+        const esc = (s)=> String(s||"")
+          .replaceAll("\\","\\\\")
+          .replaceAll("\n","\\n")
+          .replaceAll(",","\\,")
+          .replaceAll(";","\\;");
+
+        return [
+          "BEGIN:VCALENDAR",
+          "VERSION:2.0",
+          "PRODID:-//Compromisos Local//ES",
+          "CALSCALE:GREGORIAN",
+          "METHOD:PUBLISH",
+          "BEGIN:VEVENT",
+          `UID:${uidv}`,
+          `DTSTAMP:${dtstamp}`,
+          `DTSTART:${dtstart}`,
+          `DTEND:${dtend}`,
+          `SUMMARY:${esc(title)}`,
+          `DESCRIPTION:${esc(desc)}`,
+          "END:VEVENT",
+          "END:VCALENDAR"
+        ].join("\r\n");
+      }
+
+      // =======================
+      // PIN overlay
+      // =======================
+      let pinBuffer = "";
 
       function setDots(n){
         $("d1").classList.toggle("on", n>=1);
@@ -2600,509 +2466,643 @@
 
       function showLockOverlay(){
         if(!settings.pinEnabled) return;
-        pinBuf = "";
-        setDots(0);
         $("lockOverlay").classList.add("show");
         $("lockOverlay").setAttribute("aria-hidden","false");
+        pinBuffer = "";
+        setDots(0);
       }
+
       function hideLockOverlay(){
         $("lockOverlay").classList.remove("show");
         $("lockOverlay").setAttribute("aria-hidden","true");
+        pinBuffer = "";
+        setDots(0);
       }
 
-      async function tryUnlockWithPin(pin){
-        const ok = await verifyPin(pin);
-        if(ok){
-          applyUnlock();
-          hideLockOverlay();
-          toast("Desbloqueado ✅");
-        } else {
-          pinBuf = "";
-          setDots(0);
-          toast("PIN incorrecto");
-        }
-      }
-
-      $("keypad").addEventListener("click", async (e) => {
-        const btn = e.target.closest("button");
-        if(!btn) return;
-        const k = btn.getAttribute("data-k");
-        if(!k) return;
-
+      async function handleKey(k){
         if(k === "del"){
-          pinBuf = pinBuf.slice(0, -1);
-          setDots(pinBuf.length);
+          pinBuffer = pinBuffer.slice(0,-1);
+          setDots(pinBuffer.length);
           return;
         }
         if(k === "ok"){
-          if(pinBuf.length !== 4){ toast("Introduce 4 dígitos"); return; }
-          await tryUnlockWithPin(pinBuf);
+          if(pinBuffer.length !== 4){
+            toast("PIN incompleto");
+            return;
+          }
+          const ok = await verifyPin(pinBuffer);
+          if(ok){
+            applyUnlock();
+            hideLockOverlay();
+            toast("Desbloqueado ✅");
+          }else{
+            pinBuffer = "";
+            setDots(0);
+            toast("PIN incorrecto");
+          }
           return;
         }
         if(/^\d$/.test(k)){
-          if(pinBuf.length >= 4) return;
-          pinBuf += k;
-          setDots(pinBuf.length);
-          if(pinBuf.length === 4){
-            await tryUnlockWithPin(pinBuf);
+          if(pinBuffer.length >= 4) return;
+          pinBuffer += k;
+          setDots(pinBuffer.length);
+          if(pinBuffer.length === 4){
+            // auto OK
+            const ok = await verifyPin(pinBuffer);
+            if(ok){
+              applyUnlock();
+              hideLockOverlay();
+              toast("Desbloqueado ✅");
+            }else{
+              pinBuffer = "";
+              setDots(0);
+              toast("PIN incorrecto");
+            }
           }
         }
-      });
+      }
 
-      $("btnLockCopyLink").addEventListener("click", copyCurrentLink);
-      $("btnLockReset").addEventListener("click", async () => {
-        const ok = await Confirm.open({
-          title: "Borrar todo",
-          msg: `Esto borrará <b>TODO</b> (compromisos, contactos y PIN).<br><span class="dangerTxt">No se puede deshacer.</span>`,
-          yesText: "Sí, borrar todo",
-          danger: true
-        });
-        if(!ok) return;
-        localStorage.clear();
-        location.replace(baseFolderUrl() + "compromisos.html");
-      });
-
-      document.addEventListener("visibilitychange", () => {
+      function scheduleAutoLock(){
         if(!settings.pinEnabled) return;
-        if(document.visibilityState === "hidden"){
-          const m = Number(settings.autoLockMin || 0);
-          lockAtTs = (m === 0) ? Date.now() : (Date.now() + m*60*1000);
-        } else {
-          if(lockAtTs && Date.now() >= lockAtTs){
-            forceLock();
-          }
-          lockAtTs = 0;
-        }
-      });
-
-      // --------- Modal PIN config ----------
-      let pinMode = "enable";
-      function openPinModal(mode){
-        pinMode = mode;
-        $("pinBackdrop").classList.add("show");
-        $("pinBackdrop").setAttribute("aria-hidden","false");
-
-        $("pinOld").value = "";
-        $("pinNew").value = "";
-        $("pinNew2").value = "";
-
-        if(mode === "enable"){
-          $("pinTitle").textContent = "Activar PIN";
-          $("pinHint").textContent = "Crea un PIN de 4 dígitos para bloquear la app.";
-          $("pinOldWrap").style.display = "none";
-          $("pinNewWrap").style.display = "";
-          $("pinNew2Wrap").style.display = "";
-        } else if(mode === "change"){
-          $("pinTitle").textContent = "Cambiar PIN";
-          $("pinHint").textContent = "Introduce tu PIN actual y el nuevo PIN.";
-          $("pinOldWrap").style.display = "";
-          $("pinNewWrap").style.display = "";
-          $("pinNew2Wrap").style.display = "";
-        } else if(mode === "disable"){
-          $("pinTitle").textContent = "Desactivar PIN";
-          $("pinHint").textContent = "Introduce tu PIN actual para desactivarlo.";
-          $("pinOldWrap").style.display = "";
-          $("pinNewWrap").style.display = "none";
-          $("pinNew2Wrap").style.display = "none";
-        }
-
-        setTimeout(()=> {
-          const el = (mode === "enable") ? $("pinNew") : $("pinOld");
-          try{ el.focus(); }catch(e){}
-        }, 60);
-      }
-      function closePinModal(){
-        $("pinBackdrop").classList.remove("show");
-        $("pinBackdrop").setAttribute("aria-hidden","true");
-      }
-
-      function clampPinInput(el){
-        el.value = normalizePin(el.value);
-      }
-      ["pinOld","pinNew","pinNew2"].forEach(id => {
-        $(id).addEventListener("input", () => clampPinInput($(id)));
-      });
-
-      $("pinClose").addEventListener("click", closePinModal);
-      $("pinCancel").addEventListener("click", closePinModal);
-      $("pinBackdrop").addEventListener("click", (e)=>{ if(e.target === $("pinBackdrop")) closePinModal(); });
-
-      $("pinOk").addEventListener("click", async () => {
-        try{
-          if(pinMode === "enable"){
-            const p1 = normalizePin($("pinNew").value);
-            const p2 = normalizePin($("pinNew2").value);
-            if(p1.length !== 4) { toast("PIN inválido"); return; }
-            if(p1 !== p2) { toast("Los PIN no coinciden"); return; }
-            await setPin(p1);
-            settings.pinEnabled = true;
-            settings.unlockUntil = 0;
-            sessionUnlocked = false;
-            save(SETTINGS_KEY, settings);
-            updateSettingsUI();
-            closePinModal();
-            toast("PIN activado ✅");
-            forceLock();
-            return;
-          }
-
-          if(pinMode === "change"){
-            const oldp = normalizePin($("pinOld").value);
-            if(oldp.length !== 4) { toast("PIN actual inválido"); return; }
-            const ok = await verifyPin(oldp);
-            if(!ok){ toast("PIN actual incorrecto"); return; }
-
-            const p1 = normalizePin($("pinNew").value);
-            const p2 = normalizePin($("pinNew2").value);
-            if(p1.length !== 4) { toast("Nuevo PIN inválido"); return; }
-            if(p1 !== p2) { toast("Los PIN no coinciden"); return; }
-
-            await setPin(p1);
-            settings.pinEnabled = true;
-            settings.unlockUntil = 0;
-            sessionUnlocked = false;
-            save(SETTINGS_KEY, settings);
-            updateSettingsUI();
-            closePinModal();
-            toast("PIN cambiado ✅");
-            forceLock();
-            return;
-          }
-
-          if(pinMode === "disable"){
-            const oldp = normalizePin($("pinOld").value);
-            if(oldp.length !== 4) { toast("PIN inválido"); return; }
-            const ok = await verifyPin(oldp);
-            if(!ok){ toast("PIN incorrecto"); return; }
-
-            setPinEnabled(false);
-            closePinModal();
-            hideLockOverlay();
-            toast("PIN desactivado");
-            return;
-          }
-        }catch(e){
-          toast("No se pudo aplicar el PIN");
-        }
-      });
-
-      function toggleSwitchPin(){
-        if(settings.pinEnabled){ openPinModal("disable"); }
-        else { openPinModal("enable"); }
-      }
-
-      async function resetAll(){
-        const ok = await Confirm.open({
-          title: "Borrar todo",
-          msg: `Esto borrará <b>TODO</b> (compromisos, contactos y ajustes).<br><span class="dangerTxt">No se puede deshacer.</span>`,
-          yesText: "Sí, borrar todo",
-          danger: true
-        });
-        if(!ok) return;
-        localStorage.clear();
-        location.replace(baseFolderUrl() + "compromisos.html");
-      }
-
-      // --------- Notif switch ----------
-      function toggleSwitchNotif(){
-        if(!settings.notifEnabled){
-          if(notifSupported() && notifPermission() !== "granted"){
-            requestNotifPermission().then(ok => {
-              if(ok) setNotifEnabled(true);
-              else setNotifEnabled(false);
-            });
-          } else {
-            setNotifEnabled(true);
-          }
-        } else {
-          setNotifEnabled(false);
+        const min = Number(settings.autoLockMin || 0);
+        if(min <= 0){
+          // inmediato al perder foco
+          lockAtTs = Date.now() + 1;
+        }else{
+          lockAtTs = Date.now() + min*60*1000;
         }
       }
 
-      // --------- Service worker ----------
-      (async function registerSW(){
-        if(!("serviceWorker" in navigator)) return;
-        try{
-          await navigator.serviceWorker.register("./sw.js", { scope: "./" });
-        }catch(e){}
-      })();
+      function checkAutoLockTick(){
+        if(!settings.pinEnabled) return;
+        if(isUnlockedNow()) return; // si hay unlockUntil vigente, no bloquear
+        if(lockAtTs && Date.now() >= lockAtTs){
+          forceLock();
+        }
+      }
 
-      // --------- Modal compartir handlers ----------
-      $("shareClose").addEventListener("click", closeShareModal);
-      $("shareCancel").addEventListener("click", closeShareModal);
-      $("shareBackdrop").addEventListener("click", (e)=>{ if(e.target === $("shareBackdrop")) closeShareModal(); });
-
-      $("shareShort").addEventListener("click", ()=>{ shareState.mode="short"; updateShareUI(); });
-      $("shareLong").addEventListener("click", ()=>{ shareState.mode="long"; updateShareUI(); });
-
-      $("shareCopyUrl").addEventListener("click", async ()=> {
-        await copyToClipboard(shareState.url || "");
-      });
-      $("shareCopyAll").addEventListener("click", async ()=> {
-        const msg = (shareState.mode === "long") ? shareState.longText : shareState.shortText;
-        const combined = (shareState.title ? shareState.title + "\n" : "") + (msg ? msg + "\n" : "") + shareState.url;
-        await copyToClipboard(combined);
-      });
-
-      $("shareSend").addEventListener("click", doShare);
-
-      // --------- UI eventos ----------
+      // =======================
+      // Handlers
+      // =======================
       $("tabCommitments").addEventListener("click", ()=> setPane("commitments"));
       $("tabContacts").addEventListener("click", ()=> setPane("contacts"));
       $("tabSettings").addEventListener("click", ()=> setPane("settings"));
 
-      $("tabPending").addEventListener("click", () => {
-        view = "pending";
-        $("tabPending").classList.add("active");
-        $("tabDone").classList.remove("active");
-        renderCommitments();
-      });
-      $("tabDone").addEventListener("click", () => {
-        view = "done";
-        $("tabDone").classList.add("active");
-        $("tabPending").classList.remove("active");
-        renderCommitments();
-      });
+      $("tabPending").addEventListener("click", ()=> setView("pending"));
+      $("tabDone").addEventListener("click", ()=> setView("done"));
 
-      $("fab").addEventListener("click", () => {
-        if(pane === "contacts"){
-          resetContactForm();
-          openContactModal();
-          $("cName").focus();
-          return;
-        }
-        resetCommitmentForm();
-        openModal();
-        $("fContact").focus();
-      });
+      $("btnHelpToggle").addEventListener("click", toggleHelp);
+
+      $("btnA11y").addEventListener("click", toggleTextScale);
+
+      $("fContact").addEventListener("change", updateCustomWhoField);
 
       $("btnClose").addEventListener("click", closeModal);
       $("btnCancel").addEventListener("click", closeModal);
       $("backdrop").addEventListener("click", (e)=>{ if(e.target === $("backdrop")) closeModal(); });
 
-      $("fContact").addEventListener("change", onContactSelectChanged);
-
-      $("btnSave").addEventListener("click", async () => {
-        const res = createOrEditCommitment();
-        if(!res) return;
-
-        closeModal();
-        renderAll();
-
-        toast(editingItemId ? "Actualizado ✅" : "Guardado ✅");
-        await prepareShare(res.ev, data.find(x => x.id === res.itemId));
-      });
-
-      // Contact modal
       $("cBtnClose").addEventListener("click", closeContactModal);
       $("cBtnCancel").addEventListener("click", closeContactModal);
       $("cBackdrop").addEventListener("click", (e)=>{ if(e.target === $("cBackdrop")) closeContactModal(); });
 
-      $("cBtnSave").addEventListener("click", () => {
-        const c = upsertContact($("cName").value, $("cNote").value);
-        if(!c) return;
+      $("shareClose").addEventListener("click", closeShare);
+      $("shareCancel").addEventListener("click", closeShare);
+      $("shareBackdrop").addEventListener("click", (e)=>{ if(e.target === $("shareBackdrop")) closeShare(); });
 
-        closeContactModal();
-        renderAll();
-        toast("Contacto guardado ✅");
+      $("shareShort").addEventListener("click", ()=> setShareMode("short"));
+      $("shareLong").addEventListener("click",  ()=> setShareMode("long"));
 
-        openNewCommitmentForContact(c.id);
+      $("shareCopyUrl").addEventListener("click", async ()=>{
+        const url = $("shareUrlBox").textContent || "";
+        try{
+          await safeClipboardWrite(url);
+          toast("Enlace copiado ✅");
+        }catch(e){
+          toast("No se pudo copiar (usa copiar manual)");
+        }
       });
 
-      // Ajustes
-      $("swPin").addEventListener("click", toggleSwitchPin);
-      $("swPin").addEventListener("keydown", (e)=>{ if(e.key==="Enter" || e.key===" "){ e.preventDefault(); toggleSwitchPin(); } });
+      $("shareCopyAll").addEventListener("click", async ()=>{
+        const txt = $("shareTextBox").textContent || "";
+        try{
+          await safeClipboardWrite(txt);
+          toast("Texto copiado ✅");
+        }catch(e){
+          toast("No se pudo copiar");
+        }
+      });
 
-      $("swNotif").addEventListener("click", toggleSwitchNotif);
-      $("swNotif").addEventListener("keydown", (e)=>{ if(e.key==="Enter" || e.key===" "){ e.preventDefault(); toggleSwitchNotif(); } });
+      $("shareSend").addEventListener("click", async ()=>{
+        const txt = $("shareTextBox").textContent || "";
+        const url = $("shareUrlBox").textContent || "";
+        if(navigator.share){
+          try{
+            await navigator.share({ text: txt, url });
+            toast("Compartido ✅");
+          }catch(e){
+            toast("Compartir cancelado");
+          }
+        }else{
+          try{
+            await safeClipboardWrite(txt);
+            toast("Copiado ✅ (pégalo en WhatsApp)");
+          }catch(e){
+            toast("No se pudo copiar");
+          }
+        }
+      });
+
+      $("btnInstall").addEventListener("click", async ()=>{
+        if(!deferredPrompt) return;
+        try{
+          deferredPrompt.prompt();
+          await deferredPrompt.userChoice;
+        }catch(e){}
+        deferredPrompt = null;
+        $("btnInstall").style.display = "none";
+      });
+
+      $("btnInstallBanner").addEventListener("click", async ()=>{
+        if(!deferredPrompt) return;
+        try{
+          deferredPrompt.prompt();
+          await deferredPrompt.userChoice;
+        }catch(e){}
+        deferredPrompt = null;
+        $("btnInstallBanner").style.display = "none";
+        $("btnInstall").style.display = "none";
+        toast("Listo ✅");
+      });
+
+      $("btnOpenChrome").addEventListener("click", async ()=>{
+        // No podemos “forzar” abrir Chrome desde un webview;
+        // ofrecemos copiar el enlace para pegarlo en Chrome.
+        try{
+          await safeClipboardWrite(location.href);
+          toast("Enlace copiado. Pégalo en Chrome.");
+        }catch(e){
+          toast("Copia el enlace y ábrelo en Chrome");
+        }
+      });
+
+      $("btnCopyLink").addEventListener("click", async ()=>{
+        try{
+          await safeClipboardWrite(location.href);
+          toast("Enlace copiado ✅");
+        }catch(e){
+          toast("No se pudo copiar");
+        }
+      });
+
+      $("btnHideBanner").addEventListener("click", ()=>{
+        $("installBanner").classList.remove("show");
+      });
+
+      // Pills superiores
+      $("btnNotifPend").addEventListener("click", async ()=>{
+        if((pendingNotifs.c||0) <= 0) return;
+        const ok = await Confirm.open({
+          title: "Limpiar avisos",
+          msg: `¿Quieres poner a 0 los avisos pendientes?`,
+          yesText: "Limpiar",
+          danger: false
+        });
+        if(ok) clearPendingBadge();
+      });
+
+      $("btnReceivedTop").addEventListener("click", async ()=>{
+        if((received.c||0) <= 0) return;
+        const ok = await Confirm.open({
+          title: "Limpiar recibidos",
+          msg: `¿Quieres poner a 0 los recibidos?`,
+          yesText: "Limpiar",
+          danger: false
+        });
+        if(ok) clearReceived();
+      });
+
+      $("btnPendingTop").addEventListener("click", ()=>{
+        setPane("commitments");
+        setView("pending");
+        window.scrollTo({ top: 0, behavior:"smooth" });
+      });
+
+      $("btnOverdueTop").addEventListener("click", ()=>{
+        setPane("commitments");
+        setView("pending");
+        window.scrollTo({ top: 0, behavior:"smooth" });
+      });
+
+      $("btnInboxTop").addEventListener("click", ()=>{
+        showInstallBanner("inbox");
+      });
+
+      // FAB
+      $("fab").addEventListener("click", ()=>{
+        if(pane === "commitments") openModalForNew();
+        else if(pane === "contacts") openContactModalNew();
+      });
+
+      // Guardar compromiso
+      $("btnSave").addEventListener("click", ()=>{
+        const base = buildCommitmentFromForm();
+        if(!base) return;
+
+        if(editingId){
+          const cur = data.find(x => x.id === editingId);
+          if(!cur){
+            toast("No encontrado");
+            closeModal();
+            return;
+          }
+          const updated = Object.assign({}, cur, base, {
+            updatedAt: nowIso(),
+            _ts: Date.now()
+          });
+          // si pasa a pending, conserva doneAt vacío
+          if(updated.status !== "done") updated.doneAt = "";
+          upsertCommitment(updated);
+          closeModal();
+          renderAll();
+          toast("Guardado");
+          commitSaveAndShare(updated);
+        }else{
+          const it = Object.assign({}, base, {
+            id: uid(),
+            createdAt: nowIso(),
+            updatedAt: nowIso(),
+            doneAt: "",
+            _ts: Date.now()
+          });
+          upsertCommitment(it);
+          closeModal();
+          renderAll();
+          toast("Creado");
+          commitSaveAndShare(it);
+        }
+      });
+
+      // Guardar contacto
+      $("cBtnSave").addEventListener("click", ()=>{
+        const name = normalizeText($("cName").value, 80);
+        const note = normalizeText($("cNote").value, 120);
+
+        if(!name){
+          toast("Escribe el nombre");
+          return;
+        }
+
+        if(editingContactId){
+          const idx = contacts.findIndex(x => x.id === editingContactId);
+          if(idx < 0){
+            toast("Contacto no encontrado");
+            closeContactModal();
+            return;
+          }
+          contacts[idx] = Object.assign({}, contacts[idx], {
+            name, note,
+            updatedAt: nowIso(),
+            _ts: Date.now()
+          });
+          save(CONTACTS_KEY, contacts);
+          closeContactModal();
+          renderAll();
+          toast("Contacto actualizado");
+        }else{
+          const c = { id: uid(), name, note, createdAt: nowIso(), updatedAt: nowIso(), _ts: Date.now() };
+          contacts.unshift(c);
+          save(CONTACTS_KEY, contacts);
+          closeContactModal();
+          renderAll();
+          toast("Contacto creado");
+        }
+      });
+
+      // Ajustes switches
+      $("swNotif").addEventListener("click", async ()=>{
+        if(!notifSupported()){
+          toast("No soportado");
+          return;
+        }
+        const perm = notifPermission();
+        if(perm !== "granted"){
+          const ok = await requestNotifPermission();
+          if(!ok) return;
+        }
+        setNotifEnabled(!settings.notifEnabled);
+        toast(settings.notifEnabled ? "Notificaciones ON" : "Notificaciones OFF");
+      });
 
       $("btnNotifPerm").addEventListener("click", requestNotifPermission);
 
-      $("selAutoLock").addEventListener("change", () => {
-        settings.autoLockMin = Number($("selAutoLock").value || 0);
+      $("swPin").addEventListener("click", async ()=>{
+        if(settings.pinEnabled){
+          // desactivar: pide confirm y pin actual
+          const ok = await Confirm.open({
+            title: "Desactivar PIN",
+            msg: `¿Desactivar el PIN?`,
+            yesText: "Desactivar",
+            danger: true
+          });
+          if(!ok) return;
+          // pedir pin actual
+          openPinModal("disable");
+        }else{
+          openPinModal("enable");
+        }
+      });
+
+      $("selAutoLock").addEventListener("change", ()=>{
+        settings.autoLockMin = Number($("selAutoLock").value || 0) || 0;
         save(SETTINGS_KEY, settings);
         toast("Auto-bloqueo actualizado");
       });
-      $("selRemember").addEventListener("change", () => {
-        settings.rememberMin = Number($("selRemember").value || 0);
+
+      $("selRemember").addEventListener("change", ()=>{
+        settings.rememberMin = Number($("selRemember").value || 0) || 0;
         save(SETTINGS_KEY, settings);
         toast("Recordar desbloqueo actualizado");
       });
 
-      $("btnChangePin").addEventListener("click", () => {
-        if(!settings.pinEnabled){ toast("Activa primero el PIN"); return; }
+      $("btnChangePin").addEventListener("click", ()=>{
         openPinModal("change");
       });
 
-      $("btnLockNow").addEventListener("click", () => {
-        if(!settings.pinEnabled){ toast("Activa el PIN para bloquear"); setPane("settings"); return; }
+      $("btnLockNow").addEventListener("click", ()=>{
+        if(!settings.pinEnabled){
+          toast("Activa el PIN primero");
+          return;
+        }
         forceLock();
       });
 
-      $("btnResetAll").addEventListener("click", resetAll);
+      $("btnResetAll").addEventListener("click", async ()=>{
+        const ok = await Confirm.open({
+          title: "Borrar todo",
+          msg: `<span class="dangerTxt">Irreversible.</span><br><br>Se borrarán compromisos, contactos y ajustes del móvil.`,
+          yesText: "Borrar todo",
+          danger: true
+        });
+        if(!ok) return;
 
-      // ✅ Texto grande (zona derecha)
-      $("btnA11y").addEventListener("click", toggleTextScale);
+        localStorage.removeItem(KEY);
+        localStorage.removeItem(CONTACTS_KEY);
+        localStorage.removeItem(SETTINGS_KEY);
+        localStorage.removeItem(REMIND_FIRED_KEY);
+        localStorage.removeItem(AFTER_FIRED_KEY);
+        localStorage.removeItem(PENDING_NOTIF_KEY);
+        localStorage.removeItem(RECEIVED_KEY);
+        clearInboxPack();
 
-      // ✅ Manual plegable
-      $("btnHelpToggle").addEventListener("click", toggleHelp);
+        data = [];
+        contacts = [];
+        settings = Object.assign({}, defaultSettings);
+        firedMap = {};
+        afterFired = {};
+        pendingNotifs = { c:0, at:0 };
+        received = { c:0, at:0 };
 
-      // ✅ Avisos: tocar para limpiar
-      $("btnNotifPend").addEventListener("click", () => {
-        if(Number(pendingNotifs?.c || 0) <= 0){
-          toast("Sin avisos");
-          return;
-        }
-        clearPendingBadge();
-      });
-
-      // ✅ Recibidos: tocar para limpiar
-      $("pillReceived").addEventListener("click", () => {
-        if(Number(received?.c || 0) <= 0){
-          toast("Sin recibidos");
-          return;
-        }
-        clearReceived();
-      });
-
-      // ✅ Pendientes: ir a lista de pendientes
-      $("pillPending").addEventListener("click", () => {
-        setPane("commitments");
-        view = "pending";
-        $("tabPending").classList.add("active");
-        $("tabDone").classList.remove("active");
-        renderCommitments();
-        toast("Mostrando pendientes");
-      });
-
-      // ✅ Vencidos: ir a pendientes (donde aparecen marcados)
-      $("pillOverdue").addEventListener("click", () => {
-        setPane("commitments");
-        view = "pending";
-        $("tabPending").classList.add("active");
-        $("tabDone").classList.remove("active");
-        renderCommitments();
-        const pending = data.filter(x => !x.done);
-        const overdue = pending.filter(x => isOverdue(x.when)).length;
-        toast(overdue ? `⏰ Tienes ${overdue} vencido(s)` : "Sin vencidos");
-      });
-
-      // --------- Boot ----------
-      const a11y = load(A11Y_KEY, { big:false });
-      setTextScale(!!a11y.big);
-
-      const helpPref = load(HELP_KEY, { show:false });
-      setHelpVisible(!!helpPref.show);
-
-      updateSettingsUI();
-      renderAll();
-      renderPendingBadge();
-      renderReceivedBadge();
-      renderTopCounters();
-
-      // Import desde hash (si viene con #p=...)
-      (function tryImportFromUrl(){
-        const p = parsePackageFromHash();
-        if(!p) return;
-
-        if(isInAppBrowser){
-          try{
-            localStorage.setItem(INBOX_PACK_KEY, p);
-            localStorage.setItem(INBOX_TS_KEY, String(Date.now()));
-          }catch(e){}
-          clearHashToBase();
-          showBanner("openchrome_import");
-          toast("Para importar: abre en Chrome");
-          return;
-        }
-
-        try{
-          const pack = parsePackage(p);
-          const ev = unpackEvent(pack);
-          if(!ev) throw new Error("bad");
-          const applied = applyEvent(ev);
-
-          if(applied){
-            incReceived();
-          }
-
-          renderAll();
-          toast(applied ? "Paquete importado ✅" : "Paquete ya aplicado (o sin cambios)");
-        }catch(e){
-          toast("No se pudo importar el paquete");
-        }
-
-        clearHashToBase();
-      })();
-
-      // Import desde buzón (si antes se abrió desde WhatsApp)
-      (function tryImportFromInbox(){
-        if(isInAppBrowser) return;
-        try{
-          const p = localStorage.getItem(INBOX_PACK_KEY);
-          if(!p) return;
-          localStorage.removeItem(INBOX_PACK_KEY);
-          localStorage.removeItem(INBOX_TS_KEY);
-
-          toast("Importando paquete pendiente…");
-          const pack = parsePackage(p);
-          const ev = unpackEvent(pack);
-          if(!ev) throw new Error("bad");
-          const applied = applyEvent(ev);
-
-          if(applied){
-            incReceived();
-          }
-
-          renderAll();
-          toast(applied ? "Paquete importado ✅" : "Paquete ya aplicado (o sin cambios)");
-        }catch(e){}
-      })();
-
-      cleanupFiredMaps();
-
-      setTimeout(() => {
-        if(isStandalone || isIOSStandalone) return;
-        if(isInAppBrowser) showBanner("openchrome");
-        else showBanner(deferredPrompt ? "install" : "info");
-      }, 650);
-
-      // Demo inicial
-      if(data.length === 0){
-        const now = new Date().toISOString();
-        const ev = {
-          id: uid(),
-          type: T.CREATE,
-          at: now,
-          payload: {
-            i: uid(),
-            c: null,
-            w: "Ejemplo: Laura",
-            s: "Te paso el PDF del seguro",
-            n: new Date(Date.now() + 3*60*60*1000).toISOString(),
-            r: 15,
-            af: 60,
-            aa: new Date(Date.now() + 60*60*1000).toISOString(),
-            ca: now
-          }
-        };
-        applyEvent(ev);
+        updateSettingsUI();
         renderAll();
+        toast("Restablecido ✅");
+      });
+
+      // PIN modal (configurar/cambiar/desactivar)
+      let pinMode = "enable"; // enable | change | disable
+      function openPinModal(mode){
+        pinMode = mode || "enable";
+
+        $("pinOld").value = "";
+        $("pinNew").value = "";
+        $("pinNew2").value = "";
+
+        if(pinMode === "enable"){
+          $("pinTitle").textContent = "Activar PIN";
+          $("pinHint").textContent = "Crea un PIN de 4 dígitos.";
+          $("pinOldWrap").style.display = "none";
+          $("pinNewWrap").style.display = "";
+          $("pinNew2Wrap").style.display = "";
+        }else if(pinMode === "change"){
+          if(!settings.pinEnabled){
+            toast("Activa el PIN primero");
+            return;
+          }
+          $("pinTitle").textContent = "Cambiar PIN";
+          $("pinHint").textContent = "Introduce el PIN actual y el nuevo PIN.";
+          $("pinOldWrap").style.display = "";
+          $("pinNewWrap").style.display = "";
+          $("pinNew2Wrap").style.display = "";
+        }else{
+          // disable
+          if(!settings.pinEnabled){
+            toast("PIN no activo");
+            return;
+          }
+          $("pinTitle").textContent = "Desactivar PIN";
+          $("pinHint").textContent = "Introduce tu PIN actual para desactivar.";
+          $("pinOldWrap").style.display = "";
+          $("pinNewWrap").style.display = "none";
+          $("pinNew2Wrap").style.display = "none";
+        }
+
+        openBackdrop($("pinBackdrop"));
       }
 
-      if(settings.pinEnabled && !isUnlockedNow()){
-        showLockOverlay();
+      function closePinModal(){
+        closeBackdrop($("pinBackdrop"));
       }
 
-      setInterval(() => {
-        if(settings.pinEnabled && !isUnlockedNow()) return;
-        checkReminders();
-      }, 20000);
+      $("pinClose").addEventListener("click", closePinModal);
+      $("pinCancel").addEventListener("click", closePinModal);
+      $("pinBackdrop").addEventListener("click", (e)=>{ if(e.target === $("pinBackdrop")) closePinModal(); });
 
-      setTimeout(() => {
-        if(settings.pinEnabled && !isUnlockedNow()) return;
-        checkReminders();
-      }, 1200);
+      $("pinOk").addEventListener("click", async ()=>{
+        try{
+          if(pinMode === "enable"){
+            const p1 = normalizePin($("pinNew").value);
+            const p2 = normalizePin($("pinNew2").value);
+            if(p1.length !== 4 || p2.length !== 4){
+              toast("PIN debe tener 4 dígitos");
+              return;
+            }
+            if(p1 !== p2){
+              toast("Los PIN no coinciden");
+              return;
+            }
+            await setPin(p1);
+            settings.pinEnabled = true;
+            settings.unlockUntil = 0;
+            sessionUnlocked = true; // tras crear, deja desbloqueado
+            save(SETTINGS_KEY, settings);
+            updateSettingsUI();
+            closePinModal();
+            toast("PIN activado ✅");
+          }
+          else if(pinMode === "change"){
+            const oldp = normalizePin($("pinOld").value);
+            const ok = await verifyPin(oldp);
+            if(!ok){
+              toast("PIN actual incorrecto");
+              return;
+            }
+            const p1 = normalizePin($("pinNew").value);
+            const p2 = normalizePin($("pinNew2").value);
+            if(p1.length !== 4 || p2.length !== 4){
+              toast("Nuevo PIN debe tener 4 dígitos");
+              return;
+            }
+            if(p1 !== p2){
+              toast("Los PIN no coinciden");
+              return;
+            }
+            await setPin(p1);
+            settings.pinEnabled = true;
+            settings.unlockUntil = 0;
+            sessionUnlocked = true;
+            save(SETTINGS_KEY, settings);
+            updateSettingsUI();
+            closePinModal();
+            toast("PIN cambiado ✅");
+          }
+          else {
+            // disable
+            const oldp = normalizePin($("pinOld").value);
+            const ok = await verifyPin(oldp);
+            if(!ok){
+              toast("PIN incorrecto");
+              return;
+            }
+            setPinEnabled(false);
+            closePinModal();
+            toast("PIN desactivado");
+          }
+        }catch(e){
+          toast("No se pudo guardar el PIN");
+        }
+      });
+
+      // Keypad overlay
+      $("keypad").addEventListener("click", (e)=>{
+        const btn = e.target.closest("button");
+        if(!btn) return;
+        const k = btn.getAttribute("data-k");
+        handleKey(k);
+      });
+
+      $("btnLockReset").addEventListener("click", async ()=>{
+        const ok = await Confirm.open({
+          title: "Borrar todo",
+          msg: `<span class="dangerTxt">Irreversible.</span><br><br>Se borrará todo para recuperar acceso.`,
+          yesText: "Borrar todo",
+          danger: true
+        });
+        if(!ok) return;
+        localStorage.clear();
+        location.reload();
+      });
+
+      $("btnLockCopyLink").addEventListener("click", async ()=>{
+        try{
+          await safeClipboardWrite(location.href);
+          toast("Enlace copiado ✅");
+        }catch(e){
+          toast("No se pudo copiar");
+        }
+      });
+
+      // Auto lock por visibilidad
+      document.addEventListener("visibilitychange", ()=>{
+        if(document.visibilityState === "hidden"){
+          scheduleAutoLock();
+        }else{
+          // al volver, si debería bloquear ya
+          if(settings.pinEnabled && !isUnlockedNow()){
+            showLockOverlay();
+          }
+        }
+      });
+
+      window.addEventListener("blur", ()=>{
+        scheduleAutoLock();
+      });
+
+      // =======================
+      // Boot
+      // =======================
+      function boot(){
+        // A11Y
+        const a = load(A11Y_KEY, { big:false });
+        setTextScale(!!a.big);
+
+        // Help
+        const h = load(HELP_KEY, { show:false });
+        setHelpVisible(!!h.show);
+
+        // Settings UI
+        updateSettingsUI();
+
+        // pills
+        renderTopPills();
+
+        // Import URL param (p)
+        const pack = getPackFromUrl();
+        if(pack){
+          // si está en in-app browser, guarda en inbox para importación manual
+          if(detectInAppBrowser()){
+            storeInboxPack(pack);
+            toast("Paquete recibido (pendiente de importar)");
+            clearUrlParamP();
+          }else{
+            // importa directamente
+            const ok = applyPack(pack);
+            if(ok){
+              toast("Importado ✅");
+              clearUrlParamP();
+            }else{
+              toast("No se pudo importar");
+            }
+          }
+        }
+
+        // si hay inbox guardado, muestra banner
+        if(localStorage.getItem(INBOX_PACK_KEY)){
+          showInstallBanner("inbox");
+        }else{
+          maybeShowBanner();
+        }
+
+        // Re-render
+        setPane("commitments");
+        setView("pending");
+        renderAll();
+
+        // Notif check loop
+        setInterval(checkAndFireReminders, 30*1000);
+        setInterval(checkAutoLockTick, 2*1000);
+
+        // Si PIN está activo y no está desbloqueado, bloquea al entrar
+        if(settings.pinEnabled && !isUnlockedNow()){
+          showLockOverlay();
+        }
+      }
+
+      // Install prompt
+      window.addEventListener("beforeinstallprompt", (e)=>{
+        e.preventDefault();
+        deferredPrompt = e;
+        $("btnInstall").style.display = "";
+        $("btnInstallBanner").style.display = "";
+        // si no hay inbox, sugerimos banner
+        if(!localStorage.getItem(INBOX_PACK_KEY)){
+          maybeShowBanner();
+        }
+      });
+
+      // =======================
+      // Ajuste de counts iniciales
+      // =======================
+      renderTopPills();
+      boot();
 
     })();
   </script>
