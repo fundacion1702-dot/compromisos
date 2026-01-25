@@ -22,6 +22,13 @@
       --shadow: 0 14px 40px rgba(0,0,0,.35);
       --r:18px;
       --fs-base: 16px; /* se ajusta desde JS (texto grande) */
+
+      /* ✅ NUEVO: tono más marcado para tarjetas (mejor contraste) */
+      --cardA: rgba(27,31,62,.96);
+      --cardB: rgba(17,19,38,.86);
+      --cardAltA: rgba(33,28,66,.96);
+      --cardAltB: rgba(17,19,38,.84);
+      --cardStroke: rgba(255,255,255,.18);
     }
     *{ box-sizing:border-box; }
 
@@ -271,23 +278,38 @@
 
     .list{ margin-top: .875rem; display:flex; flex-direction:column; gap: .75rem; }
 
-    /* ✅ Mejor diferenciación de tarjetas (más contraste + borde + separación visual) */
+    /* ✅ NUEVO: tarjetas con tono MÁS distinto del fondo (y entre ellas) */
     .card{
       border-radius: var(--r);
-      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03));
-      border:1px solid rgba(255,255,255,.15);
+      background: linear-gradient(180deg, var(--cardA), var(--cardB));
+      border:1px solid var(--cardStroke);
       padding: .8125rem;
-      box-shadow: 0 .875rem 2.25rem rgba(0,0,0,.28);
+      box-shadow: 0 .875rem 2.25rem rgba(0,0,0,.34);
       position:relative;
       overflow:hidden;
+      backdrop-filter: blur(6px);
+    }
+    .card.alt{
+      background: linear-gradient(180deg, var(--cardAltA), var(--cardAltB));
+      border-color: rgba(255,255,255,.20);
+      box-shadow: 0 .875rem 2.25rem rgba(0,0,0,.38);
     }
     .card::before{
       content:"";
       position:absolute;
       inset:0 0 auto 0;
       height: 2px;
-      background: linear-gradient(90deg, rgba(107,91,255,.65), rgba(255,204,102,.22), rgba(54,211,153,.18));
-      opacity:.55;
+      background: linear-gradient(90deg, rgba(107,91,255,.70), rgba(255,204,102,.25), rgba(54,211,153,.20));
+      opacity:.62;
+    }
+    .card::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.10), inset 0 0 0 1px rgba(255,255,255,.06);
+      border-radius: var(--r);
+      opacity:.9;
     }
 
     .cardTop{ display:flex; justify-content:space-between; gap:.625rem; align-items:flex-start; }
@@ -640,8 +662,9 @@
     }
     .helpBox li{ margin:.25rem 0; }
 
-    /* ✅ Contacto: ya NO es clickable para crear compromiso */
+    /* ✅ Contacto: ahora vuelve a poder abrir “nuevo compromiso” al tocar tarjeta */
     .contactCard{
+      cursor:pointer;
       user-select:none;
     }
   </style>
@@ -845,6 +868,8 @@
   </div>
 
   <!-- ✅ FIN PARTE 1/3 -->
+
+<!-- ✅ PARTE 2/3 -->
 
 <button class="fab" id="fab" aria-label="Nuevo">+</button>
 
@@ -1927,10 +1952,12 @@
 
       /* ✅ FIN PARTE 2/3: la parte 3 continúa aquí con:
          - UI / Vistas (setPane, render...)
-         - eliminar click en contacto -> ya NO crea compromiso
+         - contacto: botón/acción para “Crear compromiso” con el nombre del amigo precargado
          - pills: navegación a pendientes/vencidos/recibidos
          - import: suma "recibidos" y renderiza sus badges
          - boot + handlers */
+
+<!-- ✅ PARTE 3/3 -->
 
 // --------- UI / Vistas ----------
       function setPane(newPane){
@@ -2003,15 +2030,40 @@
             return (new Date(b.doneAt||0).getTime()) - (new Date(a.doneAt||0).getTime());
           })
           .forEach((item, idx) => list.appendChild(renderCard(item, idx)));
+      }
 
-        // ✅ Ajusta el “tono” alternando ligero para diferenciar tarjetas
-        // (La clase/estilo se aplica dentro de renderCard)
+      // ✅ Mejor contraste: las tarjetas van con un “tono” más claro que el resto
+      function applyCardTone(card, idx, kind){
+        // kind: "commit" | "contact"
+        const odd = (idx % 2) === 1;
+
+        // Fondo más diferenciado respecto a la app (más claro + borde algo más marcado)
+        const baseA = (kind === "contact") ? "rgba(255,255,255,.10)" : "rgba(255,255,255,.12)";
+        const baseB = (kind === "contact") ? "rgba(255,255,255,.04)" : "rgba(255,255,255,.05)";
+
+        const altA  = (kind === "contact") ? "rgba(107,91,255,.14)" : "rgba(107,91,255,.16)";
+        const altB  = (kind === "contact") ? "rgba(255,255,255,.04)" : "rgba(255,255,255,.05)";
+
+        card.style.background = odd
+          ? `linear-gradient(180deg, ${altA}, ${altB})`
+          : `linear-gradient(180deg, ${baseA}, ${baseB})`;
+
+        card.style.borderColor = odd
+          ? "rgba(107,91,255,.28)"
+          : "rgba(255,255,255,.18)";
+
+        // Sombra un pelín más marcada para separar tarjetas entre sí
+        card.style.boxShadow = odd
+          ? "0 1rem 2.5rem rgba(0,0,0,.34)"
+          : "0 .95rem 2.35rem rgba(0,0,0,.28)";
       }
 
       function renderCard(item, idx){
         const card = document.createElement("div");
         card.className = "card";
-        if((idx % 2) === 1) card.classList.add("alt");
+
+        // ✅ tono/contraste
+        applyCardTone(card, idx, "commit");
 
         const who = normalizedWho(item);
         const dueText = item.when ? fmtDate(item.when) : "Sin fecha";
@@ -2025,12 +2077,6 @@
           item.when && Number(item.remindMin||0) > 0 ? `<span class="chip">${escapeHtml(remindLabel(item.remindMin))}</span>` : "",
           item.afterAt && Number(item.afterMin||0) > 0 ? `<span class="chip">⏳ ${escapeHtml(item.afterMin>=60 ? (item.afterMin/60)+"h" : item.afterMin+"m")}</span>` : ""
         ].filter(Boolean).join("");
-
-        // ✅ separador visual extra (sin tocar CSS global si no existe .alt)
-        // (esto ayuda aunque no tengas la CSS de .alt)
-        card.style.boxShadow = (idx % 2)
-          ? "0 0.875rem 2.25rem rgba(0,0,0,.26)"
-          : "0 0.875rem 2.25rem rgba(0,0,0,.18)";
 
         card.innerHTML = `
           <div class="cardTop">
@@ -2078,14 +2124,43 @@
         contacts
           .slice()
           .sort((a,b) => (a.name||"").localeCompare(b.name||"", "es"))
-          .forEach(c => list.appendChild(renderContactCard(c)));
+          .forEach((c, idx) => list.appendChild(renderContactCard(c, idx)));
       }
 
-      function renderContactCard(c){
+      // ✅ NUEVO: crear compromiso con el contacto precargado
+      function openNewCommitmentForContact(contactId){
+        const c = contactById(contactId);
+        if(!c){ toast("Contacto no encontrado"); return; }
+
+        // ir a compromisos + abrir modal
+        setPane("commitments");
+        view = "pending";
+        $("tabPending").classList.add("active");
+        $("tabDone").classList.remove("active");
+
+        resetCommitmentForm();
+
+        // precarga el contacto
+        fillContactSelect();
+        $("fContact").value = c.id;
+        toggleCustomWho(false);
+        $("fWho").value = ""; // por si acaso
+
+        // texto + foco
+        $("modalTitle").textContent = "Nuevo compromiso";
+        openModal();
+        $("fWhat").focus();
+
+        toast(`Nuevo compromiso con: ${c.name}`);
+      }
+
+      function renderContactCard(c, idx){
         const card = document.createElement("div");
-        // ✅ YA NO es clickable para crear compromiso
-        card.className = "card";
+        card.className = "card contactCard";
         card.dataset.id = c.id;
+
+        // ✅ tono/contraste (algo distinto al de compromisos)
+        applyCardTone(card, idx, "contact");
 
         const note = c.note ? `<span class="chip">🛈 ${escapeHtml(c.note)}</span>` : "";
         card.innerHTML = `
@@ -2093,7 +2168,7 @@
             <div class="who">
               <p class="name">${escapeHtml(c.name || "Sin nombre")}</p>
               <p class="meta">
-                <span class="chip">👥 Contacto</span>
+                <span class="chip">👥 Amigo</span>
                 ${note}
               </p>
             </div>
@@ -2104,8 +2179,18 @@
         `;
 
         const actions = card.querySelector(".actions");
+
+        // ✅ Botón directo para crear compromiso (rápido)
+        actions.appendChild(mkBtn("➕ Compromiso", "btn primary", () => openNewCommitmentForContact(c.id)));
+
         actions.appendChild(mkBtn("✍️ Editar", "btn", () => openContactEdit(c.id)));
         actions.appendChild(mkBtn("🗑️ Eliminar", "btn danger", () => deleteContact(c.id)));
+
+        // ✅ Además: tocar la tarjeta (no botones) también abre nuevo compromiso
+        card.addEventListener("click", (e) => {
+          if(e.target.closest("button")) return; // no interferir con botones
+          openNewCommitmentForContact(c.id);
+        });
 
         return card;
       }
@@ -2916,7 +3001,7 @@
         closeContactModal();
         renderAll();
         toast("Contacto guardado ✅");
-        // ✅ YA NO abrimos automáticamente “nuevo compromiso con su nombre”
+        // ✅ ya NO abrimos automáticamente aquí; ahora puedes tocar la tarjeta o “➕ Compromiso”
       });
 
       // Ajustes
@@ -2968,7 +3053,6 @@
       }
 
       function scrollToFirstOverdue(){
-        // Busca la primera tarjeta marcada como “Vencido”
         const list = $("list");
         const first = list ? list.querySelector(".due.bad") : null;
         if(first){
@@ -2979,7 +3063,6 @@
         }
       }
 
-      // 🔔 Notifs pendientes (recordatorios/avisos): 1º click navega; si ya estás, permite limpiar
       $("btnNotifPend").addEventListener("click", async () => {
         const c = Math.max(0, Number(pendingNotifs?.c || 0));
         const alreadyThere = (pane === "commitments" && view === "pending");
@@ -2999,7 +3082,6 @@
         if(ok) clearPendingBadge();
       });
 
-      // 📥 Recibidos: 1º click navega; si ya estás, limpiar contador “recibidos”
       $("btnReceived").addEventListener("click", async () => {
         const c = Math.max(0, Number(received?.c || 0));
         const alreadyThere = (pane === "commitments" && view === "pending");
@@ -3023,13 +3105,11 @@
         }
       });
 
-      // 📝 Compromisos pendientes: ir a pendientes
       $("btnPendCommit").addEventListener("click", () => {
         goToCommitmentsPending();
         toast("📝 Mostrando pendientes");
       });
 
-      // ⏰ Vencidos: ir a pendientes y bajar al primero vencido
       $("btnOverdue").addEventListener("click", () => {
         goToCommitmentsPending();
         const overdueCount = data.filter(x => !x.done && isOverdue(x.when)).length;
@@ -3042,11 +3122,9 @@
       });
 
       // --------- Boot ----------
-      // Aplica preferencia de accesibilidad
       const a11y = load(A11Y_KEY, { big:false });
       setTextScale(!!a11y.big);
 
-      // Aplica preferencia del manual
       const helpPref = load(HELP_KEY, { show:false });
       setHelpVisible(!!helpPref.show);
 
@@ -3055,7 +3133,6 @@
       renderPendingBadge();
       renderReceivedBadge();
 
-      // Import desde hash (si viene con #p=...)
       (function tryImportFromUrl(){
         const p = parsePackageFromHash();
         if(!p) return;
@@ -3077,7 +3154,6 @@
           if(!ev) throw new Error("bad");
           const applied = applyEvent(ev);
 
-          // ✅ Si se aplicó, cuenta como “recibido”
           if(applied){
             incReceived();
             renderReceivedBadge();
@@ -3092,7 +3168,6 @@
         clearHashToBase();
       })();
 
-      // Import desde buzón (si antes se abrió desde WhatsApp)
       (function tryImportFromInbox(){
         if(isInAppBrowser) return;
         try{
@@ -3125,7 +3200,6 @@
         else showBanner(deferredPrompt ? "install" : "info");
       }, 650);
 
-      // Demo inicial
       if(data.length === 0){
         const now = new Date().toISOString();
         const ev = {
