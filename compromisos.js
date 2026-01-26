@@ -1,4 +1,4 @@
-/* compromisos.js (1/2) */
+/* compromisos.js — FULL (A11Y big text + reflow + app logic) */
 (function(){
   "use strict";
 
@@ -22,13 +22,11 @@
     return safeJsonParse(v, fallback);
   }
   function save(key, val){
-    localStorage.setItem(key, JSON.stringify(val));
+    try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){}
   }
-
   function uid(){
     return Math.random().toString(36).slice(2) + Date.now().toString(36);
   }
-
   function esc(s){
     return String(s ?? "")
       .replaceAll("&","&amp;")
@@ -44,7 +42,7 @@
     t.textContent = msg;
     t.classList.add("show");
     clearTimeout(toast._tm);
-    toast._tm = setTimeout(()=> t.classList.remove("show"), 2200);
+    toast._tm = setTimeout(()=> t.classList.remove("show"), 1800);
   }
 
   function fmtDate(iso){
@@ -67,55 +65,143 @@
   }
 
   /* =========================
-     IMPORTANTE (FIX): stubs globales seguros
-     - Antes tenías openCommitModal() sin declarar en strict mode,
-       eso provoca ReferenceError y “se muere” el JS.
-     - Aquí SIEMPRE llamamos a window.openCommitModal, etc.
+     ✅ A11Y: TEXTO GRANDE REAL + REORGANIZACIÓN (sin solapes)
+     - Incrementa tamaños fijos en px mediante CSS “.bigText …”
+     - Reflow en topbar/pills cuando está grande
   ========================= */
-  if(typeof window.openCommitModal !== "function"){
-    window.openCommitModal = function(){ toast("Modal compromiso (pendiente parte 2)"); };
-  }
-  if(typeof window.openContactModal !== "function"){
-    window.openContactModal = function(){ toast("Modal amigo (pendiente parte 2)"); };
-  }
-  if(typeof window.deleteCommit !== "function"){
-    window.deleteCommit = function(){ toast("Eliminar compromiso (pendiente parte 2)"); };
-  }
-  if(typeof window.deleteContact !== "function"){
-    window.deleteContact = function(){ toast("Eliminar amigo (pendiente parte 2)"); };
-  }
+  (function injectA11yCssOnce(){
+    if(document.getElementById("a11yBigTextCSS")) return;
+    const st = document.createElement("style");
+    st.id = "a11yBigTextCSS";
+    st.textContent = `
+      /* Colocación del botón arriba derecha (alineado con el título) */
+      .topbarInner{ position:relative !important; }
+      #btnA11yTop{
+        position:absolute !important;
+        top:12px !important;
+        right:0 !important;
+        z-index:30 !important;
+        pointer-events:auto !important;
+      }
+      .brand{ padding-right:180px !important; } /* hueco para el botón */
 
-  /* =========================
-     ✅ UI FIX: botón Texto grande arriba derecha, alineado con el título
-  ========================= */
-  (function injectA11yTopPlacement(){
-    try{
-      const st = document.createElement("style");
-      st.textContent = `
-        .topbarInner{ position:relative !important; }
-        /* Botón en la esquina superior derecha, alineado con el título */
-        #btnA11yTop{
-          position:absolute !important;
-          top:14px !important;
-          right:0 !important;
-          z-index:30 !important;
-          pointer-events:auto !important;
-        }
-        /* Deja espacio para que el título no quede debajo del botón */
-        .brand{ padding-right:190px !important; }
+      /* ========= BIG TEXT MODE ========= */
+      html.bigText body{ font-size:18px !important; }
 
-        /* Pills debajo */
-        .topActions{ width:100% !important; justify-content:flex-start !important; }
-        .pills{ margin-top:10px !important; }
+      html.bigText .title{ font-size:20px !important; line-height:1.15 !important; }
+      html.bigText .subtitle{ font-size:14px !important; }
 
-        @media (max-width:520px){
-          .brand{ padding-right:0 !important; }
-          #btnA11yTop{ top:12px !important; }
-        }
-      `;
-      document.head.appendChild(st);
-    }catch(e){}
+      html.bigText .tileTitle{ font-size:18px !important; }
+      html.bigText .tileMeta{ font-size:14px !important; }
+      html.bigText .badge{ height:26px !important; font-size:13.5px !important; }
+
+      html.bigText .sectionHead h2{ font-size:18px !important; }
+      html.bigText .sectionHead p{ font-size:14px !important; }
+
+      html.bigText .chip{ font-size:13.5px !important; padding:7px 11px !important; }
+      html.bigText .due{ font-size:13.5px !important; padding:9px 11px !important; }
+
+      html.bigText .desc{ font-size:16px !important; }
+      html.bigText .label{ font-size:13.5px !important; }
+
+      html.bigText input,
+      html.bigText select,
+      html.bigText textarea{
+        font-size:16px !important;
+        padding:13px 13px !important;
+      }
+
+      html.bigText .btn,
+      html.bigText .segBtn,
+      html.bigText .pillBtn,
+      html.bigText .a11yBtn{
+        font-size:14.5px !important;
+        height:44px !important;
+      }
+      html.bigText .pillCount{
+        height:24px !important;
+        min-width:24px !important;
+        font-size:13px !important;
+      }
+
+      /* Reflow seguro: cuando está grande, NO forzamos absolute del botón (evita solape) */
+      html.bigText #btnA11yTop{
+        position:static !important;
+        top:auto !important;
+        right:auto !important;
+        margin-left:auto !important;
+      }
+      html.bigText .brand{ padding-right:0 !important; }
+
+      /* Topbar reorganizado en grande: 1 columna + acciones wrap */
+      html.bigText .topbarInner{
+        grid-template-columns:1fr !important;
+        gap:10px !important;
+      }
+      html.bigText .topActions{
+        width:100% !important;
+        justify-content:space-between !important;
+        flex-wrap:wrap !important;
+        gap:10px !important;
+      }
+      html.bigText .pills{
+        width:100% !important;
+        justify-content:flex-start !important;
+        flex-wrap:wrap !important;     /* ✅ permite 2 líneas si hace falta */
+        overflow:visible !important;
+      }
+
+      /* En pantallas estrechas, mantenemos comportamiento estable */
+      @media (max-width:520px){
+        .brand{ padding-right:0 !important; }
+        #btnA11yTop{ position:static !important; }
+      }
+    `;
+    document.head.appendChild(st);
   })();
+
+  function applyA11yUi(big){
+    const html = document.documentElement;
+    html.classList.toggle("bigText", !!big);
+
+    // Cambiamos el label para que quede claro el toggle
+    const label = big ? "🔎 Texto normal" : "🔎 Texto grande";
+    const bTop = $("btnA11yTop");
+    const bSet = $("btnA11y");
+    if(bTop) bTop.textContent = label;
+    if(bSet) bSet.textContent = label;
+  }
+
+  function setTextBig(big){
+    save(A11Y_KEY, { big: !!big });
+    applyA11yUi(!!big);
+  }
+
+  function toggleTextBig(){
+    const st = load(A11Y_KEY, { big:false });
+    const next = !st.big;
+    setTextBig(next);
+    toast(next ? "🔎 Texto grande activado" : "🔎 Texto normal");
+  }
+
+  // Evita doble disparo en móvil (touchend + click)
+  let _lastA11yTap = 0;
+  function bindA11yButtons(){
+    const bind = (el)=>{
+      if(!el) return;
+      const handler = (e)=>{
+        const now = Date.now();
+        if(now - _lastA11yTap < 350) return;
+        _lastA11yTap = now;
+        try{ e.preventDefault(); }catch(_){}
+        toggleTextBig();
+      };
+      el.addEventListener("click", handler, { passive:false });
+      el.style.pointerEvents = "auto";
+    };
+    bind($("btnA11yTop"));
+    bind($("btnA11y"));
+  }
 
   /* =========================
      Estado / datos
@@ -126,356 +212,16 @@
     pinEnabled:false,
     autoLockMin:0,
     rememberMin:0,
-    notifEnabled:false
+    notifEnabled:false,
+    pinHash:null,
+    unlockedUntil:0
   });
   let received = load(RECEIVED_KEY, { c:0, lastAt:null });
 
   let pane = "commitments"; // commitments | contacts | settings
-  let view = "pending";     // pending | done
 
   /* =========================
-     Accesibilidad: Texto grande (UNIFICADO + sin duplicados)
-  ========================= */
-  function setTextScale(big){
-    const b = !!big;
-
-    // Variables base (compat con tu CSS)
-    document.documentElement.style.setProperty("--fs", b ? "18px" : "16px");
-    document.documentElement.style.setProperty("--fsBig", b ? "20px" : "18px");
-
-    document.body.classList.toggle("bigText", b);
-
-    // Cambia label botones
-    const label = b ? "🔎 Texto normal" : "🔎 Texto grande";
-    const b1 = $("btnA11yTop");
-    const b2 = $("btnA11y");
-    if(b1) b1.textContent = label;
-    if(b2) b2.textContent = label;
-
-    save(A11Y_KEY, { big: b });
-  }
-
-  function toggleTextScale(){
-    const cur = load(A11Y_KEY, { big:false });
-    const next = !cur.big;
-    setTextScale(next);
-    toast(next ? "🔎 Texto grande: ON" : "🔎 Texto grande: OFF");
-  }
-
-  // Export global por si en algún sitio hay onclick antiguos
-  window.setTextScale = setTextScale;
-  window.toggleTextScale = toggleTextScale;
-
-  function bindA11yButtons(){
-    const top = $("btnA11yTop");
-    const inSettings = $("btnA11y");
-
-    const bind = (btn)=>{
-      if(!btn) return;
-      btn.style.pointerEvents = "auto";
-      btn.addEventListener("click", (e)=>{ e.preventDefault(); toggleTextScale(); }, { passive:false });
-      btn.addEventListener("touchend", (e)=>{ e.preventDefault(); toggleTextScale(); }, { passive:false });
-    };
-
-    bind(top);
-    bind(inSettings);
-  }
-
-  /* =========================
-     Navegación panes
-  ========================= */
-  function safeShow(el, show){
-    if(!el) return;
-    el.style.display = show ? "" : "none";
-  }
-
-  function setPane(newPane){
-    pane = newPane;
-
-    const tC = $("tabCommitments");
-    const tA = $("tabContacts");
-
-    if(tC) tC.classList.toggle("active", pane==="commitments");
-    if(tA) tA.classList.toggle("active", pane==="contacts");
-
-    safeShow($("commitmentsPane"), pane==="commitments");
-    safeShow($("contactsPane"), pane==="contacts");
-    safeShow($("settingsPane"), pane==="settings");
-
-    const fab = $("fab");
-    if(fab){
-      if(pane === "settings") fab.style.display = "none";
-      else{
-        fab.style.display = "grid";
-        fab.setAttribute("aria-label", pane==="contacts" ? "Nuevo amigo" : "Nuevo compromiso");
-      }
-    }
-
-    renderAll();
-    try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
-  }
-
-  function setViewPending(){
-    view = "pending";
-    const a = $("tabPending"), b = $("tabDone");
-    if(a) a.classList.add("active");
-    if(b) b.classList.remove("active");
-    renderCommitments();
-  }
-  function setViewDone(){
-    view = "done";
-    const a = $("tabDone"), b = $("tabPending");
-    if(a) a.classList.add("active");
-    if(b) b.classList.remove("active");
-    renderCommitments();
-  }
-
-  function bindNav(){
-    if($("tabCommitments")) $("tabCommitments").onclick = ()=> setPane("commitments");
-    if($("tabContacts")) $("tabContacts").onclick = ()=> setPane("contacts");
-
-    if($("tabPending")) $("tabPending").onclick = setViewPending;
-    if($("tabDone")) $("tabDone").onclick = setViewDone;
-
-    // Tiles (menú)
-    const bindTile = (id, fn)=>{
-      const el = $(id);
-      if(!el) return;
-      el.addEventListener("click", fn);
-      el.addEventListener("keydown", (e)=>{
-        if(e.key==="Enter" || e.key===" "){ e.preventDefault(); fn(); }
-      });
-    };
-    bindTile("tilePending", ()=>{ setPane("commitments"); setViewPending(); });
-    bindTile("tileDone", ()=>{ setPane("commitments"); setViewDone(); });
-    bindTile("tileContacts", ()=>{ setPane("contacts"); });
-    bindTile("tileSettings", ()=>{ setPane("settings"); });
-
-    // Pills
-    if($("btnOverdue")){
-      $("btnOverdue").addEventListener("click", ()=>{
-        setPane("commitments");
-        setViewPending();
-        const overdue = data.filter(x=> !x.done && isOverdue(x.when)).length;
-        toast(overdue ? `⏰ ${overdue} vencido(s)` : "Sin vencidos ✅");
-      });
-    }
-    if($("btnReceived")){
-      $("btnReceived").addEventListener("click", ()=>{
-        setPane("commitments");
-        setViewPending();
-        const c = Math.max(0, Number(received?.c || 0));
-        toast(c ? `📥 Recibidos: ${c}` : "Sin recibidos");
-      });
-    }
-  }
-
-  /* =========================
-     Render
-  ========================= */
-  function normalizedWho(item){
-    if(item.whoId){
-      const c = contacts.find(x=>x.id===item.whoId);
-      if(c && c.name) return c.name;
-    }
-    return item.whoName || "Sin nombre";
-  }
-
-  function updateCounts(){
-    const pending = data.filter(x=>!x.done);
-    const done = data.filter(x=>x.done);
-
-    if($("tilePendingCount")) $("tilePendingCount").textContent = String(pending.length);
-    if($("tileDoneCount")) $("tileDoneCount").textContent = String(done.length);
-    if($("tileContactsCount")) $("tileContactsCount").textContent = String(contacts.length);
-    if($("bContacts")) $("bContacts").textContent = String(contacts.length);
-
-    const overdue = pending.filter(x=>isOverdue(x.when)).length;
-    if($("bOverdue")) $("bOverdue").textContent = String(overdue);
-
-    const rec = Math.max(0, Number(received?.c || 0));
-    if($("bReceived")) $("bReceived").textContent = String(rec);
-  }
-
-  function renderCommitments(){
-    updateCounts();
-
-    const list = $("list");
-    const empty = $("empty");
-    if(!list) return;
-
-    list.innerHTML = "";
-
-    const items = data
-      .filter(x=> view==="pending" ? !x.done : x.done)
-      .slice()
-      .sort((a,b)=>{
-        if(view==="pending"){
-          const ao = isOverdue(a.when)?1:0, bo = isOverdue(b.when)?1:0;
-          if(ao!==bo) return bo-ao;
-          const ta = a.when ? new Date(a.when).getTime() : Number.POSITIVE_INFINITY;
-          const tb = b.when ? new Date(b.when).getTime() : Number.POSITIVE_INFINITY;
-          if(ta!==tb) return ta-tb;
-          return new Date(b.updatedAt||b.createdAt||0).getTime() - new Date(a.updatedAt||a.createdAt||0).getTime();
-        }
-        return new Date(b.doneAt||0).getTime() - new Date(a.doneAt||0).getTime();
-      });
-
-    if(empty) empty.style.display = items.length ? "none" : "block";
-
-    items.forEach((it)=>{
-      const card = document.createElement("div");
-      card.className = "card";
-
-      const who = normalizedWho(it);
-      const dueText = it.when ? fmtDate(it.when) : "Sin fecha";
-      const overdue = (!it.done && isOverdue(it.when));
-
-      card.innerHTML = `
-        <div class="cardTop" style="align-items:flex-start;">
-          <div class="who" style="min-width:0;">
-            <p class="name" title="${esc(who)}">${esc(who)}</p>
-            <p class="meta">
-              <span class="chip">📝 ${esc(fmtDate(it.createdAt))}</span>
-              ${it.updatedAt ? `<span class="chip">✍️ ${esc(fmtDate(it.updatedAt))}</span>` : ``}
-              ${it.done ? `<span class="chip">✅ ${esc(fmtDate(it.doneAt))}</span>` : ``}
-            </p>
-          </div>
-          <div class="due ${overdue ? "bad" : ""}">
-            ⏰ ${esc(dueText)}${overdue ? " · Vencido" : ""}
-          </div>
-        </div>
-
-        <div class="desc">${esc(it.what || "—")}</div>
-
-        <div class="actions">
-          <button class="btn good" type="button" data-act="done">${it.done ? "↩️ Reabrir" : "✅ Hecho"}</button>
-          <button class="btn" type="button" data-act="edit">✍️ Editar</button>
-          <button class="btn danger" type="button" data-act="del">🗑️ Eliminar</button>
-        </div>
-      `;
-
-      card.querySelector('[data-act="done"]').addEventListener("click", ()=>{
-        if(it.done){ it.done=false; it.doneAt=null; }
-        else { it.done=true; it.doneAt=new Date().toISOString(); }
-        it.updatedAt = new Date().toISOString();
-        save(KEY, data);
-        renderCommitments();
-      });
-
-      // ✅ SIEMPRE vía window.* (no revienta en strict)
-      card.querySelector('[data-act="edit"]').addEventListener("click", ()=> window.openCommitModal(it.id));
-      card.querySelector('[data-act="del"]').addEventListener("click", ()=> window.deleteCommit(it.id));
-
-      list.appendChild(card);
-    });
-  }
-
-  function renderContacts(){
-    updateCounts();
-
-    const list = $("contactsList");
-    const empty = $("contactsEmpty");
-    if(!list) return;
-
-    list.innerHTML = "";
-    if(empty) empty.style.display = contacts.length ? "none" : "block";
-
-    contacts
-      .slice()
-      .sort((a,b)=> (a.name||"").localeCompare(b.name||"", "es"))
-      .forEach((c)=>{
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <div class="cardTop">
-            <div class="who" style="min-width:0;">
-              <p class="name">${esc(c.name || "Sin nombre")}</p>
-              <p class="meta">
-                <span class="chip">👥 Amigo</span>
-                ${c.note ? `<span class="chip">🛈 ${esc(c.note)}</span>` : ``}
-              </p>
-            </div>
-            <button class="btn primary" type="button" data-act="new" style="flex:0 0 auto;">➕ Compromiso</button>
-          </div>
-          <div class="desc">${esc(c.note || "Amigo guardado en tu móvil.")}</div>
-          <div class="actions">
-            <button class="btn" type="button" data-act="edit">✍️ Editar</button>
-            <button class="btn danger" type="button" data-act="del">🗑️ Eliminar</button>
-          </div>
-        `;
-
-        // ✅ SIEMPRE vía window.*
-        card.querySelector('[data-act="new"]').addEventListener("click", ()=> window.openCommitModal(null, c.id));
-        card.querySelector('[data-act="edit"]').addEventListener("click", ()=> window.openContactModal(c.id));
-        card.querySelector('[data-act="del"]').addEventListener("click", ()=> window.deleteContact(c.id));
-
-        list.appendChild(card);
-      });
-  }
-
-  function renderAll(){
-    renderCommitments();
-    renderContacts();
-    updateCounts();
-  }
-
-  /* =========================
-     FAB (+)
-  ========================= */
-  function bindFab(){
-    const fab = $("fab");
-    if(!fab) return;
-    fab.addEventListener("click", ()=>{
-      if(pane === "contacts") window.openContactModal(null);
-      else window.openCommitModal(null, null);
-    });
-  }
-
-  /* =========================
-     Boot
-  ========================= */
-  (function boot(){
-    const a11y = load(A11Y_KEY, { big:false });
-    setTextScale(!!a11y.big);
-
-    bindA11yButtons();
-    bindNav();
-    bindFab();
-    renderAll();
-  })();
-
-  /* =========================
-     (la PARTE 2/2 va a partir de aquí)
-     - Modales reales: compromiso / amigo
-     - Confirm modal real
-     - Ajustes: PIN + autobloqueo + recordar + notificaciones
-     - Compartir paquete
-     - Borrar todo
-     - etc.
-  ========================= */
-
-})();
-/* compromisos.js (2/2) */
-(function(){
-  "use strict";
-
-  // Esta parte asume que la 1/2 ya definió KEY/CONTACTS_KEY/SETTINGS_KEY/RECEIVED_KEY/A11Y_KEY,
-  // data/contacts/settings/received, $, load/save, toast, uid, fmtDate, isOverdue, etc.
-  // Para no duplicar, lo leemos desde el mismo closure global del archivo (la parte 1).
-  // Como estás pegando esto DENTRO del mismo archivo (después de la parte 1),
-  // aquí podemos acceder a window.* que dejó la parte 1 (openCommitModal, etc.)
-  // y también a los elementos del DOM.
-
-  // ⚠️ Importante: como la parte 1 y 2 están en el MISMO archivo, aquí NO volvemos a declarar
-  // funciones/const de la parte 1. Solo añadimos la lógica completa.
-
-  // Si por lo que sea esta parte se pega suelta (sin la 1/2), evitamos romper:
-  const $ = (id)=> document.getElementById(id);
-  const toast = window.toast || function(m){ console.log(m); };
-
-  /* =========================
-     Utilidades UI (backdrops)
+     Backdrops
   ========================= */
   function showBackdrop(id){
     const b = $(id);
@@ -498,25 +244,15 @@
   const Confirm = {
     _resolver:null,
     open({ title="Confirmar", msg="", yesText="Sí, continuar", danger=true }){
-      const t = $("confirmTitle");
-      const m = $("confirmMsg");
-      const y = $("confirmYes");
-      const n = $("confirmNo");
-
-      if(t) t.textContent = title;
-      if(m) m.innerHTML = msg;
-
-      if(y){
-        y.textContent = yesText;
-        y.classList.toggle("danger", !!danger);
-        y.classList.toggle("primary", !danger);
+      if($("confirmTitle")) $("confirmTitle").textContent = title;
+      if($("confirmMsg")) $("confirmMsg").innerHTML = msg;
+      if($("confirmYes")){
+        $("confirmYes").textContent = yesText;
+        $("confirmYes").classList.toggle("danger", !!danger);
+        $("confirmYes").classList.toggle("primary", !danger);
       }
-
       showBackdrop("confirmBackdrop");
-
-      return new Promise((resolve)=>{
-        Confirm._resolver = resolve;
-      });
+      return new Promise((resolve)=>{ Confirm._resolver = resolve; });
     },
     close(val){
       hideBackdrop("confirmBackdrop");
@@ -527,10 +263,10 @@
   };
 
   (function bindConfirm(){
-    const c = $("confirmClose");
+    const x = $("confirmClose");
     const n = $("confirmNo");
     const y = $("confirmYes");
-    if(c) c.onclick = ()=> Confirm.close(false);
+    if(x) x.onclick = ()=> Confirm.close(false);
     if(n) n.onclick = ()=> Confirm.close(false);
     if(y) y.onclick = ()=> Confirm.close(true);
 
@@ -543,75 +279,8 @@
   })();
 
   /* =========================
-     Storage keys / load helpers
+     Helpers (render)
   ========================= */
-  const KEY = "compromisos.data.v1";
-  const CONTACTS_KEY = "compromisos.contacts.v1";
-  const SETTINGS_KEY = "compromisos.settings.v1";
-  const RECEIVED_KEY = "compromisos.received.v1";
-  const A11Y_KEY = "compromisos.a11y.v1";
-
-  function safeJsonParse(s, fallback){
-    try{ return JSON.parse(s); }catch(e){ return fallback; }
-  }
-  function load(key, fallback){
-    const v = localStorage.getItem(key);
-    if(v == null) return fallback;
-    return safeJsonParse(v, fallback);
-  }
-  function save(key, val){
-    localStorage.setItem(key, JSON.stringify(val));
-  }
-  function uid(){
-    return Math.random().toString(36).slice(2) + Date.now().toString(36);
-  }
-
-  // Estado real (recargamos por seguridad)
-  let data = load(KEY, []);
-  let contacts = load(CONTACTS_KEY, []);
-  let settings = load(SETTINGS_KEY, {
-    pinEnabled:false,
-    autoLockMin:0,
-    rememberMin:0,
-    notifEnabled:false,
-    pinHash:null,
-    unlockedUntil:0
-  });
-  let received = load(RECEIVED_KEY, { c:0, lastAt:null });
-
-  // Para distinguir “nuevo / editar”
-  let currentEditCommitId = null;
-  let currentEditContactId = null;
-
-  /* =========================
-     Helpers
-  ========================= */
-  function esc(s){
-    return String(s ?? "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-  function fmtDate(iso){
-    try{
-      if(!iso) return "";
-      const d = (iso instanceof Date) ? iso : new Date(iso);
-      if(isNaN(d.getTime())) return "";
-      return d.toLocaleString("es-ES", {
-        year:"numeric", month:"2-digit", day:"2-digit",
-        hour:"2-digit", minute:"2-digit"
-      });
-    }catch(e){ return ""; }
-  }
-  function isOverdue(iso){
-    if(!iso) return false;
-    const t = new Date(iso).getTime();
-    if(!isFinite(t)) return false;
-    return t < Date.now();
-  }
-
   function normalizedWho(item){
     if(item.whoId){
       const c = contacts.find(x=>x.id===item.whoId);
@@ -620,9 +289,6 @@
     return item.whoName || "Sin nombre";
   }
 
-  /* =========================
-     Render / contadores (conectamos con parte 1)
-  ========================= */
   function updateCounts(){
     const pending = data.filter(x=>!x.done);
     const done = data.filter(x=>x.done);
@@ -639,6 +305,10 @@
     if($("bReceived")) $("bReceived").textContent = String(rec);
   }
 
+  function currentView(){
+    return ($("tabDone") && $("tabDone").classList.contains("active")) ? "done" : "pending";
+  }
+
   function renderCommitments(){
     updateCounts();
 
@@ -646,9 +316,7 @@
     const empty = $("empty");
     if(!list) return;
 
-    // Determinar view desde botones active
-    const view = ($("tabDone") && $("tabDone").classList.contains("active")) ? "done" : "pending";
-
+    const view = currentView();
     list.innerHTML = "";
 
     const items = data
@@ -759,6 +427,11 @@
       });
   }
 
+  function renderReceivedBadge(){
+    const rec = Math.max(0, Number(received?.c || 0));
+    if($("bReceived")) $("bReceived").textContent = String(rec);
+  }
+
   function renderAll(){
     renderCommitments();
     renderContacts();
@@ -766,6 +439,118 @@
     fillContactSelect();
     updateSettingsUI();
     renderReceivedBadge();
+  }
+
+  /* =========================
+     Navegación panes
+  ========================= */
+  function safeShow(el, show){
+    if(!el) return;
+    el.style.display = show ? "" : "none";
+  }
+
+  function setPane(newPane){
+    pane = newPane;
+
+    const tC = $("tabCommitments");
+    const tA = $("tabContacts");
+
+    if(tC) tC.classList.toggle("active", pane==="commitments");
+    if(tA) tA.classList.toggle("active", pane==="contacts");
+
+    safeShow($("commitmentsPane"), pane==="commitments");
+    safeShow($("contactsPane"), pane==="contacts");
+    safeShow($("settingsPane"), pane==="settings");
+
+    const fab = $("fab");
+    if(fab){
+      if(pane === "settings") fab.style.display = "none";
+      else{
+        fab.style.display = "grid";
+        fab.setAttribute("aria-label", pane==="contacts" ? "Nuevo amigo" : "Nuevo compromiso");
+      }
+    }
+
+    renderAll();
+    try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
+  }
+
+  function setViewPending(){
+    const a = $("tabPending"), b = $("tabDone");
+    if(a) a.classList.add("active");
+    if(b) b.classList.remove("active");
+    renderCommitments();
+  }
+  function setViewDone(){
+    const a = $("tabDone"), b = $("tabPending");
+    if(a) a.classList.add("active");
+    if(b) b.classList.remove("active");
+    renderCommitments();
+  }
+
+  function bindNav(){
+    if($("tabCommitments")) $("tabCommitments").onclick = ()=> setPane("commitments");
+    if($("tabContacts")) $("tabContacts").onclick = ()=> setPane("contacts");
+
+    if($("tabPending")) $("tabPending").onclick = setViewPending;
+    if($("tabDone")) $("tabDone").onclick = setViewDone;
+
+    // Tiles (menú)
+    const bindTile = (id, fn)=>{
+      const el = $(id);
+      if(!el) return;
+      el.addEventListener("click", fn);
+      el.addEventListener("keydown", (e)=>{
+        if(e.key==="Enter" || e.key===" "){ e.preventDefault(); fn(); }
+      });
+    };
+    bindTile("tilePending", ()=>{ setPane("commitments"); setViewPending(); toast("📝 Pendientes"); });
+    bindTile("tileDone", ()=>{ setPane("commitments"); setViewDone(); toast("✅ Hechos"); });
+    bindTile("tileContacts", ()=>{ setPane("contacts"); toast("👥 Amigos"); });
+    bindTile("tileSettings", ()=>{ setPane("settings"); toast("⚙️ Ajustes"); });
+
+    // Pills
+    if($("btnOverdue")){
+      $("btnOverdue").addEventListener("click", ()=>{
+        setPane("commitments");
+        setViewPending();
+        const overdue = data.filter(x=> !x.done && isOverdue(x.when)).length;
+        toast(overdue ? `⏰ ${overdue} vencido(s)` : "Sin vencidos ✅");
+      });
+    }
+    if($("btnReceived")){
+      $("btnReceived").addEventListener("click", async ()=>{
+        setPane("commitments");
+        setViewPending();
+        const c = Math.max(0, Number(received?.c || 0));
+        if(!c){ toast("Sin recibidos"); return; }
+
+        const ok = await Confirm.open({
+          title:"Recibidos",
+          msg:`Has recibido <b>${c}</b> paquete(s).<br>¿Marcar como vistos y poner el contador a 0?`,
+          yesText:"Sí, marcar vistos",
+          danger:false
+        });
+        if(ok){
+          received = { c:0, lastAt:null };
+          save(RECEIVED_KEY, received);
+          renderAll();
+          toast("Recibidos marcados ✅");
+        }
+      });
+    }
+  }
+
+  /* =========================
+     FAB
+  ========================= */
+  function bindFab(){
+    const fab = $("fab");
+    if(!fab) return;
+    fab.addEventListener("click", ()=>{
+      if(pane === "contacts") openContactModal(null);
+      else openCommitModal(null, null);
+    });
   }
 
   /* =========================
@@ -808,71 +593,57 @@
     const fWho = $("fWho");
     if(!sel || !customWrap || !fWho) return;
 
-    const v = sel.value;
-    if(v === "__custom__"){
+    if(sel.value === "__custom__"){
       customWrap.style.display = "";
-      fWho.focus();
+      try{ fWho.focus(); }catch(e){}
     }else{
       customWrap.style.display = "none";
     }
   }
 
   /* =========================
-     Modal Compromiso: abrir/guardar/cerrar
+     Modal Compromiso
   ========================= */
+  let currentEditCommitId = null;
+
   function openCommitModal(id, preContactId){
     currentEditCommitId = id || null;
 
-    const title = $("modalTitle");
-    const btnSave = $("btnSave");
+    if($("modalTitle")) $("modalTitle").textContent = id ? "Editar compromiso" : "Nuevo compromiso";
+    if($("btnSave")) $("btnSave").textContent = id ? "Guardar cambios" : "Guardar";
 
-    if(title) title.textContent = id ? "Editar compromiso" : "Nuevo compromiso";
-    if(btnSave) btnSave.textContent = id ? "Guardar cambios" : "Guardar";
+    if($("fWhat")) $("fWhat").value = "";
+    if($("fWhen")) $("fWhen").value = "";
+    if($("fRemind")) $("fRemind").value = "0";
+    if($("fAfter")) $("fAfter").value = "0";
+    if($("fWho")) $("fWho").value = "";
 
-    // Reset fields
-    const fWhat = $("fWhat");
-    const fWhen = $("fWhen");
-    const fRemind = $("fRemind");
-    const fAfter = $("fAfter");
-    const fWho = $("fWho");
-    const contactHint = $("contactHint");
-
-    if(fWhat) fWhat.value = "";
-    if(fWhen) fWhen.value = "";
-    if(fRemind) fRemind.value = "0";
-    if(fAfter) fAfter.value = "0";
-    if(fWho) fWho.value = "";
-    if(contactHint) contactHint.textContent = "Elige un amigo o escribe un nombre sin guardar.";
-
-    // Prefill if editing
     if(id){
       const it = data.find(x=>x.id===id);
       if(it){
-        if(fWhat) fWhat.value = it.what || "";
-        if(fWhen){
-          // datetime-local necesita "YYYY-MM-DDTHH:MM"
+        if($("fWhat")) $("fWhat").value = it.what || "";
+        if($("fRemind")) $("fRemind").value = String(Number(it.remindMin||0));
+        if($("fAfter")) $("fAfter").value = String(Number(it.afterMin||0));
+
+        if($("fWhen")){
           if(it.when){
             const d = new Date(it.when);
             if(!isNaN(d.getTime())){
               const pad = (n)=> String(n).padStart(2,"0");
-              fWhen.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+              $("fWhen").value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
             }
           }
         }
-        if(fRemind) fRemind.value = String(Number(it.remindMin||0));
-        if(fAfter) fAfter.value = String(Number(it.afterMin||0));
 
         fillContactSelect(it.whoId || "");
         if(!it.whoId){
-          // si no tiene whoId, ponemos custom
           const sel = $("fContact");
           if(sel) sel.value = "__custom__";
           handleContactSelectChange();
-          if(fWho) fWho.value = it.whoName || "";
+          if($("fWho")) $("fWho").value = it.whoName || "";
         }
       }
-    } else {
-      // nuevo
+    }else{
       fillContactSelect(preContactId || "");
       if(preContactId){
         const sel = $("fContact");
@@ -888,48 +659,35 @@
     currentEditCommitId = null;
   }
 
-  function getSelectedWho(){
-    const sel = $("fContact");
-    const fWho = $("fWho");
-    if(!sel) return { whoId:null, whoName:"Sin nombre" };
-
-    if(sel.value && sel.value !== "__custom__"){
-      const c = contacts.find(x=>x.id===sel.value);
-      return { whoId: sel.value, whoName: (c?.name || "Sin nombre") };
-    }
-
-    // custom
-    const name = String(fWho?.value || "").trim();
-    return { whoId:null, whoName: name || "Sin nombre" };
-  }
-
   function parseWhenToIso(){
-    const fWhen = $("fWhen");
-    if(!fWhen) return null;
-    const v = String(fWhen.value||"").trim();
+    const v = String($("fWhen")?.value || "").trim();
     if(!v) return null;
     const d = new Date(v);
     if(isNaN(d.getTime())) return null;
     return d.toISOString();
   }
 
+  function getSelectedWho(){
+    const sel = $("fContact");
+    if(!sel) return { whoId:null, whoName:"Sin nombre" };
+
+    if(sel.value && sel.value !== "__custom__"){
+      const c = contacts.find(x=>x.id===sel.value);
+      return { whoId: sel.value, whoName: (c?.name || "Sin nombre") };
+    }
+    const name = String($("fWho")?.value || "").trim();
+    return { whoId:null, whoName: name || "Sin nombre" };
+  }
+
   async function saveCommitFromModal(){
-    const fWhat = $("fWhat");
-    const fRemind = $("fRemind");
-    const fAfter = $("fAfter");
+    const what = String($("fWhat")?.value || "").trim();
+    if(!what){ toast("Escribe qué se acordó ✍️"); return; }
 
-    const what = String(fWhat?.value || "").trim();
     const whenIso = parseWhenToIso();
-    const remindMin = Number(fRemind?.value || 0) || 0;
-    const afterMin = Number(fAfter?.value || 0) || 0;
-
+    const remindMin = Number($("fRemind")?.value || 0) || 0;
+    const afterMin = Number($("fAfter")?.value || 0) || 0;
     const who = getSelectedWho();
     const now = new Date().toISOString();
-
-    if(!what){
-      toast("Escribe qué se acordó ✍️");
-      return;
-    }
 
     if(currentEditCommitId){
       const it = data.find(x=>x.id===currentEditCommitId);
@@ -940,8 +698,6 @@
       it.what = what;
       it.when = whenIso;
       it.remindMin = remindMin;
-
-      // "desde ahora" solo se guarda como minutos (se aplicará al compartir)
       it.afterMin = afterMin;
       it.updatedAt = now;
 
@@ -949,7 +705,6 @@
       closeCommitModal();
       renderAll();
       toast("Guardado ✅");
-      // abrir compartir
       shareSnapshot(it.id);
       return;
     }
@@ -962,7 +717,6 @@
       when: whenIso,
       remindMin,
       afterMin,
-      afterAt: null,
       done:false,
       createdAt: now,
       updatedAt: null,
@@ -996,31 +750,29 @@
   }
 
   /* =========================
-     Modal Contacto: abrir/guardar/cerrar
+     Modal Contacto
   ========================= */
+  let currentEditContactId = null;
+
   function openContactModal(id){
     currentEditContactId = id || null;
 
-    const t = $("cModalTitle");
-    const btn = $("cBtnSave");
-    if(t) t.textContent = id ? "Editar amigo" : "Nuevo amigo";
-    if(btn) btn.textContent = id ? "Guardar cambios" : "Guardar";
+    if($("cModalTitle")) $("cModalTitle").textContent = id ? "Editar amigo" : "Nuevo amigo";
+    if($("cBtnSave")) $("cBtnSave").textContent = id ? "Guardar cambios" : "Guardar";
 
-    const cName = $("cName");
-    const cNote = $("cNote");
-    if(cName) cName.value = "";
-    if(cNote) cNote.value = "";
+    if($("cName")) $("cName").value = "";
+    if($("cNote")) $("cNote").value = "";
 
     if(id){
       const c = contacts.find(x=>x.id===id);
       if(c){
-        if(cName) cName.value = c.name || "";
-        if(cNote) cNote.value = c.note || "";
+        if($("cName")) $("cName").value = c.name || "";
+        if($("cNote")) $("cNote").value = c.note || "";
       }
     }
 
     showBackdrop("cBackdrop");
-    setTimeout(()=>{ try{ $("cName")?.focus(); }catch(e){} }, 20);
+    setTimeout(()=>{ try{ $("cName")?.focus(); }catch(e){} }, 30);
   }
 
   function closeContactModal(){
@@ -1029,20 +781,13 @@
   }
 
   async function saveContactFromModal(){
-    const cName = $("cName");
-    const cNote = $("cNote");
-    const name = String(cName?.value || "").trim();
-    const note = String(cNote?.value || "").trim();
-
-    if(!name){
-      toast("Pon un nombre 👥");
-      return;
-    }
+    const name = String($("cName")?.value || "").trim();
+    const note = String($("cNote")?.value || "").trim();
+    if(!name){ toast("Pon un nombre 👥"); return; }
 
     if(currentEditContactId){
       const c = contacts.find(x=>x.id===currentEditContactId);
       if(!c){ toast("No encontrado"); closeContactModal(); return; }
-
       c.name = name;
       c.note = note || "";
       save(CONTACTS_KEY, contacts);
@@ -1072,7 +817,6 @@
     });
     if(!ok) return;
 
-    // Convertimos los compromisos que lo usen a “nombre libre”
     data.forEach(it=>{
       if(it.whoId===id){
         it.whoId = null;
@@ -1089,38 +833,40 @@
   }
 
   /* =========================
-     Compartir paquete (modal share)
+     Compartir paquete
   ========================= */
-  function buildPackageForItem(it){
-    // Paquete “compromiso” simple para compartir por enlace.
-    // El receptor “aplica” al abrir el link (aquí solo lo preparamos).
-    const payload = {
-      i: it.id,
-      w: normalizedWho(it),
-      s: it.what || "",
-      n: it.when || null,
-      r: Number(it.remindMin||0),
-      af: Number(it.afterMin||0),
-      // “desde ahora”: se calcula en receptor si quiere, aquí solo minutos
-      ca: it.createdAt || new Date().toISOString()
-    };
-    return payload;
-  }
-
   function encodePack(obj){
     const json = JSON.stringify(obj);
-    // base64url
     const b64 = btoa(unescape(encodeURIComponent(json)))
       .replaceAll("+","-").replaceAll("/","_").replaceAll("=","");
     return b64;
   }
 
+  function decodePack(s){
+    try{
+      const b64 = s.replaceAll("-","+").replaceAll("_","/");
+      const pad = b64.length % 4 ? ("=".repeat(4 - (b64.length % 4))) : "";
+      const json = decodeURIComponent(escape(atob(b64+pad)));
+      return JSON.parse(json);
+    }catch(e){ return null; }
+  }
+
   function getBaseUrl(){
-    // Usa el propio URL actual sin query/hash
     const u = new URL(location.href);
     u.hash = "";
     u.search = "";
     return u.toString();
+  }
+
+  function buildPackageForItem(it){
+    return {
+      w: normalizedWho(it),
+      s: it.what || "",
+      n: it.when || null,
+      r: Number(it.remindMin||0) || 0,
+      af: Number(it.afterMin||0) || 0,
+      ca: it.createdAt || new Date().toISOString()
+    };
   }
 
   function shareSnapshot(itemId){
@@ -1129,9 +875,7 @@
 
     const pack = buildPackageForItem(it);
     const code = encodePack(pack);
-
-    const base = getBaseUrl();
-    const url = `${base}?p=${code}`;
+    const url = `${getBaseUrl()}?p=${code}`;
 
     const shortTxt =
       `📌 Compromiso\n`+
@@ -1147,19 +891,15 @@
       `📝 Qué: ${it.what}\n`+
       `⏰ Para: ${it.when ? fmtDate(it.when) : "Sin fecha"}\n`+
       `🔔 Recordatorio: ${Number(it.remindMin||0) ? (it.remindMin+" min antes") : "Ninguno"}\n`+
-      `⏳ Avisar “desde ahora”: ${Number(it.afterMin||0) ? (it.afterMin+" min") : "No"}\n`+
-      `🕒 Creado: ${it.createdAt ? fmtDate(it.createdAt) : ""}\n\n`+
+      `⏳ Avisar “desde ahora”: ${Number(it.afterMin||0) ? (it.afterMin+" min") : "No"}\n\n`+
       `🔗 Enlace:\n${url}`;
 
-    // UI
-    const shareTitle = $("shareTitle");
-    const box = $("shareTextBox");
-    const boxUrl = $("shareUrlBox");
+    if($("shareTitle")) $("shareTitle").innerHTML = `Vas a compartir: <b>${esc(normalizedWho(it))}</b> · <b>${esc(it.what)}</b>`;
+    if($("shareUrlBox")) $("shareUrlBox").textContent = url;
+
     const btnShort = $("shareShort");
     const btnLong = $("shareLong");
-
-    if(shareTitle) shareTitle.innerHTML = `Vas a compartir: <b>${esc(normalizedWho(it))}</b> · <b>${esc(it.what)}</b>`;
-    if(boxUrl) boxUrl.textContent = url;
+    const box = $("shareTextBox");
 
     function setMode(mode){
       if(btnShort) btnShort.classList.toggle("active", mode==="short");
@@ -1171,58 +911,49 @@
     if(btnShort) btnShort.onclick = ()=> setMode("short");
     if(btnLong) btnLong.onclick = ()=> setMode("long");
 
-    // Botones
-    const copyUrl = $("shareCopyUrl");
-    const copyAll = $("shareCopyAll");
-    const send = $("shareSend");
+    if($("shareCopyUrl")){
+      $("shareCopyUrl").onclick = async ()=>{
+        try{ await navigator.clipboard.writeText(url); toast("Enlace copiado 🔗"); }
+        catch(e){ toast("No se pudo copiar"); }
+      };
+    }
 
-    if(copyUrl) copyUrl.onclick = async ()=>{
-      try{
-        await navigator.clipboard.writeText(url);
-        toast("Enlace copiado 🔗");
-      }catch(e){
-        toast("No se pudo copiar");
-      }
-    };
-
-    if(copyAll) copyAll.onclick = async ()=>{
-      try{
-        const txt = (btnLong && btnLong.classList.contains("active")) ? longTxt : shortTxt;
-        await navigator.clipboard.writeText(txt);
-        toast("Texto copiado 📋");
-      }catch(e){
-        toast("No se pudo copiar");
-      }
-    };
-
-    if(send) send.onclick = async ()=>{
-      const txt = (btnLong && btnLong.classList.contains("active")) ? longTxt : shortTxt;
-      try{
-        if(navigator.share){
-          await navigator.share({ text: txt });
-          toast("Compartido 📤");
-        }else{
+    if($("shareCopyAll")){
+      $("shareCopyAll").onclick = async ()=>{
+        try{
+          const txt = (btnLong && btnLong.classList.contains("active")) ? longTxt : shortTxt;
           await navigator.clipboard.writeText(txt);
-          toast("Copiado (no hay share) 📋");
+          toast("Texto copiado 📋");
+        }catch(e){ toast("No se pudo copiar"); }
+      };
+    }
+
+    if($("shareSend")){
+      $("shareSend").onclick = async ()=>{
+        const txt = (btnLong && btnLong.classList.contains("active")) ? longTxt : shortTxt;
+        try{
+          if(navigator.share){
+            await navigator.share({ text: txt });
+            toast("Compartido 📤");
+          }else{
+            await navigator.clipboard.writeText(txt);
+            toast("Copiado (sin share) 📋");
+          }
+        }catch(e){
+          toast("Cancelado");
         }
-      }catch(e){
-        toast("Cancelado");
-      }
-    };
+      };
+    }
 
     showBackdrop("shareBackdrop");
   }
 
-  function closeShare(){
-    hideBackdrop("shareBackdrop");
-  }
+  function closeShare(){ hideBackdrop("shareBackdrop"); }
 
   (function bindShareModal(){
-    const x = $("shareClose");
-    const done = $("shareCancel");
+    if($("shareClose")) $("shareClose").onclick = closeShare;
+    if($("shareCancel")) $("shareCancel").onclick = closeShare;
     const bd = $("shareBackdrop");
-    if(x) x.onclick = closeShare;
-    if(done) done.onclick = closeShare;
     if(bd){
       bd.addEventListener("click", (e)=>{
         if(e.target === bd) closeShare();
@@ -1230,44 +961,14 @@
     }
   })();
 
-  /* =========================
-     Recibidos (contador)
-  ========================= */
-  function renderReceivedBadge(){
-    const rec = Math.max(0, Number(received?.c || 0));
-    if($("bReceived")) $("bReceived").textContent = String(rec);
-  }
-
-  function clearReceived(){
-    received = { c:0, lastAt:null };
-    save(RECEIVED_KEY, received);
-    renderReceivedBadge();
-  }
-
-  /* =========================
-     Aplicar paquete recibido por URL (?p=...)
-  ========================= */
-  function decodePack(s){
-    try{
-      const b64 = s.replaceAll("-","+").replaceAll("_","/");
-      const pad = b64.length % 4 ? ("=".repeat(4 - (b64.length % 4))) : "";
-      const json = decodeURIComponent(escape(atob(b64+pad)));
-      return JSON.parse(json);
-    }catch(e){ return null; }
-  }
-
   function applyIncomingPack(){
     const u = new URL(location.href);
     const p = u.searchParams.get("p");
     if(!p) return false;
 
     const pack = decodePack(p);
-    if(!pack || typeof pack !== "object"){
-      toast("Paquete inválido");
-      return false;
-    }
+    if(!pack || typeof pack !== "object"){ toast("Paquete inválido"); return false; }
 
-    // Crea compromiso “recibido”
     const now = new Date().toISOString();
     const newItem = {
       id: uid(),
@@ -1277,7 +978,6 @@
       when: pack.n || null,
       remindMin: Number(pack.r || 0) || 0,
       afterMin: Number(pack.af || 0) || 0,
-      afterAt: null,
       done:false,
       createdAt: now,
       updatedAt: null,
@@ -1287,12 +987,10 @@
     data.push(newItem);
     save(KEY, data);
 
-    // contador recibidos
     received.c = Math.max(0, Number(received.c||0)) + 1;
     received.lastAt = now;
     save(RECEIVED_KEY, received);
 
-    // Limpia la URL para que no se reaplique al refrescar
     u.searchParams.delete("p");
     history.replaceState({}, "", u.toString());
 
@@ -1301,23 +999,20 @@
   }
 
   /* =========================
-     Ajustes: UI + PIN
+     Ajustes: PIN
   ========================= */
   function updateSettingsUI(){
-    // Switch PIN
     const swPin = $("swPin");
     if(swPin){
       swPin.classList.toggle("on", !!settings.pinEnabled);
       swPin.setAttribute("aria-checked", settings.pinEnabled ? "true" : "false");
     }
 
-    // Selects
     const selAuto = $("selAutoLock");
     const selRem = $("selRemember");
     if(selAuto) selAuto.value = String(Number(settings.autoLockMin||0));
     if(selRem) selRem.value = String(Number(settings.rememberMin||0));
 
-    // Switch notif
     const swNotif = $("swNotif");
     if(swNotif){
       swNotif.classList.toggle("on", !!settings.notifEnabled);
@@ -1326,7 +1021,6 @@
   }
 
   function hashPin(pin){
-    // hash “simple” (no crypto fuerte, pero suficiente para PWA local)
     let h = 0;
     for(let i=0;i<pin.length;i++){
       h = ((h<<5)-h) + pin.charCodeAt(i);
@@ -1341,11 +1035,8 @@
   }
   function setUnlockedForMinutes(min){
     const m = Number(min||0);
-    if(m <= 0){
-      settings.unlockedUntil = 0;
-    }else{
-      settings.unlockedUntil = Date.now() + m*60*1000;
-    }
+    if(m <= 0) settings.unlockedUntil = 0;
+    else settings.unlockedUntil = Date.now() + m*60*1000;
     save(SETTINGS_KEY, settings);
   }
 
@@ -1357,51 +1048,22 @@
     hideBackdrop("lockOverlay");
   }
 
-  // PIN entry
   let pinEntry = "";
-
   function resetPinEntry(){
     pinEntry = "";
     renderPinDots();
   }
   function renderPinDots(){
-    const ids = ["d1","d2","d3","d4"];
-    ids.forEach((id, i)=>{
+    ["d1","d2","d3","d4"].forEach((id, i)=>{
       const el = $(id);
-      if(!el) return;
-      el.classList.toggle("on", i < pinEntry.length);
+      if(el) el.classList.toggle("on", i < pinEntry.length);
     });
   }
 
-  function handlePinKey(k){
-    if(k === "del"){
-      pinEntry = pinEntry.slice(0,-1);
-      renderPinDots();
-      return;
-    }
-    if(k === "ok"){
-      verifyPinEntry();
-      return;
-    }
-    if(/^\d$/.test(k)){
-      if(pinEntry.length >= 4) return;
-      pinEntry += k;
-      renderPinDots();
-      if(pinEntry.length === 4) verifyPinEntry();
-    }
-  }
-
   function verifyPinEntry(){
-    if(!settings.pinEnabled){
-      hideLockOverlay();
-      return;
-    }
-    const entered = pinEntry;
-    if(entered.length !== 4){
-      toast("PIN incompleto");
-      return;
-    }
-    const ok = (settings.pinHash && settings.pinHash === hashPin(entered));
+    if(!settings.pinEnabled){ hideLockOverlay(); return; }
+    if(pinEntry.length !== 4){ toast("PIN incompleto"); return; }
+    const ok = (settings.pinHash && settings.pinHash === hashPin(pinEntry));
     if(ok){
       toast("Desbloqueado ✅");
       setUnlockedForMinutes(Number(settings.rememberMin||0));
@@ -1413,37 +1075,38 @@
     resetPinEntry();
   }
 
-  // Modal PIN (configurar/cambiar)
+  function handlePinKey(k){
+    if(k === "del"){ pinEntry = pinEntry.slice(0,-1); renderPinDots(); return; }
+    if(k === "ok"){ verifyPinEntry(); return; }
+    if(/^\d$/.test(k)){
+      if(pinEntry.length >= 4) return;
+      pinEntry += k;
+      renderPinDots();
+      if(pinEntry.length === 4) verifyPinEntry();
+    }
+  }
+
   let pinMode = "set"; // set | change
   function openPinModal(mode){
     pinMode = mode || "set";
-    const title = $("pinTitle");
-    const hint = $("pinHint");
-    const oldWrap = $("pinOldWrap");
 
-    if(title) title.textContent = (pinMode==="change") ? "Cambiar PIN" : "Configurar PIN";
-    if(hint){
-      hint.textContent = (pinMode==="change")
+    if($("pinTitle")) $("pinTitle").textContent = (pinMode==="change") ? "Cambiar PIN" : "Configurar PIN";
+    if($("pinHint")){
+      $("pinHint").textContent = (pinMode==="change")
         ? "Introduce tu PIN actual y el nuevo (4 dígitos)."
         : "Elige un PIN de 4 dígitos. Se guardará solo en tu móvil.";
     }
-    if(oldWrap) oldWrap.style.display = (pinMode==="change") ? "" : "none";
+    if($("pinOldWrap")) $("pinOldWrap").style.display = (pinMode==="change") ? "" : "none";
 
-    // reset inputs
-    const a = $("pinOld");
-    const b = $("pinNew");
-    const c = $("pinNew2");
-    if(a) a.value = "";
-    if(b) b.value = "";
-    if(c) c.value = "";
+    if($("pinOld")) $("pinOld").value = "";
+    if($("pinNew")) $("pinNew").value = "";
+    if($("pinNew2")) $("pinNew2").value = "";
 
     showBackdrop("pinBackdrop");
-    setTimeout(()=>{ try{ (pinMode==="change" ? $("pinOld") : $("pinNew"))?.focus(); }catch(e){} }, 20);
+    setTimeout(()=>{ try{ (pinMode==="change" ? $("pinOld") : $("pinNew"))?.focus(); }catch(e){} }, 30);
   }
 
-  function closePinModal(){
-    hideBackdrop("pinBackdrop");
-  }
+  function closePinModal(){ hideBackdrop("pinBackdrop"); }
 
   async function savePinFromModal(){
     const old = String($("pinOld")?.value || "").trim();
@@ -1453,8 +1116,7 @@
     if(pinMode==="change"){
       if(old.length !== 4){ toast("PIN actual inválido"); return; }
       if(!settings.pinHash || settings.pinHash !== hashPin(old)){
-        toast("PIN actual incorrecto");
-        return;
+        toast("PIN actual incorrecto"); return;
       }
     }
 
@@ -1469,6 +1131,7 @@
     closePinModal();
     updateSettingsUI();
     toast("PIN guardado 🔒");
+    showLockOverlay();
   }
 
   function lockNow(){
@@ -1487,18 +1150,17 @@
     }
     try{
       const p = await Notification.requestPermission();
-      const hint = $("notifHint");
       if(p === "granted"){
         settings.notifEnabled = true;
         save(SETTINGS_KEY, settings);
         updateSettingsUI();
-        if(hint) hint.textContent = "✅ Permiso concedido. (Los recordatorios se activarán cuando estén implementados al 100%)";
+        if($("notifHint")) $("notifHint").textContent = "✅ Permiso concedido.";
         toast("Notificaciones activadas ✅");
       }else{
         settings.notifEnabled = false;
         save(SETTINGS_KEY, settings);
         updateSettingsUI();
-        if(hint) hint.textContent = "ℹ️ Permiso no concedido. Puedes activarlo en ajustes del navegador.";
+        if($("notifHint")) $("notifHint").textContent = "ℹ️ Permiso no concedido. Puedes activarlo en ajustes del navegador.";
         toast("No permitido");
       }
     }catch(e){
@@ -1507,7 +1169,7 @@
   }
 
   /* =========================
-     Borrar todo
+     Reset total
   ========================= */
   async function resetAll(){
     const ok = await Confirm.open({
@@ -1522,7 +1184,6 @@
     localStorage.removeItem(CONTACTS_KEY);
     localStorage.removeItem(SETTINGS_KEY);
     localStorage.removeItem(RECEIVED_KEY);
-    // no borramos A11Y para que mantenga tu preferencia (si quieres, lo borro también)
 
     data = [];
     contacts = [];
@@ -1544,67 +1205,53 @@
   }
 
   /* =========================
-     Auto-bloqueo (al salir / volver)
+     Auto-bloqueo básico
   ========================= */
-  let lastHideAt = 0;
-
   function onHide(){
-    lastHideAt = Date.now();
-    // si autoLock=0 => inmediato
     if(settings.pinEnabled){
       const m = Number(settings.autoLockMin||0);
       if(m === 0){
         settings.unlockedUntil = 0;
         save(SETTINGS_KEY, settings);
+      }else{
+        // si autoLock > 0, lo evaluamos al volver: si ya no está “remember”, pedirá PIN
+        // (se simplifica; lo importante es que si no está unlocked, se muestre overlay)
       }
     }
   }
-
   function onShow(){
-    if(!settings.pinEnabled) return;
-    if(isUnlockedNow()) return;
-
-    // si se quedó bloqueado
-    showLockOverlay();
+    if(settings.pinEnabled && !isUnlockedNow()){
+      showLockOverlay();
+    }
   }
-
   document.addEventListener("visibilitychange", ()=>{
     if(document.hidden) onHide();
     else onShow();
   });
-
   window.addEventListener("pagehide", onHide);
   window.addEventListener("pageshow", onShow);
 
   /* =========================
-     Bindings (modales + settings)
+     Binds modales
   ========================= */
   (function bindModals(){
     // compromiso modal
-    const close = $("btnClose");
-    const cancel = $("btnCancel");
-    const saveBtn = $("btnSave");
+    if($("btnClose")) $("btnClose").onclick = closeCommitModal;
+    if($("btnCancel")) $("btnCancel").onclick = closeCommitModal;
+    if($("btnSave")) $("btnSave").onclick = saveCommitFromModal;
     const bd = $("backdrop");
-    const sel = $("fContact");
-
-    if(close) close.onclick = closeCommitModal;
-    if(cancel) cancel.onclick = closeCommitModal;
-    if(saveBtn) saveBtn.onclick = saveCommitFromModal;
     if(bd){
       bd.addEventListener("click", (e)=>{
         if(e.target === bd) closeCommitModal();
       });
     }
-    if(sel) sel.addEventListener("change", handleContactSelectChange);
+    if($("fContact")) $("fContact").addEventListener("change", handleContactSelectChange);
 
     // contacto modal
-    const cClose = $("cBtnClose");
-    const cCancel = $("cBtnCancel");
-    const cSave = $("cBtnSave");
+    if($("cBtnClose")) $("cBtnClose").onclick = closeContactModal;
+    if($("cBtnCancel")) $("cBtnCancel").onclick = closeContactModal;
+    if($("cBtnSave")) $("cBtnSave").onclick = saveContactFromModal;
     const cbd = $("cBackdrop");
-    if(cClose) cClose.onclick = closeContactModal;
-    if(cCancel) cCancel.onclick = closeContactModal;
-    if(cSave) cSave.onclick = saveContactFromModal;
     if(cbd){
       cbd.addEventListener("click", (e)=>{
         if(e.target === cbd) closeContactModal();
@@ -1612,36 +1259,72 @@
     }
 
     // pin modal
-    const pClose = $("pinClose");
-    const pCancel = $("pinCancel");
-    const pOk = $("pinOk");
+    if($("pinClose")) $("pinClose").onclick = closePinModal;
+    if($("pinCancel")) $("pinCancel").onclick = closePinModal;
+    if($("pinOk")) $("pinOk").onclick = savePinFromModal;
     const pbd = $("pinBackdrop");
-    if(pClose) pClose.onclick = closePinModal;
-    if(pCancel) pCancel.onclick = closePinModal;
-    if(pOk) pOk.onclick = savePinFromModal;
     if(pbd){
       pbd.addEventListener("click", (e)=>{
         if(e.target === pbd) closePinModal();
       });
     }
+
+    // lock overlay keypad
+    const keypad = $("keypad");
+    if(keypad){
+      keypad.addEventListener("click", (e)=>{
+        const btn = e.target.closest("button");
+        if(!btn) return;
+        const k = btn.getAttribute("data-k");
+        if(!k) return;
+        handlePinKey(k);
+      });
+    }
+
+    if($("lockClose")){
+      $("lockClose").onclick = ()=>{
+        if(settings.pinEnabled && !isUnlockedNow()){
+          toast("Introduce el PIN");
+          return;
+        }
+        hideLockOverlay();
+      };
+    }
+
+    const lockBd = $("lockOverlay");
+    if(lockBd){
+      lockBd.addEventListener("click", (e)=>{
+        if(e.target === lockBd){
+          if(settings.pinEnabled && !isUnlockedNow()){
+            toast("Introduce el PIN");
+            return;
+          }
+          hideLockOverlay();
+        }
+      });
+    }
+
+    if($("btnLockReset")) $("btnLockReset").onclick = resetAll;
+    if($("btnLockCopyLink")){
+      $("btnLockCopyLink").onclick = async ()=>{
+        try{ await navigator.clipboard.writeText(location.href); toast("Enlace copiado 🔗"); }
+        catch(e){ toast("No se pudo copiar"); }
+      };
+    }
   })();
 
+  /* =========================
+     Binds settings
+  ========================= */
   (function bindSettings(){
     const swPin = $("swPin");
     const swNotif = $("swNotif");
-    const btnChangePin = $("btnChangePin");
-    const btnLockNow = $("btnLockNow");
-    const selAuto = $("selAutoLock");
-    const selRem = $("selRemember");
-    const btnNotifPerm = $("btnNotifPerm");
-    const btnReset = $("btnResetAll");
 
     if(swPin){
       const toggle = ()=>{
         settings.pinEnabled = !settings.pinEnabled;
 
         if(settings.pinEnabled){
-          // Si no hay pin aún, pedir configurar
           if(!settings.pinHash){
             settings.pinEnabled = false;
             save(SETTINGS_KEY, settings);
@@ -1649,17 +1332,19 @@
             openPinModal("set");
             return;
           }
-          // si hay pin, bloquea (pedirá pin al volver)
           settings.unlockedUntil = 0;
-        }else{
-          settings.unlockedUntil = 0;
+          save(SETTINGS_KEY, settings);
+          updateSettingsUI();
+          toast("PIN activado 🔒");
+          showLockOverlay();
+          return;
         }
 
+        settings.unlockedUntil = 0;
         save(SETTINGS_KEY, settings);
         updateSettingsUI();
-        toast(settings.pinEnabled ? "PIN activado 🔒" : "PIN desactivado");
-        if(settings.pinEnabled) showLockOverlay();
-        else hideLockOverlay();
+        toast("PIN desactivado");
+        hideLockOverlay();
       };
 
       swPin.addEventListener("click", toggle);
@@ -1668,19 +1353,19 @@
       });
     }
 
-    if(btnChangePin) btnChangePin.onclick = ()=> openPinModal(settings.pinHash ? "change" : "set");
-    if(btnLockNow) btnLockNow.onclick = lockNow;
+    if($("btnChangePin")) $("btnChangePin").onclick = ()=> openPinModal(settings.pinHash ? "change" : "set");
+    if($("btnLockNow")) $("btnLockNow").onclick = lockNow;
 
-    if(selAuto){
-      selAuto.onchange = ()=>{
-        settings.autoLockMin = Number(selAuto.value||0) || 0;
+    if($("selAutoLock")){
+      $("selAutoLock").onchange = ()=>{
+        settings.autoLockMin = Number($("selAutoLock").value||0) || 0;
         save(SETTINGS_KEY, settings);
         toast("Auto-bloqueo guardado");
       };
     }
-    if(selRem){
-      selRem.onchange = ()=>{
-        settings.rememberMin = Number(selRem.value||0) || 0;
+    if($("selRemember")){
+      $("selRemember").onchange = ()=>{
+        settings.rememberMin = Number($("selRemember").value||0) || 0;
         save(SETTINGS_KEY, settings);
         toast("Recordar desbloqueo guardado");
       };
@@ -1699,127 +1384,45 @@
       });
     }
 
-    if(btnNotifPerm) btnNotifPerm.onclick = requestNotifPermission;
-    if(btnReset) btnReset.onclick = resetAll;
+    if($("btnNotifPerm")) $("btnNotifPerm").onclick = requestNotifPermission;
+    if($("btnResetAll")) $("btnResetAll").onclick = resetAll;
   })();
 
   /* =========================
-     Lock overlay keypad
+     Boot
   ========================= */
-  (function bindLockOverlay(){
-    const bd = $("lockOverlay");
-    const close = $("lockClose");
-    const keypad = $("keypad");
-    const btnReset = $("btnLockReset");
-    const btnCopy = $("btnLockCopyLink");
+  (function boot(){
+    // A11Y
+    const a11y = load(A11Y_KEY, { big:false });
+    applyA11yUi(!!a11y.big);
+    bindA11yButtons();
 
-    if(close) close.onclick = ()=>{
-      // no cerramos si pin está activo y no está desbloqueado
-      if(settings.pinEnabled && !isUnlockedNow()){
-        toast("Introduce el PIN");
-        return;
-      }
-      hideLockOverlay();
-    };
+    // Navegación y FAB
+    bindNav();
+    bindFab();
 
-    if(keypad){
-      keypad.addEventListener("click", (e)=>{
-        const btn = e.target.closest("button");
-        if(!btn) return;
-        const k = btn.getAttribute("data-k");
-        if(!k) return;
-        handlePinKey(k);
-      });
+    // Paquete recibido
+    const applied = applyIncomingPack();
+    if(applied){
+      setPane("commitments");
+      setViewPending();
     }
 
-    if(bd){
-      bd.addEventListener("click", (e)=>{
-        if(e.target === bd){
-          // igual: no cerramos si está bloqueado
-          if(settings.pinEnabled && !isUnlockedNow()){
-            toast("Introduce el PIN");
-            return;
-          }
-          hideLockOverlay();
-        }
-      });
-    }
+    // Estado inicial
+    updateSettingsUI();
+    renderAll();
 
-    if(btnReset) btnReset.onclick = resetAll;
-
-    if(btnCopy){
-      btnCopy.onclick = async ()=>{
-        try{
-          await navigator.clipboard.writeText(location.href);
-          toast("Enlace copiado 🔗");
-        }catch(e){
-          toast("No se pudo copiar");
-        }
-      };
-    }
+    // Lock
+    if(settings.pinEnabled && !isUnlockedNow()) showLockOverlay();
+    else hideLockOverlay();
   })();
 
-  /* =========================
-     Hook “+” y navegación (reconectar por si algo cambió)
-  ========================= */
-  (function ensureNavAndFab(){
-    const fab = $("fab");
-    if(fab){
-      fab.onclick = ()=>{
-        // si estamos en contactos => nuevo amigo, si no => nuevo compromiso
-        const contactsPaneVisible = $("contactsPane") && $("contactsPane").style.display !== "none";
-        const settingsPaneVisible = $("settingsPane") && $("settingsPane").style.display !== "none";
-
-        if(settingsPaneVisible){
-          toast("En Ajustes no se crea nada");
-          return;
-        }
-
-        if(contactsPaneVisible) openContactModal(null);
-        else openCommitModal(null, null);
-      };
-    }
-  })();
-
-  /* =========================
-     Exportar funciones reales (reemplaza stubs de la parte 1)
-  ========================= */
+  // Exponer por si algo externo lo llama
+  window.toggleTextBig = toggleTextBig;
   window.openCommitModal = openCommitModal;
   window.openContactModal = openContactModal;
   window.deleteCommit = deleteCommit;
   window.deleteContact = deleteContact;
   window.shareSnapshot = shareSnapshot;
-
-  /* =========================
-     Boot final (aplica pack, pinta, lock)
-  ========================= */
-  (function boot2(){
-    // aplicar paquete si llega por enlace
-    const applied = applyIncomingPack();
-
-    // render
-    renderAll();
-
-    // si aplicó, aseguramos pestaña compromisos pendientes
-    if(applied){
-      // activar tab pendientes
-      $("tabPending")?.classList.add("active");
-      $("tabDone")?.classList.remove("active");
-      // mostrar commitments pane
-      const cp = $("commitmentsPane");
-      const ap = $("contactsPane");
-      const sp = $("settingsPane");
-      if(cp) cp.style.display = "";
-      if(ap) ap.style.display = "none";
-      if(sp) sp.style.display = "none";
-    }
-
-    // lock
-    if(settings.pinEnabled && !isUnlockedNow()){
-      showLockOverlay();
-    }else{
-      hideLockOverlay();
-    }
-  })();
 
 })();
