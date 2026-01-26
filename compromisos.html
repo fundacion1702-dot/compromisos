@@ -1,4 +1,4 @@
-<!-- ✅ PARTE 1/3 — compromisos.html (ESTILO NUEVO “TARJETAS / MENÚ VISUAL” tipo la foto) -->
+<!-- ✅ PARTE 1/3 — compromisos.html (AJUSTES DE LAYOUT: pills sin solape + vuelve “Texto grande” arriba + bottom fijo solo Compromisos/+/Amigos) -->
 <!doctype html>
 <html lang="es">
 <head>
@@ -48,6 +48,8 @@
       --fsBig: 18px;
 
       --icon: #111827;
+
+      --bottomH: 76px; /* altura aproximada bottom bar */
     }
 
     *{ box-sizing: border-box; }
@@ -65,7 +67,7 @@
     .wrap{
       width: min(var(--max), calc(100% - 24px));
       margin: 0 auto;
-      padding: 14px 0 92px;
+      padding: 14px 0 calc(var(--bottomH) + 22px);
     }
 
     /* Top bar */
@@ -77,15 +79,17 @@
       backdrop-filter: blur(10px);
       border-bottom: 1px solid rgba(229,231,235,.7);
     }
+
     .topbarInner{
       width: min(var(--max), calc(100% - 24px));
       margin: 0 auto;
       padding: 12px 0;
-      display:flex;
-      align-items:center;
-      justify-content: space-between;
-      gap: 10px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px 12px;
+      align-items: center;
     }
+
     .brand{
       display:flex;
       align-items:center;
@@ -128,16 +132,49 @@
       align-items:center;
       gap: 10px;
       flex: 0 0 auto;
+      justify-content: flex-end;
+      min-width: 0;
     }
 
-    /* “Píldoras” arriba (notifs / recibidos / vencidos) */
+    /* Botón accesibilidad arriba (vuelve “Texto grande”) */
+    .a11yBtn{
+      height: 34px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow2);
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--text);
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      white-space: nowrap;
+      flex: 0 0 auto;
+    }
+    .a11yBtn:active{ transform: translateY(1px); }
+
+    /* “Píldoras” arriba (notifs / recibidos / vencidos / pendientes) */
     .pills{
       display:flex;
       gap: 8px;
       align-items:center;
       justify-content:flex-end;
-      flex-wrap: wrap;
+      /* ✅ evita solapes: una sola fila y scroll horizontal */
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      -webkit-overflow-scrolling: touch;
+      max-width: 100%;
+      padding-bottom: 2px;
+      scrollbar-width: none;
     }
+    .pills::-webkit-scrollbar{ display:none; }
+
     .pillBtn{
       height: 34px;
       padding: 0 12px;
@@ -153,6 +190,8 @@
       cursor:pointer;
       user-select:none;
       -webkit-tap-highlight-color: transparent;
+      white-space: nowrap;
+      flex: 0 0 auto;
     }
     .pillBtn:active{ transform: translateY(1px); }
     .pillDot{
@@ -160,6 +199,7 @@
       border-radius: 999px;
       background: var(--muted);
       opacity: .35;
+      flex: 0 0 auto;
     }
     .pillCount{
       min-width: 22px;
@@ -173,6 +213,7 @@
       background: var(--surface2);
       border: 1px solid var(--border);
       color: var(--text);
+      flex: 0 0 auto;
     }
     .pillBtn.primary .pillDot{ background: var(--primary); opacity: .9; }
     .pillBtn.primary .pillCount{ background: var(--primarySoft); border-color: rgba(37,99,235,.18); }
@@ -296,6 +337,7 @@
       font-size: 13px;
       color: var(--text);
       -webkit-tap-highlight-color: transparent;
+      white-space: nowrap;
     }
     .segBtn.active{
       background: var(--primarySoft);
@@ -424,7 +466,7 @@
       font-size: 13.5px;
     }
 
-    /* Bottom bar (más limpio) */
+    /* Bottom bar — fijo y limpio (solo Compromisos / + / Amigos) */
     .bottomBar{
       position: fixed;
       left: 0; right: 0; bottom: 0;
@@ -437,13 +479,13 @@
     .bottomInner{
       width: min(var(--max), calc(100% - 24px));
       margin: 0 auto;
-      display:flex;
+      display:grid;
+      grid-template-columns: 1fr auto 1fr;
       gap: 10px;
       align-items:center;
-      justify-content: space-between;
     }
+
     .navBtn{
-      flex: 1 1 0;
       height: 44px;
       border-radius: 16px;
       border: 1px solid var(--border);
@@ -456,6 +498,13 @@
       justify-content:center;
       gap: 8px;
       -webkit-tap-highlight-color: transparent;
+      min-width: 0;
+      padding: 0 10px;
+      white-space: nowrap;
+    }
+    .navBtn span{
+      overflow:hidden;
+      text-overflow: ellipsis;
     }
     .navBtn.active{
       background: var(--primarySoft);
@@ -463,18 +512,16 @@
       color: #1E40AF;
     }
 
-    /* FAB */
+    /* ✅ Botón + integrado en la barra (en vez de flotante) */
     .fab{
-      position: fixed;
-      right: 16px;
-      bottom: 82px;
+      position: static;
       width: 56px;
       height: 56px;
       border-radius: 20px;
       border: 1px solid rgba(37,99,235,.18);
       background: #2563EB;
       color: #fff;
-      font-size: 26px;
+      font-size: 28px;
       font-weight: 900;
       display:grid;
       place-items:center;
@@ -482,6 +529,7 @@
       box-shadow: 0 18px 40px rgba(37,99,235,.22);
       z-index: 25;
       -webkit-tap-highlight-color: transparent;
+      margin: -18px auto 0; /* “asoma” por arriba como en apps */
     }
     .fab:active{ transform: translateY(1px); }
 
@@ -568,7 +616,7 @@
     .installBanner{
       position: fixed;
       left: 12px; right: 12px;
-      bottom: 156px;
+      bottom: calc(var(--bottomH) + 70px);
       z-index: 30;
       display:none;
     }
@@ -602,7 +650,19 @@
     @media (min-width: 720px){
       .menuGrid{ grid-template-columns: 1fr 1fr 1fr 1fr; }
       .tile{ min-height: 78px; }
-      .fab{ right: 22px; }
+    }
+
+    /* ✅ En móviles estrechos: acciones debajo del logo (sin solaparse) */
+    @media (max-width: 520px){
+      .topbarInner{
+        grid-template-columns: 1fr;
+      }
+      .topActions{
+        justify-content: flex-start;
+      }
+      .pills{
+        justify-content: flex-start;
+      }
     }
   </style>
 </head>
@@ -620,6 +680,9 @@
       </div>
 
       <div class="topActions">
+        <!-- ✅ vuelve el botón de texto grande arriba -->
+        <button class="a11yBtn" id="btnA11yTop" type="button" title="Cambiar tamaño de letra">🔎 Texto grande</button>
+
         <div class="pills" aria-label="Indicadores">
           <!-- estos IDs los usa tu JS -->
           <button class="pillBtn primary" id="btnNotifPend" type="button" title="Notificaciones pendientes">
@@ -754,17 +817,20 @@
     </div>
   </div>
 
-  <!-- Bottom nav (IDs existentes) -->
+  <!-- Bottom nav (fijo) -->
   <div class="bottomBar">
     <div class="bottomInner">
-      <button class="navBtn active" id="tabCommitments" type="button">🗓️ Compromisos</button>
-      <button class="navBtn" id="tabContacts" type="button">👥 Amigos</button>
-      <button class="navBtn" id="tabSettings" type="button">⚙️ Ajustes</button>
+      <button class="navBtn active" id="tabCommitments" type="button"><span>🗓️ Compromisos</span></button>
+
+      <!-- ✅ botón + fijo abajo -->
+      <button class="fab" id="fab" type="button" aria-label="Nuevo">＋</button>
+
+      <button class="navBtn" id="tabContacts" type="button"><span>👥 Amigos</span></button>
+
+      <!-- mantenemos el ID por compatibilidad, pero oculto (no ocupa layout) -->
       <button class="navBtn" id="btnInstall" type="button" style="display:none;">⬇️ Instalar</button>
     </div>
   </div>
-
-  <button class="fab" id="fab" type="button" aria-label="Nuevo compromiso">＋</button>
 
   <!-- Banner instalación (estructura; lógica en JS) -->
   <div class="installBanner" id="installBanner" aria-hidden="true">
@@ -788,13 +854,13 @@
 
 <!-- ✅ PARTE 2/3 — MODALES + BASE JS (helpers/estado) -->
 
-  <style>
+    <style>
     /* Extras de UI para el nuevo look (teclado PIN, toast, etc.) */
     .toast{
       position: fixed;
       left: 50%;
       transform: translateX(-50%);
-      bottom: 88px;
+      bottom: calc(var(--bottomH) + 12px);
       background: rgba(17,24,39,.92);
       color: #fff;
       padding: 10px 12px;
@@ -1283,7 +1349,7 @@
       }
       function renderReceivedBadge(){
         const c = Math.max(0, Number(received?.c || 0));
-        $("bReceived").textContent = String(c);
+        if($("bReceived")) $("bReceived").textContent = String(c);
         const pill = $("btnReceived");
         if(pill){
           pill.classList.toggle("good", c > 0);
@@ -1323,13 +1389,17 @@
       })();
 
       /* =========================
-         Accesibilidad (texto grande)
+         Accesibilidad (texto grande) + botón top
          ========================= */
       function setTextScale(on){
         const isOn = !!on;
         document.body.style.fontSize = isOn ? "var(--fsBig)" : "var(--fs)";
         save(A11Y_KEY, { big: isOn });
-        $("btnA11y").textContent = isOn ? "🔎 Texto normal" : "🔎 Texto grande";
+
+        // ✅ Botón dentro de Ajustes
+        if($("btnA11y")) $("btnA11y").textContent = isOn ? "🔎 Texto normal" : "🔎 Texto grande";
+        // ✅ Botón arriba (topbar)
+        if($("btnA11yTop")) $("btnA11yTop").textContent = isOn ? "🔎 Texto normal" : "🔎 Texto grande";
       }
       function toggleTextScale(){
         const s = load(A11Y_KEY, { big:false });
@@ -1501,16 +1571,20 @@
       /* ✅ FIN PARTE 2/3
          En la PARTE 3 va TODO lo que falta:
          - applyEvent completo + limpieza firedMaps
-         - render (compromisos/contacts) con tarjetas nuevas
-         - CLICK en tarjeta de amigo => abrir modal compromiso con su nombre ya seleccionado ✅
-         - tabs / tiles / nav
-         - sharing, import (hash + buzón), PWA banner
-         - checkReminders (incrementa notifs arriba)
-         - boot final
+         - render (compromisos/contacts) con tarjetas
+         - navegación (tabs/tiles/bottom fijo sin Ajustes)
+         - handlers (incluye btnA11yTop) + boot
       */
-/* =========================
+      /* =========================
          applyEvent + limpieza firedMaps
          ========================= */
+      function firedKey(it){
+        return `${it.id}|${it.when||""}|${Number(it.remindMin||0)}|${it.done?"1":"0"}`;
+      }
+      function afterKey(it){
+        return `${it.id}|${it.afterAt||""}|${Number(it.afterMin||0)}|${it.done?"1":"0"}`;
+      }
+
       function cleanupFiredMaps(){
         const liveA = new Set();
         const liveB = new Set();
@@ -1686,13 +1760,12 @@
       function setPane(newPane){
         pane = newPane;
 
+        // ✅ Ajustes desaparece del bottom: solo queda accesible por tile “Ajustes” o por arriba
         const tC = $("tabCommitments");
         const tA = $("tabContacts");
-        const tS = $("tabSettings");
 
         if(tC) tC.classList.toggle("active", pane==="commitments");
         if(tA) tA.classList.toggle("active", pane==="contacts");
-        if(tS) tS.classList.toggle("active", pane==="settings");
 
         safeShow($("commitmentsPane"), pane==="commitments");
         safeShow($("contactsPane"), pane==="contacts");
@@ -1736,17 +1809,14 @@
         const pending = data.filter(x => !x.done);
         const overdueCount = pending.filter(x => isOverdue(x.when)).length;
 
-        // Pills del header (si existen en la PARTE 1)
-        const bPend = $("bPending") || $("bPendCommit");
-        if(bPend) bPend.textContent = String(pending.length);
+        // Pills del header
+        if($("bPending")) $("bPending").textContent = String(pending.length);
+        if($("bOverdue")) $("bOverdue").textContent = String(overdueCount);
 
-        const bOver = $("bOverdue");
-        if(bOver) bOver.textContent = String(overdueCount);
-
-        // Recibidos (pill existente)
+        // Recibidos
         if($("bReceived")) $("bReceived").textContent = String(Math.max(0, Number(received?.c || 0)));
 
-        // Notifs (pill dinámica)
+        // Notifs
         renderNotifAlertsBadge();
         renderReceivedBadge();
       }
@@ -1763,17 +1833,10 @@
         const pending = data.filter(x => !x.done);
         const done = data.filter(x => x.done);
 
-        // subtabs contadores si existen
-        if($("bPending")) $("bPending").textContent = String(pending.length);
-        if($("bDone")) $("bDone").textContent = String(done.length);
-
         const items = (view === "pending") ? pending : done;
 
         if(empty) empty.style.display = items.length ? "none" : "block";
 
-        // Orden visual:
-        // - Pendientes: vencidos arriba, luego por fecha
-        // - Hechos: por doneAt desc
         items
           .slice()
           .sort((a,b)=>{
@@ -1797,7 +1860,7 @@
         const card = document.createElement("div");
         card.className = "card";
 
-        // ✅ Se distingue más del fondo: alternamos un tono suave
+        // Alternamos tono suave
         card.style.background = (idx % 2)
           ? "linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.86))"
           : "linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.90))";
@@ -1814,20 +1877,22 @@
           item.afterAt && Number(item.afterMin||0) > 0 ? `<span class="chip">⏳ ${escapeHtml(item.afterMin>=60 ? (item.afterMin/60)+"h" : item.afterMin+"m")}</span>` : ""
         ].filter(Boolean).join("");
 
+        // ⚠️ En tu CSS base existe .cardTop/.who/.name/.meta.
+        // En esta versión usamos estructura simple compatible.
         card.innerHTML = `
-          <div class="cardRow">
-            <div style="min-width:0">
-              <div class="title" title="${escapeHtml(who)}">${escapeHtml(who)}</div>
-              <div class="meta">${chips}</div>
+          <div class="cardTop" style="align-items:flex-start;">
+            <div class="who" style="min-width:0;">
+              <p class="name" title="${escapeHtml(who)}">${escapeHtml(who)}</p>
+              <p class="meta">${chips}</p>
             </div>
-            <div class="due ${overdue ? "danger" : ""}" style="white-space:nowrap;">
+            <div class="due ${overdue ? "bad" : ""}" style="white-space:nowrap;">
               ⏰ ${escapeHtml(dueText)}${overdue ? " · Vencido" : ""}
             </div>
           </div>
 
           <div class="desc">${escapeHtml(item.what || "—")}</div>
 
-          <div class="actions" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+          <div class="actions">
             <button class="btn" type="button" data-act="cal">📅 Calendario</button>
             <button class="btn primary" type="button" data-act="share">📦 Compartir</button>
             ${item.done
@@ -1873,29 +1938,28 @@
         const note = c.note ? `<span class="chip">🛈 ${escapeHtml(c.note)}</span>` : "";
 
         card.innerHTML = `
-          <div class="cardRow">
-            <div style="min-width:0">
-              <div class="title">${escapeHtml(c.name || "Sin nombre")}</div>
-              <div class="meta">
+          <div class="cardTop">
+            <div class="who" style="min-width:0;">
+              <p class="name">${escapeHtml(c.name || "Sin nombre")}</p>
+              <p class="meta">
                 <span class="chip">👥 Amigo</span>
                 ${note}
-              </div>
+              </p>
             </div>
             <button class="btn primary" type="button" data-act="new" style="flex:0 0 auto;">➕ Compromiso</button>
           </div>
           <div class="desc">${escapeHtml(c.note || "Amigo guardado en tu móvil.")}</div>
-          <div class="actions" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+          <div class="actions">
             <button class="btn" type="button" data-act="edit">✍️ Editar</button>
             <button class="btn danger" type="button" data-act="del">🗑️ Eliminar</button>
           </div>
         `;
 
-        // ✅ Como pediste: al pulsar tarjeta O botón => abrir nuevo compromiso con ese amigo preseleccionado
         const openCommitWithFriend = () => openNewCommitmentForContact(c.id);
 
         card.addEventListener("click", (e)=>{
           const inBtn = e.target.closest("button");
-          if(inBtn) return; // botones tienen su propio handler
+          if(inBtn) return;
           openCommitWithFriend();
         });
         card.style.cursor = "pointer";
@@ -2003,7 +2067,6 @@
           toggleCustomWho(true);
           return;
         }
-        // contacto existente
         toggleCustomWho(false);
         if($("fWho")) $("fWho").value = "";
       }
@@ -2060,12 +2123,11 @@
         try{ $("fWhat").focus(); }catch(e){}
       }
 
-      // ✅ Abrir “Nuevo compromiso” con un amigo ya seleccionado
       function openNewCommitmentForContact(contactId){
         const c = contactById(contactId);
         if(!c){ toast("Amigo no encontrado"); return; }
 
-        setPane("commitments"); // nos aseguramos de estar en compromisos
+        setPane("commitments");
         setViewPending();
 
         resetCommitmentForm();
@@ -2264,7 +2326,6 @@
         });
         if(!ok) return;
 
-        // convertir referencias whoId a whoName
         data.forEach(it => {
           if(it.whoId === id){
             it.whoName = normalizedWho(it);
@@ -2309,7 +2370,6 @@
           toast("Copiado ✅");
           return true;
         }catch(e){
-          // ✅ sin prompt del navegador: dejamos el texto visible en el modal
           toast("Mantén pulsado para copiar (si no funciona el botón)");
           return false;
         }
@@ -2414,13 +2474,6 @@
       /* =========================
          Recordatorios (por fecha + desde ahora)
          ========================= */
-      function firedKey(it){
-        return `${it.id}|${it.when||""}|${Number(it.remindMin||0)}|${it.done?"1":"0"}`;
-      }
-      function afterKey(it){
-        return `${it.id}|${it.afterAt||""}|${Number(it.afterMin||0)}|${it.done?"1":"0"}`;
-      }
-
       function checkReminders(){
         const now = Date.now();
 
@@ -2448,7 +2501,7 @@
           const body = (what ? what + " · " : "") + `Para: ${dueTxt}`;
 
           sendLocalNotification(title, body);
-          incNotifAlerts(); // ✅ suma notificaciones arriba
+          incNotifAlerts();
           firedMap[k] = now;
           save(REMIND_FIRED_KEY, firedMap);
         }
@@ -2475,7 +2528,7 @@
           const body = what || "Tienes un compromiso pendiente.";
 
           sendLocalNotification(title, body);
-          incNotifAlerts(); // ✅ suma notificaciones arriba
+          incNotifAlerts();
           afterFired[k] = now;
           save(AFTER_FIRED_KEY, afterFired);
         }
@@ -2674,10 +2727,12 @@
       /* =========================
          UI: handlers base
          ========================= */
-      // Tabs
+      // Bottom tabs (solo 2)
       if($("tabCommitments")) $("tabCommitments").addEventListener("click", ()=> setPane("commitments"));
       if($("tabContacts")) $("tabContacts").addEventListener("click", ()=> setPane("contacts"));
-      if($("tabSettings")) $("tabSettings").addEventListener("click", ()=> setPane("settings"));
+
+      // Tile settings (si existe)
+      if($("tileSettings")) $("tileSettings").addEventListener("click", ()=> setPane("settings"));
 
       // Subtabs
       if($("tabPending")) $("tabPending").addEventListener("click", setViewPending);
@@ -2742,7 +2797,7 @@
       }
 
       /* =========================
-         Ajustes (UI)
+         Ajustes (UI) — sigue usando tus IDs (en PARTE 1 estaban)
          ========================= */
       function updateSettingsUI(){
         const swP = $("swPin");
@@ -2984,11 +3039,12 @@
       }
       if($("btnResetAll")) $("btnResetAll").addEventListener("click", resetAll);
 
-      // Texto grande
+      // Texto grande (en ajustes + arriba)
       if($("btnA11y")) $("btnA11y").addEventListener("click", toggleTextScale);
+      if($("btnA11yTop")) $("btnA11yTop").addEventListener("click", toggleTextScale);
 
       /* =========================
-         Pills/tiles: navegación rápida (si existen)
+         Pills/tiles: navegación rápida
          ========================= */
       function goToCommitmentsPending(){
         setPane("commitments");
@@ -2998,7 +3054,7 @@
       function scrollToFirstOverdue(){
         const list = $("list");
         if(!list) return;
-        const first = list.querySelector(".due.danger");
+        const first = list.querySelector(".due.bad");
         if(first){
           const card = first.closest(".card");
           if(card){
@@ -3029,7 +3085,7 @@
         if(ok) clearNotifAlerts();
       });
 
-      // Recibidos pill (si existe)
+      // Recibidos pill
       if($("btnReceived")){
         $("btnReceived").addEventListener("click", async () => {
           const c = Math.max(0, Number(received?.c || 0));
@@ -3055,8 +3111,8 @@
         });
       }
 
-      // Pendientes / vencidos pills (si existen)
-      if($("btnPendCommit")) $("btnPendCommit").addEventListener("click", ()=>{ goToCommitmentsPending(); toast("📝 Mostrando pendientes"); });
+      // Pendientes / vencidos
+      if($("btnNotifPend")) $("btnNotifPend").addEventListener("click", ()=>{ goToCommitmentsPending(); toast("📝 Mostrando pendientes"); });
       if($("btnOverdue")) $("btnOverdue").addEventListener("click", ()=>{
         goToCommitmentsPending();
         const overdueCount = data.filter(x => !x.done && isOverdue(x.when)).length;
@@ -3108,7 +3164,7 @@
         $("btnLockReset").addEventListener("click", resetAll);
       }
       if($("lockClose")){
-        $("lockClose").addEventListener("click", ()=>{ /* no cerramos si está bloqueada */ toast("Introduce tu PIN"); });
+        $("lockClose").addEventListener("click", ()=>{ toast("Introduce tu PIN"); });
       }
 
       document.addEventListener("visibilitychange", () => {
@@ -3211,3 +3267,4 @@
   </script>
 </body>
 </html>
+
