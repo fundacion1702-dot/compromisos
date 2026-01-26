@@ -67,8 +67,26 @@
   }
 
   /* =========================
+     IMPORTANTE (FIX): stubs globales seguros
+     - Antes tenías openCommitModal() sin declarar en strict mode,
+       eso provoca ReferenceError y “se muere” el JS.
+     - Aquí SIEMPRE llamamos a window.openCommitModal, etc.
+  ========================= */
+  if(typeof window.openCommitModal !== "function"){
+    window.openCommitModal = function(){ toast("Modal compromiso (pendiente parte 2)"); };
+  }
+  if(typeof window.openContactModal !== "function"){
+    window.openContactModal = function(){ toast("Modal amigo (pendiente parte 2)"); };
+  }
+  if(typeof window.deleteCommit !== "function"){
+    window.deleteCommit = function(){ toast("Eliminar compromiso (pendiente parte 2)"); };
+  }
+  if(typeof window.deleteContact !== "function"){
+    window.deleteContact = function(){ toast("Eliminar amigo (pendiente parte 2)"); };
+  }
+
+  /* =========================
      ✅ UI FIX: botón Texto grande arriba derecha, alineado con el título
-     (lo ponemos en el hueco del recuadro rojo)
   ========================= */
   (function injectA11yTopPlacement(){
     try{
@@ -85,9 +103,11 @@
         }
         /* Deja espacio para que el título no quede debajo del botón */
         .brand{ padding-right:190px !important; }
-        /* Pills debajo, sin mover su sitio */
+
+        /* Pills debajo */
         .topActions{ width:100% !important; justify-content:flex-start !important; }
         .pills{ margin-top:10px !important; }
+
         @media (max-width:520px){
           .brand{ padding-right:0 !important; }
           #btnA11yTop{ top:12px !important; }
@@ -114,15 +134,27 @@
   let view = "pending";     // pending | done
 
   /* =========================
-     Accesibilidad: Texto grande (FUNCIONA SIEMPRE)
+     Accesibilidad: Texto grande (UNIFICADO + sin duplicados)
   ========================= */
   function setTextScale(big){
-    // Ajuste simple y robusto: tocamos variable CSS y clase
-    const root = document.documentElement;
-    root.style.setProperty("--fs", big ? "18px" : "16px");
-    root.classList.toggle("bigText", !!big);
-    save(A11Y_KEY, { big: !!big });
+    const b = !!big;
+
+    // Variables base (compat con tu CSS)
+    document.documentElement.style.setProperty("--fs", b ? "18px" : "16px");
+    document.documentElement.style.setProperty("--fsBig", b ? "20px" : "18px");
+
+    document.body.classList.toggle("bigText", b);
+
+    // Cambia label botones
+    const label = b ? "🔎 Texto normal" : "🔎 Texto grande";
+    const b1 = $("btnA11yTop");
+    const b2 = $("btnA11y");
+    if(b1) b1.textContent = label;
+    if(b2) b2.textContent = label;
+
+    save(A11Y_KEY, { big: b });
   }
+
   function toggleTextScale(){
     const cur = load(A11Y_KEY, { big:false });
     const next = !cur.big;
@@ -130,18 +162,23 @@
     toast(next ? "🔎 Texto grande: ON" : "🔎 Texto grande: OFF");
   }
 
-  // ✅ Enganche fuerte: aunque algo falle, el click siempre llama a toggleTextScale()
+  // Export global por si en algún sitio hay onclick antiguos
+  window.setTextScale = setTextScale;
+  window.toggleTextScale = toggleTextScale;
+
   function bindA11yButtons(){
     const top = $("btnA11yTop");
     const inSettings = $("btnA11y");
-    if(top){
-      top.addEventListener("click", (e)=>{ e.preventDefault(); toggleTextScale(); }, { passive:false });
-      top.addEventListener("touchend", (e)=>{ e.preventDefault(); toggleTextScale(); }, { passive:false });
-    }
-    if(inSettings){
-      inSettings.addEventListener("click", (e)=>{ e.preventDefault(); toggleTextScale(); }, { passive:false });
-      inSettings.addEventListener("touchend", (e)=>{ e.preventDefault(); toggleTextScale(); }, { passive:false });
-    }
+
+    const bind = (btn)=>{
+      if(!btn) return;
+      btn.style.pointerEvents = "auto";
+      btn.addEventListener("click", (e)=>{ e.preventDefault(); toggleTextScale(); }, { passive:false });
+      btn.addEventListener("touchend", (e)=>{ e.preventDefault(); toggleTextScale(); }, { passive:false });
+    };
+
+    bind(top);
+    bind(inSettings);
   }
 
   /* =========================
@@ -286,7 +323,7 @@
 
     if(empty) empty.style.display = items.length ? "none" : "block";
 
-    items.forEach((it, idx)=>{
+    items.forEach((it)=>{
       const card = document.createElement("div");
       card.className = "card";
 
@@ -326,8 +363,9 @@
         renderCommitments();
       });
 
-      card.querySelector('[data-act="edit"]').addEventListener("click", ()=> openCommitModal(it.id)); // (def en parte 2)
-      card.querySelector('[data-act="del"]').addEventListener("click", ()=> deleteCommit(it.id));     // (def en parte 2)
+      // ✅ SIEMPRE vía window.* (no revienta en strict)
+      card.querySelector('[data-act="edit"]').addEventListener("click", ()=> window.openCommitModal(it.id));
+      card.querySelector('[data-act="del"]').addEventListener("click", ()=> window.deleteCommit(it.id));
 
       list.appendChild(card);
     });
@@ -367,9 +405,10 @@
           </div>
         `;
 
-        card.querySelector('[data-act="new"]').addEventListener("click", ()=> openCommitModal(null, c.id)); // parte 2
-        card.querySelector('[data-act="edit"]').addEventListener("click", ()=> openContactModal(c.id));    // parte 2
-        card.querySelector('[data-act="del"]').addEventListener("click", ()=> deleteContact(c.id));       // parte 2
+        // ✅ SIEMPRE vía window.*
+        card.querySelector('[data-act="new"]').addEventListener("click", ()=> window.openCommitModal(null, c.id));
+        card.querySelector('[data-act="edit"]').addEventListener("click", ()=> window.openContactModal(c.id));
+        card.querySelector('[data-act="del"]').addEventListener("click", ()=> window.deleteContact(c.id));
 
         list.appendChild(card);
       });
@@ -382,112 +421,38 @@
   }
 
   /* =========================
-     FAB + binds base (parte 2 completa la lógica de modales)
+     FAB (+)
   ========================= */
   function bindFab(){
     const fab = $("fab");
     if(!fab) return;
     fab.addEventListener("click", ()=>{
-      if(pane === "contacts") openContactModal(null);    // parte 2
-      else openCommitModal(null, null);                  // parte 2
+      if(pane === "contacts") window.openContactModal(null);
+      else window.openCommitModal(null, null);
     });
   }
 
   /* =========================
      Boot
   ========================= */
-  const a11y = load(A11Y_KEY, { big:false });
-  setTextScale(!!a11y.big);
+  (function boot(){
+    const a11y = load(A11Y_KEY, { big:false });
+    setTextScale(!!a11y.big);
 
-  bindA11yButtons();
-  bindNav();
-  bindFab();
-  renderAll();
+    bindA11yButtons();
+    bindNav();
+    bindFab();
+    renderAll();
+  })();
 
-  // Exponemos “stubs” para que no reviente si algo llama antes de la parte 2
-  // (en la parte 2 se reemplazan por funciones reales)
-  window.openCommitModal = window.openCommitModal || function(){ toast("Abre modal compromiso (pendiente parte 2)"); };
-  window.openContactModal = window.openContactModal || function(){ toast("Abre modal amigo (pendiente parte 2)"); };
-  window.deleteCommit = window.deleteCommit || function(){ toast("Eliminar compromiso (pendiente parte 2)"); };
-  window.deleteContact = window.deleteContact || function(){ toast("Eliminar amigo (pendiente parte 2)"); };
+  /* =========================
+     (la PARTE 2/2 va a partir de aquí)
+     - Modales reales: compromiso / amigo
+     - Confirm modal real
+     - Ajustes: PIN + autobloqueo + recordar + notificaciones
+     - Compartir paquete
+     - Borrar todo
+     - etc.
+  ========================= */
 
-})();
-/* =========================
-   PARCHE ACCESIBILIDAD — TEXTO GRANDE (FIX DEFINITIVO)
-   Pegar AL FINAL de compromisos.js
-   ========================= */
-(function A11Y_TEXT_BIG_FIX(){
-  const KEY = "compromisos_a11y_v1";
-
-  function _load(k, fallback){
-    try{
-      const raw = localStorage.getItem(k);
-      if(!raw) return fallback;
-      return JSON.parse(raw);
-    }catch(e){
-      return fallback;
-    }
-  }
-
-  function _save(k, v){
-    try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){}
-  }
-
-  function _toast(msg){
-    const t = document.getElementById("toast");
-    if(!t) return;
-    t.textContent = msg;
-    t.classList.add("show");
-    clearTimeout(_toast._tm);
-    _toast._tm = setTimeout(()=> t.classList.remove("show"), 1600);
-  }
-
-  function setTextScale(big){
-    // Ajusta variables base del CSS
-    document.documentElement.style.setProperty("--fs", big ? "18px" : "16px");
-    document.documentElement.style.setProperty("--fsBig", big ? "20px" : "18px");
-
-    // Marca estado visual (por si quieres usarlo luego en CSS)
-    document.body.classList.toggle("bigText", !!big);
-
-    // Actualiza textos de botones (opcional pero útil)
-    const label = big ? "🔎 Texto normal" : "🔎 Texto grande";
-    const b1 = document.getElementById("btnA11yTop");
-    const b2 = document.getElementById("btnA11y");
-    if(b1) b1.textContent = label;
-    if(b2) b2.textContent = label;
-  }
-
-  function toggleTextScale(){
-    const st = _load(KEY, { big:false });
-    st.big = !st.big;
-    _save(KEY, st);
-    setTextScale(!!st.big);
-    _toast(st.big ? "🔎 Texto grande activado" : "🔎 Texto normal");
-  }
-
-  // Exporta a global para que cualquier onclick antiguo funcione
-  window.setTextScale = setTextScale;
-  window.toggleTextScale = toggleTextScale;
-
-  function bind(){
-    const bTop = document.getElementById("btnA11yTop");
-    const bSet = document.getElementById("btnA11y");
-
-    if(bTop){
-      bTop.addEventListener("click", toggleTextScale, { passive:true });
-      bTop.style.pointerEvents = "auto";
-    }
-    if(bSet){
-      bSet.addEventListener("click", toggleTextScale, { passive:true });
-      bSet.style.pointerEvents = "auto";
-    }
-
-    // Aplica preferencia al arrancar
-    const st = _load(KEY, { big:false });
-    setTextScale(!!st.big);
-  }
-
-  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
-  else bind();
 })();
