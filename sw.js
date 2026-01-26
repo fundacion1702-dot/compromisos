@@ -1,114 +1,86 @@
-/* sw.js — Compromisos (PWA) */
-(() => {
-  "use strict";
+/* sw.js — Compromisos (v2) */
 
-  // ✅ Sube esta versión cuando cambies archivos para forzar actualización de caché
-  const VERSION = "compromisos-sw-v1.0.1";
-  const STATIC_CACHE = `static-${VERSION}`;
-  const RUNTIME_CACHE = `runtime-${VERSION}`;
+const CACHE_NAME = "compromisos-v2";
+const CORE_ASSETS = [
+  "./",
+  "./index.html",
+  "./compromisos.html",
+  "./manifest.webmanifest",
+  "./icon-192.png",
+  "./icon-512.png",
+  "./compromisos.css",
+  "./compromisos.js"
+];
 
-  // Página “principal” para fallback offline
-  const APP_SHELL = "./compromisos.html";
+self.addEventListener("install", (event) => {
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.addAll(CORE_ASSETS);
+    await self.skipWaiting();
+  })());
+});
 
-  // Archivos base a cachear
-  const PRECACHE_URLS = [
-    "./",
-    APP_SHELL,
-    "./manifest.webmanifest",
-    "./icon-192.png",
-    "./icon-512.png",
-    "./sw.js"
-  ];
+self.addEventListener("activate", (event) => {
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(
+      keys
+        .filter(k => k.startsWith("compromisos-") && k !== CACHE_NAME)
+        .map(k => caches.delete(k))
+    );
+    await self.clients.claim();
+  })());
+});
 
-  self.addEventListener("install", (event) => {
-    event.waitUntil((async () => {
-      const cache = await caches.open(STATIC_CACHE);
-      await cache.addAll(PRECACHE_URLS.map(u => new Request(u, { cache: "reload" })));
-      self.skipWaiting();
-    })());
-  });
+/**
+ * Estrategia:
+ * - HTML/CSS/JS (mismo origen): NETWORK-FIRST (para evitar versiones antiguas)
+ * - Resto: CACHE-FIRST
+ */
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
+  const url = new URL(req.url);
 
-  self.addEventListener("activate", (event) => {
-    event.waitUntil((async () => {
-      const keys = await caches.keys();
-      await Promise.all(
-        keys
-          .filter(k => (k.startsWith("static-") || k.startsWith("runtime-")) && k !== STATIC_CACHE && k !== RUNTIME_CACHE)
-          .map(k => caches.delete(k))
-      );
-      self.clients.claim();
-    })());
-  });
+  // Solo controlamos mismo origen
+  if (url.origin !== self.location.origin) return;
 
-  self.addEventListener("message", (event) => {
-    const msg = event.data;
-    if (!msg) return;
-    if (msg === "SKIP_WAITING" || (msg && msg.type === "SKIP_WAITING")) {
-      self.skipWaiting();
-    }
-  });
+  const isHTML = req.mode === "navigate" || url.pathname.endsWith(".html") || url.pathname.endsWith("/");
+  const isCSS = url.pathname.endsWith(".css");
+  const isJS  = url.pathname.endsWith(".js");
 
-  function isNavigationRequest(request) {
-    return request.mode === "navigate" ||
-      (request.method === "GET" &&
-       request.headers.get("accept") &&
-       request.headers.get("accept").includes("text/html"));
-  }
-
-  async function cacheFirst(request) {
-    const cached = await caches.match(request);
-    if (cached) return cached;
-
-    const res = await fetch(request);
-    const cache = await caches.open(RUNTIME_CACHE);
-    cache.put(request, res.clone());
-    return res;
-  }
-
-  async function networkFirst(request) {
-    const cache = await caches.open(RUNTIME_CACHE);
-    try {
-      const res = await fetch(request);
-      cache.put(request, res.clone());
-      return res;
-    } catch (e) {
-      const cached = await cache.match(request) || await caches.match(request);
-      if (cached) return cached;
-      return caches.match(APP_SHELL);
-    }
-  }
-
-  self.addEventListener("fetch", (event) => {
-    const req = event.request;
-    if (req.method !== "GET") return;
-
-    const url = new URL(req.url);
-    if (url.origin !== self.location.origin) return;
-
-    // HTML → network-first
-    if (isNavigationRequest(req)) {
-      event.respondWith(networkFirst(req));
-      return;
-    }
-
-    // Assets → cache-first
-    const isStaticAsset =
-      url.pathname.endsWith(".js") ||
-      url.pathname.endsWith(".css") ||
-      url.pathname.endsWith(".png") ||
-      url.pathname.endsWith(".jpg") ||
-      url.pathname.endsWith(".jpeg") ||
-      url.pathname.endsWith(".webp") ||
-      url.pathname.endsWith(".svg") ||
-      url.pathname.endsWith(".ico") ||
-      url.pathname.endsWith(".webmanifest") ||
-      url.pathname.endsWith(".json");
-
-    if (isStaticAsset) {
-      event.respondWith(cacheFirst(req));
-      return;
-    }
-
+  if (isHTML || isCSS || isJS) {
     event.respondWith(networkFirst(req));
-  });
-})();
+    return;
+  }
+
+  event.respondWith(cacheFirst(req));
+});
+
+async function networkFirst(req) {
+  const cache = await caches.open(CACHE_NAME);
+  try {
+    const fresh = await fetch(req);
+    // Guardamos copia
+    cache.put(req, fresh.clone());
+    return fresh;
+  } catch (e) {
+    const cached = await cache.match(req);
+    if (cached) return cached;
+    // Último recurso: intentar raíz si es navegación
+    if (req.mode === "navigate") {
+      const fallback = await cache.match("./index.html") || await cache.match("./compromisos.html");
+      if (fallback) return fallback;
+    }
+    throw e;
+  }
+}
+
+async function cacheFirst(req) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(req);
+  if (cached) return cached;
+
+  const fresh = await fetch(req);
+  cache.put(req, fresh.clone());
+  return fresh;
+}
