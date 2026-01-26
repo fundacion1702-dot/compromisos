@@ -14,8 +14,8 @@
   <meta name="apple-mobile-web-app-title" content="Compromisos">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-  <!-- CSS separado (subo versión para evitar caché) -->
-  <link rel="stylesheet" href="compromisos.css?v=3">
+  <!-- CSS separado -->
+  <link rel="stylesheet" href="compromisos.css?v=2">
 </head>
 
 <body>
@@ -112,6 +112,15 @@
         </div>
       </div>
 
+      <!-- ✅ NUEVO: filtro por amigo -->
+      <div class="field" style="margin-top:10px;">
+        <label class="label" for="selFriendFilter">Filtrar por amigo</label>
+        <select id="selFriendFilter">
+          <option value="">Todos</option>
+        </select>
+        <div class="hint" id="friendFilterHint">Elige un amigo para ver solo sus compromisos (pendientes o hechos).</div>
+      </div>
+
       <div class="list" id="list"></div>
       <div class="empty" id="empty">No hay compromisos aquí todavía.</div>
     </div>
@@ -126,6 +135,13 @@
         <div class="segTabs">
           <span class="badge" id="bContacts">0</span>
         </div>
+      </div>
+
+      <!-- ✅ NUEVO: buscador de amigos -->
+      <div class="field" style="margin-top:10px;">
+        <label class="label" for="contactsSearch">Buscar amigo</label>
+        <input id="contactsSearch" type="search" placeholder="Escribe para buscar..." autocomplete="off"/>
+        <div class="hint" id="contactsSearchHint">Filtra la lista de amigos al escribir.</div>
       </div>
 
       <div class="list" id="contactsList"></div>
@@ -485,7 +501,7 @@
 
   <div class="toast" id="toast"></div>
 
-  <!-- JS separado (subo versión para evitar caché) -->
-  <script src="compromisos.js?v=3"></script>
+  <!-- JS separado -->
+  <script src="compromisos.js?v=2"></script>
 </body>
 </html>
