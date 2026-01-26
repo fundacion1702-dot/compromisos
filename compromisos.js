@@ -412,3 +412,82 @@
   window.deleteContact = window.deleteContact || function(){ toast("Eliminar amigo (pendiente parte 2)"); };
 
 })();
+/* =========================
+   PARCHE ACCESIBILIDAD — TEXTO GRANDE (FIX DEFINITIVO)
+   Pegar AL FINAL de compromisos.js
+   ========================= */
+(function A11Y_TEXT_BIG_FIX(){
+  const KEY = "compromisos_a11y_v1";
+
+  function _load(k, fallback){
+    try{
+      const raw = localStorage.getItem(k);
+      if(!raw) return fallback;
+      return JSON.parse(raw);
+    }catch(e){
+      return fallback;
+    }
+  }
+
+  function _save(k, v){
+    try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){}
+  }
+
+  function _toast(msg){
+    const t = document.getElementById("toast");
+    if(!t) return;
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(_toast._tm);
+    _toast._tm = setTimeout(()=> t.classList.remove("show"), 1600);
+  }
+
+  function setTextScale(big){
+    // Ajusta variables base del CSS
+    document.documentElement.style.setProperty("--fs", big ? "18px" : "16px");
+    document.documentElement.style.setProperty("--fsBig", big ? "20px" : "18px");
+
+    // Marca estado visual (por si quieres usarlo luego en CSS)
+    document.body.classList.toggle("bigText", !!big);
+
+    // Actualiza textos de botones (opcional pero útil)
+    const label = big ? "🔎 Texto normal" : "🔎 Texto grande";
+    const b1 = document.getElementById("btnA11yTop");
+    const b2 = document.getElementById("btnA11y");
+    if(b1) b1.textContent = label;
+    if(b2) b2.textContent = label;
+  }
+
+  function toggleTextScale(){
+    const st = _load(KEY, { big:false });
+    st.big = !st.big;
+    _save(KEY, st);
+    setTextScale(!!st.big);
+    _toast(st.big ? "🔎 Texto grande activado" : "🔎 Texto normal");
+  }
+
+  // Exporta a global para que cualquier onclick antiguo funcione
+  window.setTextScale = setTextScale;
+  window.toggleTextScale = toggleTextScale;
+
+  function bind(){
+    const bTop = document.getElementById("btnA11yTop");
+    const bSet = document.getElementById("btnA11y");
+
+    if(bTop){
+      bTop.addEventListener("click", toggleTextScale, { passive:true });
+      bTop.style.pointerEvents = "auto";
+    }
+    if(bSet){
+      bSet.addEventListener("click", toggleTextScale, { passive:true });
+      bSet.style.pointerEvents = "auto";
+    }
+
+    // Aplica preferencia al arrancar
+    const st = _load(KEY, { big:false });
+    setTextScale(!!st.big);
+  }
+
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
+  else bind();
+})();
