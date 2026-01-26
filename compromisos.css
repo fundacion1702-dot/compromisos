@@ -717,7 +717,7 @@ input:focus,select:focus,textarea:focus{
   .tile{ min-height:78px; }
 }
 
-/* En móviles estrechos: colocación */
+/* Móviles estrechos */
 @media (max-width:520px){
   .topbarInner{ grid-template-columns:1fr; }
   .topActions{
