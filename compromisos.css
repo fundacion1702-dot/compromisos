@@ -1,3 +1,5 @@
+/* compromisos.css — versión actualizada (mantiene tu estilo y fija “Texto grande” arriba derecha) */
+
 :root{
   --bg:#F2F3F5;
   --surface:#FFFFFF;
@@ -25,6 +27,8 @@
   --max:880px;
 
   --tap:48px;
+
+  /* Accesibilidad (JS los alterna) */
   --fs:16px;
   --fsBig:18px;
 
@@ -41,6 +45,10 @@ body{
   color:var(--text);
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
   font-size:var(--fs);
+  -webkit-text-size-adjust:100%;
+}
+body.bigText{
+  font-size:var(--fsBig);
 }
 a{ color:inherit; }
 
@@ -51,7 +59,9 @@ a{ color:inherit; }
   padding:14px 0 calc(var(--bottomH) + 22px + env(safe-area-inset-bottom));
 }
 
-/* Top bar */
+/* =========================
+   Top bar (FIX: botón Texto grande arriba derecha)
+========================= */
 .topbar{
   position:sticky;
   top:0;
@@ -60,15 +70,16 @@ a{ color:inherit; }
   backdrop-filter:blur(10px);
   border-bottom:1px solid rgba(229,231,235,.7);
 }
+
 .topbarInner{
   width:min(var(--max), calc(100% - 24px));
   margin:0 auto;
   padding:12px 0;
-  display:grid;
-  grid-template-columns:1fr auto;
-  gap:10px 12px;
-  align-items:center;
-  position:relative; /* ✅ para z-index del botón arriba */
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+  justify-content:space-between;
+  position:relative;
 }
 
 .brand{
@@ -76,7 +87,9 @@ a{ color:inherit; }
   align-items:center;
   gap:10px;
   min-width:0;
+  flex:1 1 auto;
 }
+
 .logo{
   width:42px;height:42px;
   border-radius:14px;
@@ -88,6 +101,7 @@ a{ color:inherit; }
   flex:0 0 auto;
 }
 .logo span{ font-size:20px; }
+
 .titleBox{ min-width:0; }
 .title{
   margin:0;
@@ -108,12 +122,14 @@ a{ color:inherit; }
   text-overflow:ellipsis;
 }
 
-/* TOP actions */
+/* Accesibilidad + Pills (columna derecha) */
 .topActions{
   display:flex;
-  align-items:center;
-  justify-content:flex-end;
+  flex-direction:column;
+  align-items:flex-end;
+  justify-content:flex-start;
   gap:10px;
+  flex:0 0 auto;
   min-width:0;
 }
 
@@ -135,15 +151,13 @@ a{ color:inherit; }
   -webkit-tap-highlight-color:transparent;
   white-space:nowrap;
   flex:0 0 auto;
-
-  /* ✅ que siempre reciba click */
   pointer-events:auto;
   position:relative;
   z-index:20;
 }
 .a11yBtn:active{ transform:translateY(1px); }
 
-/* Pills (fijas, sin desplazamiento) */
+/* Pills */
 .pills{
   display:flex;
   gap:8px;
@@ -153,6 +167,7 @@ a{ color:inherit; }
   overflow:visible;
   max-width:100%;
 }
+
 .pillBtn{
   height:34px;
   padding:0 12px;
@@ -172,6 +187,7 @@ a{ color:inherit; }
   flex:0 0 auto;
 }
 .pillBtn:active{ transform:translateY(1px); }
+
 .pillDot{
   width:10px;height:10px;
   border-radius:999px;
@@ -193,6 +209,7 @@ a{ color:inherit; }
   color:var(--text);
   flex:0 0 auto;
 }
+
 .pillBtn.primary .pillDot{ background:var(--primary); opacity:.9; }
 .pillBtn.primary .pillCount{ background:var(--primarySoft); border-color:rgba(37,99,235,.18); }
 .pillBtn.danger .pillDot{ background:var(--danger); opacity:.9; }
@@ -200,7 +217,9 @@ a{ color:inherit; }
 .pillBtn.good .pillDot{ background:var(--good); opacity:.9; }
 .pillBtn.good .pillCount{ background:var(--goodSoft); border-color:rgba(22,163,74,.18); }
 
-/* Menú grid */
+/* =========================
+   Menú grid
+========================= */
 .menuGrid{
   margin-top:14px;
   display:grid;
@@ -222,6 +241,7 @@ a{ color:inherit; }
   min-height:72px;
 }
 .tile:active{ transform:translateY(1px); }
+
 .tileIcon{
   width:44px;height:44px;
   border-radius:16px;
@@ -233,6 +253,7 @@ a{ color:inherit; }
   flex:0 0 auto;
 }
 .tileIcon span{ font-size:20px; }
+
 .tileText{ min-width:0; flex:1 1 auto; }
 .tileTitle{
   margin:0;
@@ -250,6 +271,7 @@ a{ color:inherit; }
   gap:8px;
   flex-wrap:wrap;
 }
+
 .badge{
   display:inline-flex;
   align-items:center;
@@ -268,7 +290,9 @@ a{ color:inherit; }
 .badge.danger{ background:var(--dangerSoft); border-color:rgba(220,38,38,.20); color:#991B1B; }
 .badge.good{ background:var(--goodSoft); border-color:rgba(22,163,74,.20); color:#14532D; }
 
-/* Secciones */
+/* =========================
+   Secciones
+========================= */
 .section{
   margin-top:16px;
   background:var(--surface);
@@ -277,6 +301,7 @@ a{ color:inherit; }
   box-shadow:var(--shadow2);
   overflow:hidden;
 }
+
 .sectionHead{
   padding:14px 14px 12px;
   display:flex;
@@ -286,6 +311,7 @@ a{ color:inherit; }
   border-bottom:1px solid rgba(229,231,235,.8);
   background:linear-gradient(180deg,#fff,#fbfbfc);
 }
+
 .sectionHead h2{
   margin:0;
   font-size:16px;
@@ -297,6 +323,7 @@ a{ color:inherit; }
   font-size:12.5px;
   color:var(--muted);
 }
+
 .segTabs{ display:flex; align-items:center; gap:8px; }
 .segBtn{
   height:34px;
@@ -317,13 +344,39 @@ a{ color:inherit; }
   color:#1E40AF;
 }
 
-/* List / cards */
+/* ✅ (para el futuro) buscador/filtro en Amigos */
+.searchRow{
+  padding:12px 12px 0;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+.searchInput,
+.filterSelect{
+  height:40px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  background:var(--surface2);
+  box-shadow:var(--shadow2);
+  padding:0 12px;
+  font-weight:900;
+  color:var(--text);
+  outline:none;
+}
+.searchInput{ flex:1 1 220px; min-width:180px; }
+.filterSelect{ flex:0 0 auto; }
+
+/* =========================
+   List / cards
+========================= */
 .list{
   padding:12px;
   display:flex;
   flex-direction:column;
   gap:10px;
 }
+
 .card{
   background:var(--surface);
   border:1px solid var(--border);
@@ -331,24 +384,28 @@ a{ color:inherit; }
   box-shadow:var(--shadow2);
   padding:12px 12px;
 }
+
 .cardTop{
   display:flex;
   align-items:flex-start;
   justify-content:space-between;
   gap:10px;
 }
+
 .who .name{
   margin:0;
   font-weight:950;
   letter-spacing:.2px;
   font-size:15.5px;
 }
+
 .who .meta{
   margin:6px 0 0;
   display:flex;
   flex-wrap:wrap;
   gap:6px;
 }
+
 .chip{
   display:inline-flex;
   align-items:center;
@@ -360,6 +417,7 @@ a{ color:inherit; }
   color:var(--chipText);
   border:1px solid rgba(99,102,241,.18);
 }
+
 .due{
   flex:0 0 auto;
   font-size:12.5px;
@@ -376,6 +434,7 @@ a{ color:inherit; }
   background:var(--dangerSoft);
   border-color:rgba(220,38,38,.20);
 }
+
 .desc{
   margin-top:10px;
   color:var(--text);
@@ -386,6 +445,7 @@ a{ color:inherit; }
   background:#FAFAFB;
   border:1px solid rgba(229,231,235,.9);
 }
+
 .actions{
   margin-top:10px;
   display:flex;
@@ -422,7 +482,9 @@ a{ color:inherit; }
   font-size:13.5px;
 }
 
-/* Bottom bar */
+/* =========================
+   Bottom bar
+========================= */
 .bottomBar{
   position:fixed;
   left:0; right:0; bottom:0;
@@ -432,6 +494,7 @@ a{ color:inherit; }
   padding:10px 12px calc(10px + env(safe-area-inset-bottom));
   z-index:20;
 }
+
 .bottomInner{
   width:min(var(--max), calc(100% - 24px));
   margin:0 auto;
@@ -440,6 +503,7 @@ a{ color:inherit; }
   gap:10px;
   align-items:center;
 }
+
 .navBtn{
   height:44px;
   border-radius:16px;
@@ -486,7 +550,7 @@ a{ color:inherit; }
 
 /* =========================
    MODALS (FIX: no se pierden botones arriba/abajo)
-   ========================= */
+========================= */
 .backdrop{
   position:fixed;
   inset:0;
@@ -494,7 +558,6 @@ a{ color:inherit; }
   display:none;
   align-items:center;
   justify-content:center;
-  /* ✅ padding safe-area */
   padding:calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
   z-index:50;
 }
@@ -507,8 +570,6 @@ a{ color:inherit; }
   border:1px solid rgba(229,231,235,.9);
   box-shadow:0 24px 70px rgba(17,24,39,.20);
   overflow:hidden;
-
-  /* ✅ clave: alto máximo + layout en columna */
   max-height:calc(100vh - 32px);
   display:flex;
   flex-direction:column;
@@ -536,7 +597,6 @@ a{ color:inherit; }
   font-weight:900;
 }
 
-/* ✅ ahora el scroll es solo aquí */
 .modalBody{
   padding:12px 14px 14px;
   overflow:auto;
@@ -544,7 +604,6 @@ a{ color:inherit; }
   flex:1 1 auto;
 }
 
-/* ✅ pie siempre visible */
 .modalFoot{
   padding:12px 14px calc(14px + env(safe-area-inset-bottom));
   display:flex;
@@ -579,6 +638,16 @@ input:focus,select:focus,textarea:focus{
   box-shadow:0 0 0 4px rgba(37,99,235,.10);
 }
 
+.twoCol{ display:flex; gap:10px; flex-wrap:wrap; }
+.twoCol > *{ flex:1; min-width:170px; }
+
+.hint{
+  margin-top:8px;
+  color:var(--muted);
+  font-size:12.5px;
+  line-height:1.35;
+}
+
 /* Toast */
 .toast{
   position:fixed;
@@ -599,16 +668,6 @@ input:focus,select:focus,textarea:focus{
   text-align:center;
 }
 .toast.show{ display:block; }
-
-.twoCol{ display:flex; gap:10px; flex-wrap:wrap; }
-.twoCol > *{ flex:1; min-width:170px; }
-
-.hint{
-  margin-top:8px;
-  color:var(--muted);
-  font-size:12.5px;
-  line-height:1.35;
-}
 
 /* Share mono box */
 .mono{
@@ -738,7 +797,9 @@ input:focus,select:focus,textarea:focus{
 .installTitle{ margin:0; font-weight:950; font-size:14.5px; }
 .installText{ margin:6px 0 0; color:var(--muted); font-size:13px; line-height:1.3; }
 
-/* Responsive */
+/* =========================
+   Responsive
+========================= */
 @media (min-width:720px){
   .menuGrid{ grid-template-columns:1fr 1fr 1fr 1fr; }
   .tile{ min-height:78px; }
@@ -746,13 +807,27 @@ input:focus,select:focus,textarea:focus{
 
 /* En móviles estrechos */
 @media (max-width:520px){
-  .topbarInner{ grid-template-columns:1fr; }
+  .topbarInner{ flex-direction:column; align-items:stretch; }
   .topActions{
-    justify-content:space-between;
-    flex-wrap:wrap;
+    width:100%;
+    align-items:flex-start;
+    gap:10px;
   }
+  /* El botón se queda arriba a la derecha igualmente */
+  .a11yBtn{ align-self:flex-end; }
+  /* Pills a 2 columnas si caben, si no ya harán wrap con bigText */
   .pills{
     width:100%;
     justify-content:flex-start;
   }
 }
+
+/* =========================
+   Accesibilidad (evita solapes cuando está grande)
+========================= */
+body.bigText .topbarInner{ gap:12px; }
+body.bigText .pills{ flex-wrap:wrap; }
+body.bigText .pillBtn{ height:38px; }
+body.bigText .menuGrid{ gap:14px; }
+body.bigText .btn{ height:44px; }
+body.bigText input, body.bigText select, body.bigText textarea{ font-size:16px; }
