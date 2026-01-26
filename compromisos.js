@@ -66,8 +66,7 @@
 
   /* =========================
      ✅ A11Y: TEXTO GRANDE REAL + REORGANIZACIÓN (sin solapes)
-     - Incrementa tamaños fijos en px mediante CSS “.bigText …”
-     - Reflow en topbar/pills cuando está grande
+     FIX: botón "Texto grande" SIEMPRE arriba derecha (también en bigText)
   ========================= */
   (function injectA11yCssOnce(){
     if(document.getElementById("a11yBigTextCSS")) return;
@@ -83,7 +82,14 @@
         z-index:30 !important;
         pointer-events:auto !important;
       }
-      .brand{ padding-right:180px !important; } /* hueco para el botón */
+      .brand{ padding-right:200px !important; } /* hueco para que el título no se meta debajo */
+
+      /* Pills: permite 2 líneas si hace falta (evita solapes cuando el texto crece) */
+      .pills{
+        flex-wrap:wrap !important;
+        gap:10px !important;
+        overflow:visible !important;
+      }
 
       /* ========= BIG TEXT MODE ========= */
       html.bigText body{ font-size:18px !important; }
@@ -124,37 +130,22 @@
         font-size:13px !important;
       }
 
-      /* Reflow seguro: cuando está grande, NO forzamos absolute del botón (evita solape) */
-      html.bigText #btnA11yTop{
-        position:static !important;
-        top:auto !important;
-        right:auto !important;
-        margin-left:auto !important;
-      }
-      html.bigText .brand{ padding-right:0 !important; }
+      /* En bigText mantenemos el botón arriba derecha, pero damos un pelín más de hueco */
+      html.bigText #btnA11yTop{ top:10px !important; }
+      html.bigText .brand{ padding-right:210px !important; }
 
-      /* Topbar reorganizado en grande: 1 columna + acciones wrap */
-      html.bigText .topbarInner{
-        grid-template-columns:1fr !important;
-        gap:10px !important;
-      }
+      /* TopActions: deja que las cosas bajen si es necesario */
       html.bigText .topActions{
         width:100% !important;
-        justify-content:space-between !important;
+        justify-content:flex-start !important;
         flex-wrap:wrap !important;
         gap:10px !important;
       }
-      html.bigText .pills{
-        width:100% !important;
-        justify-content:flex-start !important;
-        flex-wrap:wrap !important;     /* ✅ permite 2 líneas si hace falta */
-        overflow:visible !important;
-      }
 
-      /* En pantallas estrechas, mantenemos comportamiento estable */
       @media (max-width:520px){
+        /* En móviles estrechos: seguimos arriba derecha pero con menos padding */
         .brand{ padding-right:0 !important; }
-        #btnA11yTop{ position:static !important; }
+        #btnA11yTop{ top:10px !important; }
       }
     `;
     document.head.appendChild(st);
@@ -164,7 +155,6 @@
     const html = document.documentElement;
     html.classList.toggle("bigText", !!big);
 
-    // Cambiamos el label para que quede claro el toggle
     const label = big ? "🔎 Texto normal" : "🔎 Texto grande";
     const bTop = $("btnA11yTop");
     const bSet = $("btnA11y");
@@ -495,7 +485,6 @@
     if($("tabPending")) $("tabPending").onclick = setViewPending;
     if($("tabDone")) $("tabDone").onclick = setViewDone;
 
-    // Tiles (menú)
     const bindTile = (id, fn)=>{
       const el = $(id);
       if(!el) return;
@@ -509,7 +498,6 @@
     bindTile("tileContacts", ()=>{ setPane("contacts"); toast("👥 Amigos"); });
     bindTile("tileSettings", ()=>{ setPane("settings"); toast("⚙️ Ajustes"); });
 
-    // Pills
     if($("btnOverdue")){
       $("btnOverdue").addEventListener("click", ()=>{
         setPane("commitments");
@@ -1213,9 +1201,6 @@
       if(m === 0){
         settings.unlockedUntil = 0;
         save(SETTINGS_KEY, settings);
-      }else{
-        // si autoLock > 0, lo evaluamos al volver: si ya no está “remember”, pedirá PIN
-        // (se simplifica; lo importante es que si no está unlocked, se muestre overlay)
       }
     }
   }
@@ -1235,7 +1220,6 @@
      Binds modales
   ========================= */
   (function bindModals(){
-    // compromiso modal
     if($("btnClose")) $("btnClose").onclick = closeCommitModal;
     if($("btnCancel")) $("btnCancel").onclick = closeCommitModal;
     if($("btnSave")) $("btnSave").onclick = saveCommitFromModal;
@@ -1247,7 +1231,6 @@
     }
     if($("fContact")) $("fContact").addEventListener("change", handleContactSelectChange);
 
-    // contacto modal
     if($("cBtnClose")) $("cBtnClose").onclick = closeContactModal;
     if($("cBtnCancel")) $("cBtnCancel").onclick = closeContactModal;
     if($("cBtnSave")) $("cBtnSave").onclick = saveContactFromModal;
@@ -1258,7 +1241,6 @@
       });
     }
 
-    // pin modal
     if($("pinClose")) $("pinClose").onclick = closePinModal;
     if($("pinCancel")) $("pinCancel").onclick = closePinModal;
     if($("pinOk")) $("pinOk").onclick = savePinFromModal;
@@ -1269,7 +1251,6 @@
       });
     }
 
-    // lock overlay keypad
     const keypad = $("keypad");
     if(keypad){
       keypad.addEventListener("click", (e)=>{
@@ -1392,32 +1373,26 @@
      Boot
   ========================= */
   (function boot(){
-    // A11Y
     const a11y = load(A11Y_KEY, { big:false });
     applyA11yUi(!!a11y.big);
     bindA11yButtons();
 
-    // Navegación y FAB
     bindNav();
     bindFab();
 
-    // Paquete recibido
     const applied = applyIncomingPack();
     if(applied){
       setPane("commitments");
       setViewPending();
     }
 
-    // Estado inicial
     updateSettingsUI();
     renderAll();
 
-    // Lock
     if(settings.pinEnabled && !isUnlockedNow()) showLockOverlay();
     else hideLockOverlay();
   })();
 
-  // Exponer por si algo externo lo llama
   window.toggleTextBig = toggleTextBig;
   window.openCommitModal = openCommitModal;
   window.openContactModal = openContactModal;
