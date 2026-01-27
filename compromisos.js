@@ -999,9 +999,7 @@
       b.className = "whoAutoChip";
       b.innerHTML = `✅ <span>${esc(c.name || "Sin nombre")}</span>`;
       b.addEventListener("click", ()=>{
-        // Selecciona amigo y cambia UI automáticamente
         sel.value = c.id;
-        // Disparar rebuild como si el usuario cambiara el select
         rebuildContactSelect(c.id, "");
         toast(`👥 Marcado: ${c.name || "Amigo"}`);
       });
@@ -1011,7 +1009,6 @@
 
   /* =========================
      ✅ (2) Cambiar label “Nombre (sin guardar)” -> “Nombre”
-     - Lo hacemos por JS para no depender de tocar el HTML
   ========================= */
   function fixWhoLabel(){
     try{
@@ -1064,11 +1061,9 @@
 
     if(isCustom && whoInput){
       whoInput.value = customName || "";
-      // ✅ refrescar sugerencias
       setTimeout(()=>{ try{ whoInput.focus(); }catch(e){} }, 0);
       renderWhoAutocomplete();
     }else{
-      // si no es custom, limpiar sugerencias
       renderWhoAutocomplete();
     }
   }
@@ -1182,17 +1177,12 @@
       renderAll();
     };
 
-    // ✅ Nuevo comportamiento:
-    // - si estás en modo custom y el nombre coincide con un amigo, lo marcamos automáticamente
-    // - si no coincide, al guardar preguntamos si quieres crear ese amigo
     const isCustom = sel && sel.value === "__custom__";
 
     if(isCustom){
-      // si el usuario no escribió nombre, permitimos “Sin nombre”
       if(rawCustomName){
         const existing = findContactByName(rawCustomName);
         if(existing){
-          // Auto-vincular al amigo existente
           proceedSave({ whoId: existing.id, whoName: "" });
           return;
         }
@@ -1202,30 +1192,24 @@
           `Has escrito “${rawCustomName}”. ¿Quieres guardarlo en tus Amigos para reutilizarlo?`,
           "Sí, guardar",
           ()=>{
-            // crear contacto
             const newC = { id: uid(), name: rawCustomName, note: "" };
             contacts = [newC, ...contacts];
             save(CONTACTS_KEY, contacts);
             fillCommitFriendSelect();
-
-            // continuar guardado enlazado al nuevo amigo
             proceedSave({ whoId: newC.id, whoName: "" });
           },
           "No, solo para este",
           ()=>{
-            // continuar sin guardar amigo
             proceedSave({ whoId: null, whoName: rawCustomName });
           }
         );
         return;
       }
 
-      // sin nombre escrito: guardar como custom vacío
       proceedSave({ whoId:null, whoName:"" });
       return;
     }
 
-    // modo amigo seleccionado normal
     const who = resolveWho();
     proceedSave(who);
   }
