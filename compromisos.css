@@ -45,11 +45,9 @@ body{
 a{ color:inherit; }
 
 /* =========================
-   ✅ BIG TEXT (para que SE NOTE de verdad)
+   ✅ BIG TEXT (para que se note)
    ========================= */
-body.bigText{
-  font-size:var(--fsBig);
-}
+body.bigText{ font-size:var(--fsBig); }
 body.bigText .title{ font-size:20px; }
 body.bigText .subtitle{ font-size:14px; }
 body.bigText .pillBtn{ font-size:14px; height:38px; }
@@ -80,10 +78,7 @@ body.bigText .badge{ font-size:13px; height:24px; }
 }
 
 /* =========================
-   ✅ TOP BAR (FIX DEFINITIVO)
-   - Título NO se pierde
-   - Botón Texto grande SIEMPRE arriba derecha
-   - Pills debajo, mismo orden (no se invierten)
+   ✅ TOP BAR (FIX)
    ========================= */
 .topbar{
   position:sticky;
@@ -98,8 +93,7 @@ body.bigText .badge{ font-size:13px; height:24px; }
   width:min(var(--max), calc(100% - 24px));
   margin:0 auto;
   padding:12px 0;
-  position:relative;
-  display:block; /* ✅ evita que el grid robe espacio al título */
+  position:relative; /* ✅ ancla del botón absoluto */
 }
 
 /* Brand */
@@ -108,7 +102,7 @@ body.bigText .badge{ font-size:13px; height:24px; }
   align-items:center;
   gap:10px;
   min-width:0;
-  padding-right:210px; /* ✅ reserva para el botón arriba derecha */
+  padding-right:220px; /* ✅ reserva para el botón arriba derecha */
 }
 .logo{
   width:42px;height:42px;
@@ -141,21 +135,21 @@ body.bigText .badge{ font-size:13px; height:24px; }
   text-overflow:ellipsis;
 }
 
-/* TOP actions: pills bajo el título, botón absoluto arriba derecha */
+/* TOP actions */
 .topActions{
-  position:relative;
+  /* ✅ importante: NO relative aquí, para que el botón se ancle a topbarInner */
+  position:static;
   width:100%;
-  margin-top:10px;
-  padding-top:0;
+  margin-top:10px; /* espacio bajo título */
 }
 
-/* Botón A11Y absoluto arriba derecha */
+/* Botón A11Y: arriba derecha, alineado con el título */
 #btnA11yTop{
-  position:absolute;
-  top:0;
-  right:0;
-  z-index:30;
-  pointer-events:auto;
+  position:absolute !important;
+  top:12px !important;
+  right:0 !important;
+  z-index:80 !important;
+  pointer-events:auto !important;
 }
 
 /* Botón estilo */
@@ -180,17 +174,22 @@ body.bigText .badge{ font-size:13px; height:24px; }
 }
 .a11yBtn:active{ transform:translateY(1px); }
 
-/* Pills (siempre debajo del botón, centradas) */
+/* Pills: debajo, SIN empujar al botón */
 .pills{
   display:flex;
   gap:10px;
   align-items:center;
   justify-content:center;
-  flex-wrap:nowrap;          /* ✅ no invertir ni reordenar */
+  flex-wrap:nowrap;
   overflow:visible;
   max-width:100%;
-  padding-top:44px;          /* ✅ espacio para el botón absoluto */
+  position:relative;
+  z-index:10;
 }
+
+/* ✅ fuerza el orden SIEMPRE */
+#btnOverdue{ order:1; }
+#btnReceived{ order:2; }
 
 .pillBtn{
   height:34px;
@@ -523,9 +522,7 @@ body.bigText .badge{ font-size:13px; height:24px; }
 }
 .fab:active{ transform:translateY(1px); }
 
-/* =========================
-   MODALS
-   ========================= */
+/* MODALS */
 .backdrop{
   position:fixed;
   inset:0;
@@ -549,7 +546,6 @@ body.bigText .badge{ font-size:13px; height:24px; }
   display:flex;
   flex-direction:column;
 }
-
 .modalHead{
   padding:14px 14px 12px;
   display:flex;
@@ -571,14 +567,12 @@ body.bigText .badge{ font-size:13px; height:24px; }
   cursor:pointer;
   font-weight:900;
 }
-
 .modalBody{
   padding:12px 14px 14px;
   overflow:auto;
   -webkit-overflow-scrolling:touch;
   flex:1 1 auto;
 }
-
 .modalFoot{
   padding:12px 14px calc(14px + env(safe-area-inset-bottom));
   display:flex;
@@ -613,7 +607,6 @@ input:focus,select:focus,textarea:focus{
   box-shadow:0 0 0 4px rgba(37,99,235,.10);
 }
 
-/* Toast */
 .toast{
   position:fixed;
   left:50%;
@@ -644,7 +637,6 @@ input:focus,select:focus,textarea:focus{
   line-height:1.35;
 }
 
-/* Share mono box */
 .mono{
   font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
   font-size:12.5px;
@@ -657,7 +649,6 @@ input:focus,select:focus,textarea:focus{
   white-space:pre-wrap;
 }
 
-/* Seg (share mode) */
 .seg{
   display:flex;
   gap:8px;
@@ -682,105 +673,14 @@ input:focus,select:focus,textarea:focus{
   color:#111827;
 }
 
-/* Keypad / lock */
-.keypad{
-  display:grid;
-  grid-template-columns:repeat(3, 1fr);
-  gap:10px;
-  margin-top:12px;
-}
-.key{
-  height:52px;
-  border-radius:16px;
-  border:1px solid var(--border);
-  background:var(--surface2);
-  font-weight:950;
-  font-size:18px;
-  cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
-}
-.key:active{ transform:translateY(1px); }
-.key.primary{ background:var(--primarySoft); border-color:rgba(37,99,235,.22); color:#1E40AF; }
-.key.danger{ background:var(--dangerSoft); border-color:rgba(220,38,38,.22); color:#991B1B; }
-
-.pinDots{ display:flex; justify-content:center; gap:10px; margin-top:8px; }
-.dot{
-  width:12px;height:12px;
-  border-radius:999px;
-  border:2px solid rgba(17,24,39,.22);
-  background:rgba(17,24,39,.08);
-}
-.dot.on{
-  background:rgba(37,99,235,.9);
-  border-color:rgba(37,99,235,.25);
-  box-shadow:0 10px 26px rgba(37,99,235,.18);
-}
-
-/* Switch (PIN / Notif) */
-.switch{
-  width:56px;
-  height:32px;
-  border-radius:999px;
-  border:1px solid var(--border);
-  background:var(--surface2);
-  position:relative;
-  cursor:pointer;
-  flex:0 0 auto;
-  -webkit-tap-highlight-color:transparent;
-  box-shadow:var(--shadow2);
-}
-.switch .knob{
-  position:absolute;
-  top:3px; left:3px;
-  width:26px; height:26px;
-  border-radius:999px;
-  background:#fff;
-  border:1px solid rgba(229,231,235,.95);
-  box-shadow:0 8px 20px rgba(17,24,39,.10);
-  transition:transform .18s ease;
-}
-.switch.on{
-  background:rgba(37,99,235,.15);
-  border-color:rgba(37,99,235,.25);
-}
-.switch.on .knob{
-  transform:translateX(24px);
-}
-
-/* Install banner */
-.installBanner{
-  position:fixed;
-  left:12px; right:12px;
-  bottom:calc(var(--bottomH) + 70px + env(safe-area-inset-bottom));
-  z-index:30;
-  display:none;
-}
-.installBanner.show{ display:block; }
-.installCard{
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:22px;
-  box-shadow:var(--shadow);
-  padding:12px 12px;
-}
-.installRow{
-  display:flex;
-  gap:10px;
-  align-items:flex-start;
-  justify-content:space-between;
-}
-.installTitle{ margin:0; font-weight:950; font-size:14.5px; }
-.installText{ margin:6px 0 0; color:var(--muted); font-size:13px; line-height:1.3; }
-
 /* Responsive */
 @media (min-width:720px){
   .menuGrid{ grid-template-columns:1fr 1fr 1fr 1fr; }
   .tile{ min-height:78px; }
 }
 
-/* En móviles estrechos: deja respirar el título (sin cortar) */
 @media (max-width:520px){
-  .brand{ padding-right:170px; }
+  .brand{ padding-right:190px; }
   .title, .subtitle{
     white-space:normal;
     overflow:hidden;
