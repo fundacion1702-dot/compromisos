@@ -124,10 +124,10 @@
       <div class="tile" id="tileDone" role="button" tabindex="0">
         <div class="tileIcon"><span>✅</span></div>
         <div class="tileText">
-          <p class="tileTitle">Hechos</p>
+          <p class="tileTitle">Cerrados</p>
           <p class="tileMeta">
             <span class="badge good" id="tileDoneCount">0</span>
-            <span>cerrados</span>
+            <span>finalizados</span>
           </p>
         </div>
       </div>
@@ -153,10 +153,10 @@
         </div>
 
         <!-- ✅ Ahora 3 estados -->
-        <div class="segTabs" role="tablist" aria-label="Pendientes, En espera o Hechos">
+        <div class="segTabs" role="tablist" aria-label="Pendientes, En espera o Cerrados">
           <button class="segBtn active" id="tabPending" type="button">Pendientes</button>
           <button class="segBtn" id="tabWaiting" type="button">En espera</button>
-          <button class="segBtn" id="tabDone" type="button">Hechos</button>
+          <button class="segBtn" id="tabDone" type="button">Cerrados</button>
         </div>
       </div>
 
@@ -326,15 +326,16 @@
       </div>
 
       <div class="modalBody">
+        <!-- ✅ NUEVO: campo único Nombre + datalist -->
         <div class="field">
-          <label class="label" for="fContact">¿Con quién?</label>
-          <select id="fContact"></select>
-          <div class="hint" id="contactHint">Elige un amigo o escribe un nombre sin guardar.</div>
-        </div>
-
-        <div class="field" id="customWhoField" style="display:none">
-          <label class="label" for="fWho">Nombre (sin guardar)</label>
-          <input id="fWho" type="text" placeholder="Ej: Laura / Mamá / Juan (del trabajo)" autocomplete="off"/>
+          <label class="label" for="fWho">Nombre</label>
+          <input id="fWho"
+                 type="text"
+                 list="friendsDatalist"
+                 placeholder="Ej: Laura / Mamá / Juan (del trabajo)"
+                 autocomplete="off"/>
+          <datalist id="friendsDatalist"></datalist>
+          <div class="hint" id="contactHint">Si coincide exacto con un amigo, se vincula automáticamente. Si no, te preguntará si quieres guardarlo.</div>
         </div>
 
         <div class="field">
