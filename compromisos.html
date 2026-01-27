@@ -15,7 +15,32 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
   <!-- CSS separado -->
-  <link rel="stylesheet" href="compromisos.css?v=2">
+  <link rel="stylesheet" href="compromisos.css?v=1">
+
+  <!-- ✅ FIX VISUAL: evitar que el título/subtítulo “desaparezcan” con texto grande -->
+  <style>
+    /* En pantallas estrechas, permite 2 líneas en título/subtítulo para que no se pierdan */
+    @media (max-width:520px){
+      .title, .subtitle{
+        white-space: normal !important;
+        overflow: hidden !important;
+        text-overflow: clip !important;
+        display: -webkit-box !important;
+        -webkit-box-orient: vertical !important;
+        -webkit-line-clamp: 2 !important;
+      }
+    }
+    /* Con texto grande, deja respirar el header (sin recortes raros) */
+    body.bigText .title,
+    body.bigText .subtitle{
+      white-space: normal !important;
+      overflow: hidden !important;
+      text-overflow: clip !important;
+      display: -webkit-box !important;
+      -webkit-box-orient: vertical !important;
+      -webkit-line-clamp: 2 !important;
+    }
+  </style>
 </head>
 
 <body>
@@ -112,14 +137,9 @@
         </div>
       </div>
 
-      <!-- ✅ NUEVO: filtro por amigo -->
-      <div class="field" style="margin-top:10px;">
-        <label class="label" for="selFriendFilter">Filtrar por amigo</label>
-        <select id="selFriendFilter">
-          <option value="">Todos</option>
-        </select>
-        <div class="hint" id="friendFilterHint">Elige un amigo para ver solo sus compromisos (pendientes o hechos).</div>
-      </div>
+      <!-- ✅ IMPORTANTE: aquí NO dejamos filtros grandes fijos.
+           Si tu JS añade el botón "Buscar/Filtrar", perfecto; se mantiene.
+           Este HTML solo elimina (por script) cualquier filtro grande “Filtrar por amigo…” si aparece. -->
 
       <div class="list" id="list"></div>
       <div class="empty" id="empty">No hay compromisos aquí todavía.</div>
@@ -135,13 +155,6 @@
         <div class="segTabs">
           <span class="badge" id="bContacts">0</span>
         </div>
-      </div>
-
-      <!-- ✅ NUEVO: buscador de amigos -->
-      <div class="field" style="margin-top:10px;">
-        <label class="label" for="contactsSearch">Buscar amigo</label>
-        <input id="contactsSearch" type="search" placeholder="Escribe para buscar..." autocomplete="off"/>
-        <div class="hint" id="contactsSearchHint">Filtra la lista de amigos al escribir.</div>
       </div>
 
       <div class="list" id="contactsList"></div>
@@ -502,6 +515,96 @@
   <div class="toast" id="toast"></div>
 
   <!-- JS separado -->
-  <script src="compromisos.js?v=2"></script>
+  <script src="compromisos.js?v=1"></script>
+
+  <!-- ✅ FIX DEFINITIVO (independiente del JS principal):
+       1) Texto grande siempre funciona
+       2) Elimina el filtro grande fijo “Filtrar por amigo…”
+  -->
+  <script>
+    (function(){
+      "use strict";
+
+      const A11Y_KEY = "compromisos.a11y.v1";
+
+      function safeParse(v, fb){ try{ return JSON.parse(v); }catch(e){ return fb; } }
+      function loadA11y(){ return safeParse(localStorage.getItem(A11Y_KEY), { big:false }); }
+      function saveA11y(st){ try{ localStorage.setItem(A11Y_KEY, JSON.stringify(st)); }catch(e){} }
+
+      function applyA11y(big){
+        // Variables CSS globales (lo que usa tu CSS)
+        document.documentElement.style.setProperty("--fs", big ? "18px" : "16px");
+        document.documentElement.style.setProperty("--fsBig", big ? "20px" : "18px");
+        document.body.classList.toggle("bigText", !!big);
+
+        // Etiqueta coherente
+        const label = big ? "🔎 Texto normal" : "🔎 Texto grande";
+        const bTop = document.getElementById("btnA11yTop");
+        const bSet = document.getElementById("btnA11y");
+        if(bTop) bTop.textContent = label;
+        if(bSet) bSet.textContent = label;
+      }
+
+      function toggleA11y(e){
+        if(e){
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        const st = loadA11y();
+        st.big = !st.big;
+        saveA11y(st);
+        applyA11y(st.big);
+      }
+
+      function bindA11y(){
+        const bTop = document.getElementById("btnA11yTop");
+        const bSet = document.getElementById("btnA11y");
+
+        // capture:true para que funcione aunque otro listener interfiera
+        if(bTop){
+          bTop.addEventListener("click", toggleA11y, true);
+          bTop.addEventListener("touchend", toggleA11y, { capture:true, passive:false });
+          bTop.style.pointerEvents = "auto";
+        }
+        if(bSet){
+          bSet.addEventListener("click", toggleA11y, true);
+          bSet.addEventListener("touchend", toggleA11y, { capture:true, passive:false });
+          bSet.style.pointerEvents = "auto";
+        }
+
+        const st = loadA11y();
+        applyA11y(!!st.big);
+      }
+
+      function removeBigFriendFilter(){
+        const pane = document.getElementById("commitmentsPane");
+        if(!pane) return;
+
+        // 1) elimina campos tipo .field que contengan “Filtrar por amigo”
+        pane.querySelectorAll(".field").forEach(f=>{
+          const t = (f.textContent || "").trim();
+          if(/filtrar\s+por\s+amigo/i.test(t)) f.remove();
+        });
+
+        // 2) elimina hints que encajan con el texto del filtro grande
+        pane.querySelectorAll(".hint, p, div, label").forEach(el=>{
+          const t = (el.textContent || "").trim();
+          if(/Elige\s+un\s+amigo\s+para\s+ver\s+solo\s+sus\s+compromisos/i.test(t)) {
+            // borra el contenedor más lógico
+            const wrap = el.closest(".field") || el.parentElement;
+            if(wrap) wrap.remove();
+          }
+        });
+      }
+
+      function boot(){
+        bindA11y();
+        removeBigFriendFilter();
+      }
+
+      if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+      else boot();
+    })();
+  </script>
 </body>
 </html>
