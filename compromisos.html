@@ -1,3 +1,4 @@
+<!-- compromisos.html (ACTUALIZADO) -->
 <!doctype html>
 <html lang="es">
 <head>
@@ -326,15 +327,21 @@
       </div>
 
       <div class="modalBody">
-        <!-- ✅ NUEVO: campo único Nombre + datalist -->
+        <!-- ✅ Campo único Nombre + datalist + (host para lista propia si el móvil no soporta datalist bien) -->
         <div class="field">
           <label class="label" for="fWho">Nombre</label>
           <input id="fWho"
                  type="text"
                  list="friendsDatalist"
                  placeholder="Ej: Laura / Mamá / Juan (del trabajo)"
-                 autocomplete="off"/>
+                 autocomplete="off"
+                 autocapitalize="words"
+                 spellcheck="false"/>
           <datalist id="friendsDatalist"></datalist>
+
+          <!-- ✅ (NO MOLESTA si no se usa) Host para sugerencias custom (lo activaremos en el JS) -->
+          <div id="whoSuggest" class="whoSuggest" role="listbox" aria-label="Sugerencias de amigos" style="display:none;"></div>
+
           <div class="hint" id="contactHint">Si coincide exacto con un amigo, se vincula automáticamente. Si no, te preguntará si quieres guardarlo.</div>
         </div>
 
