@@ -45,30 +45,55 @@ body{
 a{ color:inherit; }
 
 /* =========================
-   ✅ BIG TEXT (para que se note)
+   ✅ BIG TEXT (robusto)
+   Soporta class en <body> o en <html> (por si el JS cambia uno u otro)
    ========================= */
-body.bigText{ font-size:var(--fsBig); }
-body.bigText .title{ font-size:20px; }
-body.bigText .subtitle{ font-size:14px; }
-body.bigText .pillBtn{ font-size:14px; height:38px; }
-body.bigText .pillCount{ font-size:13px; min-width:24px; height:24px; }
-body.bigText .tileTitle{ font-size:17px; }
-body.bigText .tileMeta{ font-size:13.5px; }
-body.bigText .sectionHead h2{ font-size:17px; }
-body.bigText .sectionHead p{ font-size:13.5px; }
-body.bigText .segBtn{ font-size:14px; height:38px; }
-body.bigText .who .name{ font-size:16.5px; }
-body.bigText .desc{ font-size:15.5px; }
-body.bigText .btn{ font-size:15px; height:44px; }
+body.bigText,
+html.bigText body{
+  font-size:var(--fsBig);
+}
+body.bigText .title,
+html.bigText body .title{ font-size:20px; }
+body.bigText .subtitle,
+html.bigText body .subtitle{ font-size:14px; }
+body.bigText .pillBtn,
+html.bigText body .pillBtn{ font-size:14px; height:38px; }
+body.bigText .pillCount,
+html.bigText body .pillCount{ font-size:13px; min-width:24px; height:24px; }
+body.bigText .tileTitle,
+html.bigText body .tileTitle{ font-size:17px; }
+body.bigText .tileMeta,
+html.bigText body .tileMeta{ font-size:13.5px; }
+body.bigText .sectionHead h2,
+html.bigText body .sectionHead h2{ font-size:17px; }
+body.bigText .sectionHead p,
+html.bigText body .sectionHead p{ font-size:13.5px; }
+body.bigText .segBtn,
+html.bigText body .segBtn{ font-size:14px; height:38px; }
+body.bigText .who .name,
+html.bigText body .who .name{ font-size:16.5px; }
+body.bigText .desc,
+html.bigText body .desc{ font-size:15.5px; }
+body.bigText .btn,
+html.bigText body .btn{ font-size:15px; height:44px; }
 body.bigText input,
 body.bigText select,
-body.bigText textarea{ font-size:16px; }
-body.bigText .hint{ font-size:13.5px; }
-body.bigText .chip{ font-size:13px; padding:7px 11px; }
-body.bigText .due{ font-size:13.5px; padding:9px 11px; }
-body.bigText .empty{ font-size:14.5px; }
-body.bigText .navBtn{ font-size:15px; height:48px; }
-body.bigText .badge{ font-size:13px; height:24px; }
+body.bigText textarea,
+html.bigText body input,
+html.bigText body select,
+html.bigText body textarea{ font-size:16px; }
+body.bigText .hint,
+html.bigText body .hint{ font-size:13.5px; }
+body.bigText .chip,
+html.bigText body .chip{ font-size:13px; padding:7px 11px; }
+body.bigText .due,
+html.bigText body .due{ font-size:13.5px; padding:9px 11px; }
+body.bigText .empty,
+html.bigText body .empty{ font-size:14.5px; }
+body.bigText .navBtn,
+html.bigText body .navBtn{ font-size:15px; height:48px; }
+body.bigText .badge,
+html.bigText body .badge{ font-size:13px; height:24px; }
 
 /* Wrap */
 .wrap{
@@ -174,7 +199,7 @@ body.bigText .badge{ font-size:13px; height:24px; }
 }
 .a11yBtn:active{ transform:translateY(1px); }
 
-/* Pills: debajo, SIN empujar al botón */
+/* Pills: debajo, centradas */
 .pills{
   display:flex;
   gap:10px;
@@ -187,9 +212,10 @@ body.bigText .badge{ font-size:13px; height:24px; }
   z-index:10;
 }
 
-/* ✅ fuerza el orden SIEMPRE */
-#btnOverdue{ order:1; }
-#btnReceived{ order:2; }
+/* ✅ ORDEN INVERTIDO (como pides):
+   Recibidos a la izquierda, Vencidos a la derecha (ambos centrados) */
+#btnReceived{ order:1; }
+#btnOverdue{ order:2; }
 
 .pillBtn{
   height:34px;
@@ -672,6 +698,33 @@ input:focus,select:focus,textarea:focus{
   box-shadow:var(--shadow2);
   color:#111827;
 }
+
+/* =========================
+   ✅ INSTALL BANNER (para que NO salga texto suelto “Instálala / Consejo”)
+   ========================= */
+.installBanner{
+  position:fixed;
+  left:12px; right:12px;
+  bottom:calc(var(--bottomH) + 70px + env(safe-area-inset-bottom));
+  z-index:30;
+  display:none;
+}
+.installBanner.show{ display:block; }
+.installCard{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:22px;
+  box-shadow:var(--shadow);
+  padding:12px 12px;
+}
+.installRow{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  justify-content:space-between;
+}
+.installTitle{ margin:0; font-weight:950; font-size:14.5px; }
+.installText{ margin:6px 0 0; color:var(--muted); font-size:13px; line-height:1.3; }
 
 /* Responsive */
 @media (min-width:720px){
