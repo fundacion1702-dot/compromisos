@@ -145,14 +145,11 @@
 
   /* =========================
      ✅ FIX 1: Texto grande (REAL)
-     - Forzamos el cambio de tamaño sin depender solo de reglas CSS (por si el CSS no está actualizado/caché)
-     - Seguimos manteniendo la clase bigText para el resto de estilos
   ========================= */
   function applyTextScale(big){
-    const basePx = big ? 19 : 16;     // ✅ más evidente
+    const basePx = big ? 19 : 16;
     const bigPx  = big ? 22 : 18;
 
-    // Variables CSS (por compatibilidad con tu CSS)
     try{
       document.documentElement.style.setProperty("--fs", basePx + "px");
       document.documentElement.style.setProperty("--fsBig", bigPx + "px");
@@ -160,17 +157,14 @@
       document.body && document.body.style && (document.body.style.setProperty("--fsBig", bigPx + "px"));
     }catch(e){}
 
-    // ✅ Forzado directo (para que SIEMPRE se note aunque falten reglas)
     try{
       if(document.body){
         document.body.style.fontSize = basePx + "px";
       }
     }catch(e){}
 
-    // Clase (para el resto de ajustes visuales que ya tienes en CSS)
     if(document.body) document.body.classList.toggle("bigText", !!big);
 
-    // Etiqueta coherente
     const label = big ? "🔎 Texto normal" : "🔎 Texto grande";
     const bTop = $("btnA11yTop");
     const bSet = $("btnA11y");
@@ -200,7 +194,6 @@
     toggleTextScale();
   }
 
-  // ✅ Delegación: funciona aunque el botón cambie/esté en otro pane
   function bindA11yDelegation(){
     const matchA11y = (node)=>{
       if(!node) return null;
@@ -217,7 +210,6 @@
       guardedToggle(e);
     };
 
-    // Captura para ganar a cualquier listener previo
     document.addEventListener("pointerup", handler, true);
     document.addEventListener("touchend", handler, true);
     document.addEventListener("click", handler, true);
@@ -227,6 +219,57 @@
       const el = matchA11y(document.activeElement);
       if(!el) return;
       guardedToggle(e);
+    }, true);
+  }
+
+  /* =========================
+     ✅ NUEVO: click en logo/título => ir a pantalla principal
+     - Funciona estés en la pantalla que estés
+     - Principal = Compromisos + vista Pendientes
+  ========================= */
+  function bindBrandHome(){
+    const brand = document.querySelector(".brand");
+    if(brand){
+      try{
+        brand.style.cursor = "pointer";
+        // accesibilidad (sin tocar HTML)
+        if(!brand.hasAttribute("tabindex")) brand.setAttribute("tabindex","0");
+        brand.setAttribute("role","button");
+        brand.setAttribute("aria-label","Ir a pantalla principal");
+      }catch(e){}
+    }
+
+    const isBrandTarget = (node)=>{
+      if(!node) return null;
+      return node.closest?.(".brand, .brand .logo, .brand .titleBox, .brand .title, .brand .subtitle") || null;
+    };
+
+    const goHome = (e)=>{
+      try{ e && e.preventDefault && e.preventDefault(); }catch(_){}
+      try{ e && e.stopPropagation && e.stopPropagation(); }catch(_){}
+      setPane("commitments");
+      setViewPending();
+      try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(_){ window.scrollTo(0,0); }
+    };
+
+    // Captura para que funcione incluso si hay listeners encima
+    document.addEventListener("click", (e)=>{
+      const el = isBrandTarget(e.target);
+      if(!el) return;
+      goHome(e);
+    }, true);
+
+    document.addEventListener("touchend", (e)=>{
+      const el = isBrandTarget(e.target);
+      if(!el) return;
+      goHome(e);
+    }, { capture:true, passive:false });
+
+    document.addEventListener("keydown", (e)=>{
+      if(e.key!=="Enter" && e.key!==" ") return;
+      const el = isBrandTarget(document.activeElement);
+      if(!el) return;
+      goHome(e);
     }, true);
   }
 
@@ -250,7 +293,6 @@
       const elR = findByText("recibid");
 
       if(elR && elV){
-        // Queremos: Recibidos primero, Vencidos segundo
         if(pills.firstElementChild !== elR){
           pills.insertBefore(elR, pills.firstElementChild);
         }
@@ -258,7 +300,6 @@
           pills.insertBefore(elV, elR.nextElementSibling);
         }
       }else{
-        // fallback: swap simple
         const x = children[0], y = children[1];
         const firstTxt = (x.textContent || "").toLowerCase();
         if(!firstTxt.includes("recibid")){
@@ -273,11 +314,9 @@
   ========================= */
   function removeBottomInstallText(){
     try{
-      // 1) elimina banner si existe
       const ban = document.querySelector("#installBanner, .installBanner");
       if(ban) ban.remove();
 
-      // 2) oculta textos exactos sueltos
       const candidates = document.querySelectorAll("a,button,div,span,p,li");
       candidates.forEach(el=>{
         if(!el || el.children.length) return;
@@ -287,7 +326,6 @@
         }
       });
 
-      // 3) si hay un contenedor que contiene SOLO esas palabras, lo ocultamos
       const blocks = document.querySelectorAll("div,section,footer,aside");
       blocks.forEach(el=>{
         const t = (el.textContent || "").trim().replace(/\s+/g," ");
@@ -355,7 +393,6 @@
     if($("tabPending")) $("tabPending").onclick = setViewPending;
     if($("tabDone")) $("tabDone").onclick = setViewDone;
 
-    // Tiles (menú)
     const bindTile = (id, fn)=>{
       const el = $(id);
       if(!el) return;
@@ -369,7 +406,6 @@
     bindTile("tileContacts", ()=>{ setPane("contacts"); });
     bindTile("tileSettings", ()=>{ setPane("settings"); });
 
-    // Pills
     if($("btnOverdue")){
       $("btnOverdue").addEventListener("click", ()=>{
         setPane("commitments");
@@ -390,7 +426,6 @@
 
   /* =========================
      ✅ UI desplegable: filtros/búsquedas
-     + ocultar “filtro grande” legacy
   ========================= */
   function hideLegacyCommitFilters(paneEl){
     try{
@@ -1123,7 +1158,7 @@
   }
 
   /* =========================
-     Compartir: TEXTO COMPLETO + enlace importable #p=
+     Compartir
   ========================= */
   let shareItem = null;
   let shareMode = "short"; // short | long
@@ -1504,12 +1539,11 @@
   })();
 
   function start(){
-    // aplica accesibilidad guardada
     const a11y = load(A11Y_KEY, { big:false });
     applyTextScale(!!a11y.big);
 
-    // listeners robustos
     bindA11yDelegation();
+    bindBrandHome();   // ✅ NUEVO
     bindNav();
     bindFab();
     bindCommitModal();
@@ -1518,13 +1552,9 @@
     bindSettings();
     bindInstall();
 
-    // importar si viene paquete en hash
     importFromHash();
-
-    // refresca selects de filtro
     fillCommitFriendSelect();
 
-    // orden y limpieza visual
     fixPillsOrder();
     removeBottomInstallText();
 
