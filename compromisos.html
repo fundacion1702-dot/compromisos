@@ -17,9 +17,8 @@
   <!-- CSS separado -->
   <link rel="stylesheet" href="compromisos.css?v=1">
 
-  <!-- ✅ FIX VISUAL: evitar que el título/subtítulo “desaparezcan” con texto grande -->
+  <!-- ✅ Evitar que el título/subtítulo “desaparezcan” con texto grande -->
   <style>
-    /* En pantallas estrechas, permite 2 líneas en título/subtítulo para que no se pierdan */
     @media (max-width:520px){
       .title, .subtitle{
         white-space: normal !important;
@@ -30,7 +29,6 @@
         -webkit-line-clamp: 2 !important;
       }
     }
-    /* Con texto grande, deja respirar el header (sin recortes raros) */
     body.bigText .title,
     body.bigText .subtitle{
       white-space: normal !important;
@@ -55,21 +53,22 @@
         </div>
       </div>
 
-      <!-- Accesibilidad arriba a la derecha + pills fijas -->
+      <!-- Accesibilidad arriba derecha + pills -->
       <div class="topActions">
         <button class="a11yBtn" id="btnA11yTop" type="button" title="Cambiar tamaño de letra">🔎 Texto grande</button>
 
         <div class="pills" aria-label="Indicadores">
-          <button class="pillBtn danger" id="btnOverdue" type="button" title="Vencidos">
-            <span class="pillDot" aria-hidden="true"></span>
-            <span>Vencidos</span>
-            <span class="pillCount" id="bOverdue">0</span>
-          </button>
-
+          <!-- ✅ Orden pedido: Recibidos a la izquierda, Vencidos a la derecha -->
           <button class="pillBtn good" id="btnReceived" type="button" title="Recibidos">
             <span class="pillDot" aria-hidden="true"></span>
             <span>Recibidos</span>
             <span class="pillCount" id="bReceived">0</span>
+          </button>
+
+          <button class="pillBtn danger" id="btnOverdue" type="button" title="Vencidos">
+            <span class="pillDot" aria-hidden="true"></span>
+            <span>Vencidos</span>
+            <span class="pillCount" id="bOverdue">0</span>
           </button>
         </div>
       </div>
@@ -136,10 +135,6 @@
           <button class="segBtn" id="tabDone" type="button">Hechos</button>
         </div>
       </div>
-
-      <!-- ✅ IMPORTANTE: aquí NO dejamos filtros grandes fijos.
-           Si tu JS añade el botón "Buscar/Filtrar", perfecto; se mantiene.
-           Este HTML solo elimina (por script) cualquier filtro grande “Filtrar por amigo…” si aparece. -->
 
       <div class="list" id="list"></div>
       <div class="empty" id="empty">No hay compromisos aquí todavía.</div>
@@ -284,8 +279,9 @@
     <div class="installCard">
       <div class="installRow">
         <div>
-          <p class="installTitle" id="installTitle">Instálala</p>
-          <p class="installText" id="installText">Consejo</p>
+          <!-- ✅ Para evitar “texto suelto” si algo falla, por defecto van vacíos -->
+          <p class="installTitle" id="installTitle"></p>
+          <p class="installText" id="installText"></p>
         </div>
         <button class="iconBtn" id="btnHideBanner" type="button" aria-label="Cerrar">✕</button>
       </div>
@@ -516,95 +512,5 @@
 
   <!-- JS separado -->
   <script src="compromisos.js?v=1"></script>
-
-  <!-- ✅ FIX DEFINITIVO (independiente del JS principal):
-       1) Texto grande siempre funciona
-       2) Elimina el filtro grande fijo “Filtrar por amigo…”
-  -->
-  <script>
-    (function(){
-      "use strict";
-
-      const A11Y_KEY = "compromisos.a11y.v1";
-
-      function safeParse(v, fb){ try{ return JSON.parse(v); }catch(e){ return fb; } }
-      function loadA11y(){ return safeParse(localStorage.getItem(A11Y_KEY), { big:false }); }
-      function saveA11y(st){ try{ localStorage.setItem(A11Y_KEY, JSON.stringify(st)); }catch(e){} }
-
-      function applyA11y(big){
-        // Variables CSS globales (lo que usa tu CSS)
-        document.documentElement.style.setProperty("--fs", big ? "18px" : "16px");
-        document.documentElement.style.setProperty("--fsBig", big ? "20px" : "18px");
-        document.body.classList.toggle("bigText", !!big);
-
-        // Etiqueta coherente
-        const label = big ? "🔎 Texto normal" : "🔎 Texto grande";
-        const bTop = document.getElementById("btnA11yTop");
-        const bSet = document.getElementById("btnA11y");
-        if(bTop) bTop.textContent = label;
-        if(bSet) bSet.textContent = label;
-      }
-
-      function toggleA11y(e){
-        if(e){
-          e.preventDefault();
-          e.stopPropagation();
-        }
-        const st = loadA11y();
-        st.big = !st.big;
-        saveA11y(st);
-        applyA11y(st.big);
-      }
-
-      function bindA11y(){
-        const bTop = document.getElementById("btnA11yTop");
-        const bSet = document.getElementById("btnA11y");
-
-        // capture:true para que funcione aunque otro listener interfiera
-        if(bTop){
-          bTop.addEventListener("click", toggleA11y, true);
-          bTop.addEventListener("touchend", toggleA11y, { capture:true, passive:false });
-          bTop.style.pointerEvents = "auto";
-        }
-        if(bSet){
-          bSet.addEventListener("click", toggleA11y, true);
-          bSet.addEventListener("touchend", toggleA11y, { capture:true, passive:false });
-          bSet.style.pointerEvents = "auto";
-        }
-
-        const st = loadA11y();
-        applyA11y(!!st.big);
-      }
-
-      function removeBigFriendFilter(){
-        const pane = document.getElementById("commitmentsPane");
-        if(!pane) return;
-
-        // 1) elimina campos tipo .field que contengan “Filtrar por amigo”
-        pane.querySelectorAll(".field").forEach(f=>{
-          const t = (f.textContent || "").trim();
-          if(/filtrar\s+por\s+amigo/i.test(t)) f.remove();
-        });
-
-        // 2) elimina hints que encajan con el texto del filtro grande
-        pane.querySelectorAll(".hint, p, div, label").forEach(el=>{
-          const t = (el.textContent || "").trim();
-          if(/Elige\s+un\s+amigo\s+para\s+ver\s+solo\s+sus\s+compromisos/i.test(t)) {
-            // borra el contenedor más lógico
-            const wrap = el.closest(".field") || el.parentElement;
-            if(wrap) wrap.remove();
-          }
-        });
-      }
-
-      function boot(){
-        bindA11y();
-        removeBigFriendFilter();
-      }
-
-      if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
-      else boot();
-    })();
-  </script>
 </body>
 </html>
