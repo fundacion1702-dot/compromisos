@@ -68,7 +68,7 @@
   }
 
   /* =========================
-     ✅ CSS SOLO para “lupa desplegable”
+     ✅ CSS extra: herramientas + tabs + topbar NO fija + top tools placement
   ========================= */
   (function injectMiniToolsCss(){
     try{
@@ -114,8 +114,47 @@
           font-size:12.5px;
           line-height:1.35;
         }
-        .chip.status{
-          font-weight:900;
+        .chip.status{ font-weight:900; }
+
+        /* ✅ (3) Topbar NO fija */
+        .topbar{
+          position: static !important;
+          top:auto !important;
+        }
+        body{ padding-top:0 !important; }
+        .wrap{ padding-top:0 !important; }
+
+        /* ✅ (2) Tabs no se cortan: wrap + scroll suave */
+        .sectionHead{
+          flex-wrap: wrap !important;
+          gap: 10px !important;
+        }
+        .segTabs{
+          max-width: 100%;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+        }
+        .segTabs::-webkit-scrollbar{ display:none; }
+        .segTabs .segBtn{
+          flex: 0 0 auto !important;
+          white-space: nowrap !important;
+        }
+
+        /* ✅ (5) Botón herramientas debajo de Texto grande, alineado a la derecha */
+        .topActions{
+          flex-wrap: wrap !important;
+          gap: 10px !important;
+          align-items: center;
+        }
+        #btnCommitToolsTop{
+          flex-basis: 100% !important; /* fuerza línea nueva */
+          margin-left: auto !important; /* a la derecha */
+          align-self: flex-end !important;
+        }
+        .topActions .pills{
+          width: 100%;
+          justify-content: center;
         }
       `;
       document.head.appendChild(st);
@@ -136,7 +175,6 @@
   let received = load(RECEIVED_KEY, { c:0, lastAt:null });
 
   let pane = "commitments"; // commitments | contacts | settings
-  // ✅ 3 vistas
   let view = "pending";     // pending | waiting | closed
 
   // ✅ filtros/búsquedas (desplegable)
@@ -156,20 +194,18 @@
 
     let status = it.status;
     if(status !== "pending" && status !== "waiting" && status !== "closed"){
-      // retrocompat: si existía done, lo usamos
       if(it.done === true) status = "closed";
       else status = "pending";
     }
 
-    // Mantener compat con campos antiguos
     const done = (status === "closed");
     const closedAt = it.closedAt || it.doneAt || (done ? (it.doneAt || nowIso) : null);
 
     return {
       ...it,
       status,
-      done,                         // retrocompat
-      doneAt: done ? (it.doneAt || closedAt) : null, // retrocompat
+      done,
+      doneAt: done ? (it.doneAt || closedAt) : null,
       closedAt: done ? closedAt : null
     };
   }
@@ -187,7 +223,7 @@
   }
 
   /* =========================
-     ✅ FIX 1: Texto grande
+     ✅ Texto grande
   ========================= */
   function applyTextScale(big){
     document.documentElement.style.setProperty("--fs", big ? "18px" : "16px");
@@ -298,7 +334,7 @@
   }
 
   /* =========================
-     ✅ FIX 2: Cambiar orden Vencidos / Recibidos
+     ✅ Orden pills + limpieza “Instálala/Consejo”
   ========================= */
   function fixPillsOrder(){
     try{
@@ -334,9 +370,6 @@
     }catch(e){}
   }
 
-  /* =========================
-     ✅ FIX 3: Quitar texto “Instálala / Consejo”
-  ========================= */
   function removeBottomInstallText(){
     try{
       const ban = document.querySelector("#installBanner, .installBanner");
@@ -363,7 +396,7 @@
   }
 
   /* =========================
-     Navegación panes
+     Navegación panes/vistas
   ========================= */
   function safeShow(el, show){
     if(!el) return;
@@ -410,6 +443,95 @@
     renderCommitments();
   }
 
+  /* =========================
+     ✅ (4) Añadir píldora “En espera” si no existe + clicks a sección
+  ========================= */
+  function ensureWaitingPill(){
+    const pills = document.querySelector(".pills");
+    if(!pills) return;
+
+    if($("btnWaiting")) return;
+
+    const btn = document.createElement("button");
+    btn.className = "pillBtn";
+    btn.id = "btnWaiting";
+    btn.type = "button";
+    btn.title = "En espera";
+    btn.innerHTML = `
+      <span class="pillDot" aria-hidden="true"></span>
+      <span>En espera</span>
+      <span class="pillCount" id="bWaiting">0</span>
+    `;
+
+    // Insertar entre Recibidos y Vencidos (si existen)
+    const r = $("btnReceived");
+    const v = $("btnOverdue");
+    if(r && r.parentElement === pills){
+      if(v && v.parentElement === pills){
+        pills.insertBefore(btn, v);
+      }else{
+        pills.appendChild(btn);
+      }
+    }else{
+      pills.insertBefore(btn, pills.firstChild || null);
+    }
+  }
+
+  /* =========================
+     ✅ (5) Botón herramientas en TOPBAR, debajo de Texto grande
+  ========================= */
+  function ensureTopToolsButton(){
+    const topActions = document.querySelector(".topActions");
+    if(!topActions) return;
+
+    if($("btnCommitToolsTop")) return;
+
+    const btn = document.createElement("button");
+    btn.className = "miniBtn";
+    btn.id = "btnCommitToolsTop";
+    btn.type = "button";
+    btn.setAttribute("aria-expanded","false");
+    btn.textContent = "🔍 Buscar / Filtrar";
+
+    // Insertar justo después de Texto grande (ideal) o al final
+    const a11y = $("btnA11yTop");
+    if(a11y && a11y.parentElement === topActions){
+      if(a11y.nextSibling) topActions.insertBefore(btn, a11y.nextSibling);
+      else topActions.appendChild(btn);
+    }else{
+      topActions.appendChild(btn);
+    }
+  }
+
+  function hideLegacyMiniToolsButton(){
+    const legacy = $("miniCommitTools");
+    if(legacy) legacy.style.display = "none";
+  }
+
+  function toggleCommitTools(force){
+    ensureCommitFiltersUi(); // garantiza panel y selects
+
+    const panel = $("commitToolsPanel");
+    if(!panel) return;
+
+    const next = (typeof force === "boolean") ? force : !uiCommitFiltersOpen;
+    uiCommitFiltersOpen = next;
+
+    panel.classList.toggle("show", uiCommitFiltersOpen);
+
+    const bTop = $("btnCommitToolsTop");
+    const bLegacy = $("btnCommitTools");
+    if(bTop) bTop.setAttribute("aria-expanded", uiCommitFiltersOpen ? "true" : "false");
+    if(bLegacy) bLegacy.setAttribute("aria-expanded", uiCommitFiltersOpen ? "true" : "false");
+
+    if(uiCommitFiltersOpen){
+      setTimeout(()=>{ try{ $("commitSearchTxt")?.focus(); }catch(e){} }, 0);
+    }
+  }
+
+  /* =========================
+     Bind navegación
+  ========================= */
   function bindNav(){
     if($("tabCommitments")) $("tabCommitments").onclick = ()=> setPane("commitments");
     if($("tabContacts")) $("tabContacts").onclick = ()=> setPane("contacts");
@@ -417,14 +539,6 @@
     if($("tabPending")) $("tabPending").onclick = ()=> setView("pending");
     if($("tabWaiting")) $("tabWaiting").onclick = ()=> setView("waiting");
     if($("tabDone")) $("tabDone").onclick = ()=> setView("closed");
-
-    // ✅ NUEVO: botón ⚙️ arriba a la derecha => Ajustes
-    const gear = $("btnSettingsGear");
-    if(gear){
-      gear.addEventListener("click", ()=>{
-        setPane("settings");
-      });
-    }
 
     // Tiles (menú)
     const bindTile = (id, fn)=>{
@@ -439,8 +553,13 @@
     bindTile("tileWaiting", ()=>{ setPane("commitments"); setView("waiting"); });
     bindTile("tileDone", ()=>{ setPane("commitments"); setView("closed"); });
     bindTile("tileContacts", ()=>{ setPane("contacts"); });
-    // (tileSettings puede no existir; dejamos compat)
+
+    // (Ajustes en tile antiguo si existiera)
     bindTile("tileSettings", ()=>{ setPane("settings"); });
+
+    // ✅ Gear de arriba abre Ajustes
+    const gear = $("btnSettingsGear");
+    if(gear) gear.addEventListener("click", ()=> setPane("settings"));
 
     // Pills
     if($("btnOverdue")){
@@ -459,10 +578,20 @@
         toast(c ? `📥 Recibidos: ${c}` : "Sin recibidos");
       });
     }
+    // ✅ nueva pill: En espera
+    document.addEventListener("click", (e)=>{
+      const t = e.target?.closest?.("#btnWaiting");
+      if(!t) return;
+      setPane("commitments");
+      setView("waiting");
+      const w = data.filter(x=>x.status==="waiting").length;
+      toast(w ? `⏳ En espera: ${w}` : "Sin 'En espera'");
+    }, true);
   }
 
   /* =========================
      ✅ UI desplegable: filtros/búsquedas
+     (panel sigue en commitmentsPane, pero se abre desde el botón top)
   ========================= */
   function hideLegacyCommitFilters(paneEl){
     try{
@@ -498,19 +627,17 @@
 
     hideLegacyCommitFilters(paneEl);
 
-    if($("miniCommitTools")) return;
+    // ya existe panel
+    if($("commitToolsPanel")){
+      fillCommitFriendSelect();
+      return;
+    }
 
     const head = paneEl.querySelector(".sectionHead");
     if(!head) return;
 
-    const tools = document.createElement("div");
-    tools.className = "miniTools";
-    tools.id = "miniCommitTools";
-    tools.innerHTML = `
-      <button class="miniBtn" id="btnCommitTools" type="button" aria-expanded="false">
-        🔍 Buscar / Filtrar
-      </button>
-    `;
+    // (legacy) si existía, lo ocultamos
+    hideLegacyMiniToolsButton();
 
     const panel = document.createElement("div");
     panel.className = "miniPanel";
@@ -533,19 +660,9 @@
       <div class="miniHint">Se aplica sobre la lista actual (<b>Pendientes</b>, <b>En espera</b> o <b>Cerrados</b>).</div>
     `;
 
-    head.insertAdjacentElement("afterend", tools);
-    tools.insertAdjacentElement("afterend", panel);
+    head.insertAdjacentElement("afterend", panel);
 
-    const btn = $("btnCommitTools");
-    btn.addEventListener("click", ()=>{
-      uiCommitFiltersOpen = !uiCommitFiltersOpen;
-      btn.setAttribute("aria-expanded", uiCommitFiltersOpen ? "true" : "false");
-      panel.classList.toggle("show", uiCommitFiltersOpen);
-      if(uiCommitFiltersOpen){
-        setTimeout(()=>{ try{ $("commitSearchTxt").focus(); }catch(e){} }, 0);
-      }
-    });
-
+    // binds panel
     $("commitClearBtn").addEventListener("click", ()=>{
       commitFriendFilter = "all";
       commitTextFilter = "";
@@ -730,6 +847,8 @@
   }
 
   function renderCommitments(){
+    ensureTopToolsButton();
+    ensureWaitingPill();
     ensureCommitFiltersUi();
     updateCounts();
 
@@ -755,7 +874,6 @@
         if(view==="waiting"){
           return new Date(b.updatedAt||b.createdAt||0).getTime() - new Date(a.updatedAt||a.createdAt||0).getTime();
         }
-        // closed
         return new Date(b.closedAt||b.doneAt||0).getTime() - new Date(a.closedAt||a.doneAt||0).getTime();
       });
 
@@ -817,7 +935,6 @@
           renderCommitments();
           return;
         }
-        // cerrar desde pending o waiting
         it.status = "closed";
         it.closedAt = now();
         it.done = true; it.doneAt = it.closedAt;
@@ -841,7 +958,6 @@
           renderCommitments();
           return;
         }
-        // closed -> en espera (por si lo quieres)
         it.status = "waiting";
         it.closedAt = null;
         it.done = false; it.doneAt = null;
@@ -974,12 +1090,9 @@
 
   /* =========================
      Modales: Compromisos
-     - Soporta MODO NUEVO (solo input Nombre+datalist)
-     - Soporta MODO ANTIGUO (select fContact)
+     - Soporta modo antiguo (select) y modo nuevo (solo Nombre)
   ========================= */
   let editingCommitId = null;
-
-  // ✅ estado temporal del modal (para modo “Nombre” sin selector)
   let modalWhoId = null;
 
   function openModal(el){
@@ -1011,9 +1124,6 @@
     }catch(e){ return null; }
   }
 
-  /* =========================
-     ✅ Datalist (lista de amigos)
-  ========================= */
   function fillFriendsDatalist(){
     const dl = $("friendsDatalist") || $("friendsList");
     if(!dl) return;
@@ -1032,19 +1142,13 @@
       });
   }
 
-  /* =========================
-     ✅ MODO ANTIGUO: selector fContact
-  ========================= */
   function fixWhoLabel(){
     try{
       const customField = $("customWhoField");
       if(!customField) return;
       const lab = customField.querySelector("label");
       if(!lab) return;
-      const t = (lab.textContent || "").trim();
-      if(/nombre/i.test(t)){
-        lab.textContent = "Nombre";
-      }
+      lab.textContent = "Nombre";
     }catch(e){}
   }
 
@@ -1119,9 +1223,6 @@
     return { whoId:null, whoName: normalizeName(whoInput?.value || "") };
   }
 
-  /* =========================
-     ✅ MODO NUEVO: solo input “Nombre”
-  ========================= */
   function setModalWhoFromNameInput(){
     const inp = $("fWho");
     if(!inp) return;
@@ -1132,11 +1233,7 @@
       return;
     }
     const match = findContactByName(raw);
-    if(match){
-      modalWhoId = match.id;
-    }else{
-      modalWhoId = null;
-    }
+    modalWhoId = match ? match.id : null;
   }
 
   function setNameInputForWho(whoId, whoName){
@@ -1171,7 +1268,6 @@
     const whoId = it?.whoId || presetContactId || null;
     const whoName = it?.whoName || "";
 
-    // ✅ Si existe selector antiguo, úsalo (retrocompat)
     if($("fContact")){
       rebuildContactSelect(whoId, whoName);
     }else{
@@ -1266,30 +1362,11 @@
             afterMin,
             updatedAt: now
           });
-          save(KEY, data);
-          toast("✍️ Compromiso editado");
-          closeCommitModal();
-          openShareModal(data[idx]);
-        }else{
-          // ultra-safe: si no existe (raro), lo tratamos como nuevo
-          const item = normalizeStatus({
-            id: uid(),
-            whoId: who.whoId,
-            whoName: who.whoName,
-            what,
-            when: whenIso,
-            remindMin,
-            afterMin,
-            status:"pending",
-            createdAt: now,
-            updatedAt: null
-          });
-          data = [item, ...data];
-          save(KEY, data);
-          toast("✅ Compromiso creado");
-          closeCommitModal();
-          openShareModal(item);
         }
+        save(KEY, data);
+        toast("✍️ Compromiso editado");
+        closeCommitModal();
+        openShareModal(data[idx]);
       }else{
         const item = normalizeStatus({
           id: uid(),
@@ -1313,7 +1390,6 @@
       renderAll();
     };
 
-    // ✅ MODO ANTIGUO: selector
     if($("fContact")){
       const sel = $("fContact");
       const whoInput = $("fWho");
@@ -1333,7 +1409,6 @@
       return;
     }
 
-    // ✅ MODO NUEVO: solo Nombre + datalist
     setModalWhoFromNameInput();
     const whoResolved = resolveWho_NEW();
 
@@ -1374,7 +1449,6 @@
     if($("btnCancel")) $("btnCancel").onclick = closeCommitModal;
     if($("btnSave")) $("btnSave").onclick = saveCommitFromForm;
 
-    // ✅ retrocompat selector
     const sel = $("fContact");
     if(sel){
       sel.addEventListener("change", ()=>{
@@ -1382,15 +1456,11 @@
       });
     }
 
-    // ✅ input Nombre
     const who = $("fWho");
     if(who){
       who.addEventListener("input", ()=>{
-        if($("fContact")){
-          tryAutoSelectFriendFromWhoInput_OLD();
-        }else{
-          setModalWhoFromNameInput();
-        }
+        if($("fContact")) tryAutoSelectFriendFromWhoInput_OLD();
+        else setModalWhoFromNameInput();
       });
       who.addEventListener("change", ()=>{
         if($("fContact")){
@@ -1500,7 +1570,7 @@
      Compartir: TEXTO COMPLETO + enlace importable #p=
   ========================= */
   let shareItem = null;
-  let shareMode = "short"; // short | long
+  let shareMode = "short";
 
   function encodePackage(pkg){
     const json = JSON.stringify(pkg);
@@ -1594,7 +1664,6 @@
   }
 
   function openShareModal(item){
-    if(!item) return;
     shareItem = item;
     shareMode = "short";
 
@@ -1866,6 +1935,29 @@
   }
 
   /* =========================
+     ✅ (1) Fix definitivo: botón herramientas abre/cierra SIEMPRE
+     - delegación global (por si el botón aparece tras render)
+  ========================= */
+  function bindToolsDelegation(){
+    document.addEventListener("click", (e)=>{
+      const btn = e.target?.closest?.("#btnCommitToolsTop,#btnCommitTools");
+      if(!btn) return;
+      // solo si estamos en compromisos
+      if(pane !== "commitments") setPane("commitments");
+      toggleCommitTools();
+    }, true);
+
+    document.addEventListener("keydown", (e)=>{
+      if(e.key!=="Enter" && e.key!==" ") return;
+      const btn = document.activeElement?.closest?.("#btnCommitToolsTop,#btnCommitTools");
+      if(!btn) return;
+      e.preventDefault();
+      if(pane !== "commitments") setPane("commitments");
+      toggleCommitTools();
+    }, true);
+  }
+
+  /* =========================
      Boot (DOM READY)
   ========================= */
   (function normalizeContacts(){
@@ -1878,14 +1970,11 @@
   })();
 
   function start(){
-    // aplica accesibilidad guardada
     const a11y = load(A11Y_KEY, { big:false });
     applyTextScale(!!a11y.big);
 
-    // ✅ migración de estados
     migrateAllData();
 
-    // listeners robustos
     bindA11yDelegation();
     bindBrandHome();
     bindNav();
@@ -1896,19 +1985,18 @@
     bindSettings();
     bindInstall();
 
-    // ✅ label “Nombre” (modo antiguo)
-    fixWhoLabel();
+    // ✅ herramientas + top button + nueva pill
+    bindToolsDelegation();
+    ensureTopToolsButton();
+    ensureWaitingPill();
 
-    // ✅ datalist de amigos listo desde el inicio
+    fixWhoLabel();
     fillFriendsDatalist();
 
-    // importar si viene paquete en hash
     importFromHash();
 
-    // refresca selects de filtro
     fillCommitFriendSelect();
 
-    // orden y limpieza visual
     fixPillsOrder();
     removeBottomInstallText();
 
