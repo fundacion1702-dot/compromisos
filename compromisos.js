@@ -69,7 +69,6 @@
 
   /* =========================
      ✅ CSS SOLO para “lupa desplegable”
-     (autocomplete ahora es datalist del HTML)
   ========================= */
   (function injectMiniToolsCss(){
     try{
@@ -115,6 +114,9 @@
           font-size:12.5px;
           line-height:1.35;
         }
+        .chip.status{
+          font-weight:900;
+        }
       `;
       document.head.appendChild(st);
     }catch(e){}
@@ -134,7 +136,8 @@
   let received = load(RECEIVED_KEY, { c:0, lastAt:null });
 
   let pane = "commitments"; // commitments | contacts | settings
-  let view = "pending";     // pending | done
+  // ✅ 3 vistas
+  let view = "pending";     // pending | waiting | closed
 
   // ✅ filtros/búsquedas (desplegable)
   let uiCommitFiltersOpen = false;
@@ -143,6 +146,45 @@
   let commitFriendFilter = "all"; // all | __none__ | <contactId>
   let commitTextFilter = "";      // búsqueda en texto / quién
   let contactsTextFilter = "";    // búsqueda amigos
+
+  /* =========================
+     ✅ Migración de datos: done -> status
+     status: pending | waiting | closed
+  ========================= */
+  function normalizeStatus(it){
+    const nowIso = new Date().toISOString();
+
+    let status = it.status;
+    if(status !== "pending" && status !== "waiting" && status !== "closed"){
+      // retrocompat: si existía done, lo usamos
+      if(it.done === true) status = "closed";
+      else status = "pending";
+    }
+
+    // Mantener compat con campos antiguos
+    const done = (status === "closed");
+    const closedAt = it.closedAt || it.doneAt || (done ? (it.doneAt || nowIso) : null);
+
+    return {
+      ...it,
+      status,
+      done,                         // retrocompat
+      doneAt: done ? (it.doneAt || closedAt) : null, // retrocompat
+      closedAt: done ? closedAt : null
+    };
+  }
+
+  function migrateAllData(){
+    let changed = false;
+    data = (data || []).map(it=>{
+      const before = JSON.stringify({ status:it.status, done:it.done, doneAt:it.doneAt, closedAt:it.closedAt });
+      const afterObj = normalizeStatus(it);
+      const after = JSON.stringify({ status:afterObj.status, done:afterObj.done, doneAt:afterObj.doneAt, closedAt:afterObj.closedAt });
+      if(before !== after) changed = true;
+      return afterObj;
+    });
+    if(changed) save(KEY, data);
+  }
 
   /* =========================
      ✅ FIX 1: Texto grande
@@ -210,7 +252,6 @@
 
   /* =========================
      ✅ Click en logo/título => ir a pantalla principal
-     (Compromisos + Pendientes)
   ========================= */
   function bindBrandHome(){
     const brand = document.querySelector(".brand");
@@ -232,7 +273,7 @@
       try{ e && e.preventDefault && e.preventDefault(); }catch(_){}
       try{ e && e.stopPropagation && e.stopPropagation(); }catch(_){}
       setPane("commitments");
-      setViewPending();
+      setView("pending");
       try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(_){ window.scrollTo(0,0); }
     };
 
@@ -258,7 +299,6 @@
 
   /* =========================
      ✅ FIX 2: Cambiar orden Vencidos / Recibidos
-     - Recibidos izquierda, Vencidos derecha
   ========================= */
   function fixPillsOrder(){
     try{
@@ -356,18 +396,17 @@
     try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
   }
 
-  function setViewPending(){
-    view = "pending";
-    const a = $("tabPending"), b = $("tabDone");
-    if(a) a.classList.add("active");
-    if(b) b.classList.remove("active");
-    renderCommitments();
-  }
-  function setViewDone(){
-    view = "done";
-    const a = $("tabDone"), b = $("tabPending");
-    if(a) a.classList.add("active");
-    if(b) b.classList.remove("active");
+  function setView(newView){
+    view = newView;
+
+    const a = $("tabPending");
+    const w = $("tabWaiting"); // puede no existir aún
+    const c = $("tabDone");    // lo reutilizamos como Cerrados
+
+    if(a) a.classList.toggle("active", view==="pending");
+    if(w) w.classList.toggle("active", view==="waiting");
+    if(c) c.classList.toggle("active", view==="closed");
+
     renderCommitments();
   }
 
@@ -375,8 +414,9 @@
     if($("tabCommitments")) $("tabCommitments").onclick = ()=> setPane("commitments");
     if($("tabContacts")) $("tabContacts").onclick = ()=> setPane("contacts");
 
-    if($("tabPending")) $("tabPending").onclick = setViewPending;
-    if($("tabDone")) $("tabDone").onclick = setViewDone;
+    if($("tabPending")) $("tabPending").onclick = ()=> setView("pending");
+    if($("tabWaiting")) $("tabWaiting").onclick = ()=> setView("waiting"); // opcional
+    if($("tabDone")) $("tabDone").onclick = ()=> setView("closed"); // Cerrados
 
     // Tiles (menú)
     const bindTile = (id, fn)=>{
@@ -387,8 +427,9 @@
         if(e.key==="Enter" || e.key===" "){ e.preventDefault(); fn(); }
       });
     };
-    bindTile("tilePending", ()=>{ setPane("commitments"); setViewPending(); });
-    bindTile("tileDone", ()=>{ setPane("commitments"); setViewDone(); });
+    bindTile("tilePending", ()=>{ setPane("commitments"); setView("pending"); });
+    bindTile("tileWaiting", ()=>{ setPane("commitments"); setView("waiting"); }); // opcional
+    bindTile("tileDone", ()=>{ setPane("commitments"); setView("closed"); });
     bindTile("tileContacts", ()=>{ setPane("contacts"); });
     bindTile("tileSettings", ()=>{ setPane("settings"); });
 
@@ -396,15 +437,15 @@
     if($("btnOverdue")){
       $("btnOverdue").addEventListener("click", ()=>{
         setPane("commitments");
-        setViewPending();
-        const overdue = data.filter(x=> !x.done && isOverdue(x.when)).length;
+        setView("pending");
+        const overdue = data.filter(x=> x.status==="pending" && isOverdue(x.when)).length;
         toast(overdue ? `⏰ ${overdue} vencido(s)` : "Sin vencidos ✅");
       });
     }
     if($("btnReceived")){
       $("btnReceived").addEventListener("click", ()=>{
         setPane("commitments");
-        setViewPending();
+        setView("pending");
         const c = Math.max(0, Number(received?.c || 0));
         toast(c ? `📥 Recibidos: ${c}` : "Sin recibidos");
       });
@@ -480,7 +521,7 @@
           <button class="btn" id="commitClearBtn" type="button">🧹 Limpiar</button>
         </div>
       </div>
-      <div class="miniHint">Se aplica sobre la lista actual (<b>Pendientes</b> o <b>Hechos</b>).</div>
+      <div class="miniHint">Se aplica sobre la lista actual (<b>Pendientes</b>, <b>En espera</b> o <b>Cerrados</b>).</div>
     `;
 
     head.insertAdjacentElement("afterend", tools);
@@ -611,8 +652,20 @@
   }
 
   /* =========================
-     Render
+     Render helpers
   ========================= */
+  function normalizeName(s){
+    return String(s||"").trim().replace(/\s+/g," ");
+  }
+  function findContactByName(name){
+    const n = normalizeName(name).toLowerCase();
+    if(!n) return null;
+    return contacts.find(c => normalizeName(c.name).toLowerCase() === n) || null;
+  }
+  function getContactById(id){
+    return contacts.find(x=>x.id===id) || null;
+  }
+
   function normalizedWho(item){
     if(item.whoId){
       const c = contacts.find(x=>x.id===item.whoId);
@@ -621,12 +674,21 @@
     return item.whoName || "Sin nombre";
   }
 
+  function statusLabel(s){
+    if(s==="waiting") return "⏳ En espera";
+    if(s==="closed") return "✅ Cerrado";
+    return "🟣 Pendiente";
+  }
+
   function updateCounts(){
-    const pending = data.filter(x=>!x.done);
-    const done = data.filter(x=>x.done);
+    const pending = data.filter(x=>x.status==="pending");
+    const waiting = data.filter(x=>x.status==="waiting");
+    const closed = data.filter(x=>x.status==="closed");
 
     if($("tilePendingCount")) $("tilePendingCount").textContent = String(pending.length);
-    if($("tileDoneCount")) $("tileDoneCount").textContent = String(done.length);
+    if($("tileWaitingCount")) $("tileWaitingCount").textContent = String(waiting.length);
+    if($("tileDoneCount")) $("tileDoneCount").textContent = String(closed.length);
+
     if($("tileContactsCount")) $("tileContactsCount").textContent = String(contacts.length);
     if($("bContacts")) $("bContacts").textContent = String(contacts.length);
 
@@ -635,6 +697,8 @@
 
     const rec = Math.max(0, Number(received?.c || 0));
     if($("bReceived")) $("bReceived").textContent = String(rec);
+
+    if($("bWaiting")) $("bWaiting").textContent = String(waiting.length);
   }
 
   function passesCommitFilters(it){
@@ -667,7 +731,7 @@
     list.innerHTML = "";
 
     const items = data
-      .filter(x=> view==="pending" ? !x.done : x.done)
+      .filter(x=> x.status === view)
       .filter(passesCommitFilters)
       .slice()
       .sort((a,b)=>{
@@ -679,7 +743,11 @@
           if(ta!==tb) return ta-tb;
           return new Date(b.updatedAt||b.createdAt||0).getTime() - new Date(a.updatedAt||a.createdAt||0).getTime();
         }
-        return new Date(b.doneAt||0).getTime() - new Date(a.doneAt||0).getTime();
+        if(view==="waiting"){
+          return new Date(b.updatedAt||b.createdAt||0).getTime() - new Date(a.updatedAt||a.createdAt||0).getTime();
+        }
+        // closed
+        return new Date(b.closedAt||b.doneAt||0).getTime() - new Date(a.closedAt||a.doneAt||0).getTime();
       });
 
     if(empty) empty.style.display = items.length ? "none" : "block";
@@ -690,16 +758,27 @@
 
       const who = normalizedWho(it);
       const dueText = it.when ? fmtDate(it.when) : "Sin fecha";
-      const overdue = (!it.done && isOverdue(it.when));
+      const overdue = (it.status==="pending" && isOverdue(it.when));
+
+      const stChip = `<span class="chip status">${esc(statusLabel(it.status))}</span>`;
+
+      const btnPrimary =
+        it.status==="closed" ? "↩️ Reabrir" : "✅ Cerrar";
+
+      const btnSecondary =
+        it.status==="pending" ? "⏳ En espera" :
+        it.status==="waiting" ? "🟣 Pendiente" :
+        "⏳ En espera";
 
       card.innerHTML = `
         <div class="cardTop" style="align-items:flex-start;">
           <div class="who" style="min-width:0;">
             <p class="name" title="${esc(who)}">${esc(who)}</p>
             <p class="meta">
+              ${stChip}
               <span class="chip">📝 ${esc(fmtDate(it.createdAt))}</span>
               ${it.updatedAt ? `<span class="chip">✍️ ${esc(fmtDate(it.updatedAt))}</span>` : ``}
-              ${it.done ? `<span class="chip">✅ ${esc(fmtDate(it.doneAt))}</span>` : ``}
+              ${it.status==="closed" ? `<span class="chip">✅ ${esc(fmtDate(it.closedAt||it.doneAt))}</span>` : ``}
             </p>
           </div>
           <div class="due ${overdue ? "bad" : ""}">
@@ -710,16 +789,54 @@
         <div class="desc">${esc(it.what || "—")}</div>
 
         <div class="actions">
-          <button class="btn good" type="button" data-act="done">${it.done ? "↩️ Reabrir" : "✅ Hecho"}</button>
+          <button class="btn good" type="button" data-act="primary">${btnPrimary}</button>
+          <button class="btn" type="button" data-act="secondary">${btnSecondary}</button>
           <button class="btn" type="button" data-act="edit">✍️ Editar</button>
           <button class="btn danger" type="button" data-act="del">🗑️ Eliminar</button>
         </div>
       `;
 
-      card.querySelector('[data-act="done"]').addEventListener("click", ()=>{
-        if(it.done){ it.done=false; it.doneAt=null; }
-        else { it.done=true; it.doneAt=new Date().toISOString(); }
-        it.updatedAt = new Date().toISOString();
+      const now = ()=> new Date().toISOString();
+
+      card.querySelector('[data-act="primary"]').addEventListener("click", ()=>{
+        if(it.status==="closed"){
+          it.status = "pending";
+          it.closedAt = null;
+          it.done = false; it.doneAt = null;
+          it.updatedAt = now();
+          save(KEY, data);
+          renderCommitments();
+          return;
+        }
+        // cerrar desde pending o waiting
+        it.status = "closed";
+        it.closedAt = now();
+        it.done = true; it.doneAt = it.closedAt;
+        it.updatedAt = now();
+        save(KEY, data);
+        renderCommitments();
+      });
+
+      card.querySelector('[data-act="secondary"]').addEventListener("click", ()=>{
+        if(it.status==="pending"){
+          it.status = "waiting";
+          it.updatedAt = now();
+          save(KEY, data);
+          renderCommitments();
+          return;
+        }
+        if(it.status==="waiting"){
+          it.status = "pending";
+          it.updatedAt = now();
+          save(KEY, data);
+          renderCommitments();
+          return;
+        }
+        // closed -> en espera (por si lo quieres)
+        it.status = "waiting";
+        it.closedAt = null;
+        it.done = false; it.doneAt = null;
+        it.updatedAt = now();
         save(KEY, data);
         renderCommitments();
       });
@@ -814,8 +931,6 @@
 
   /* =========================
      Confirm modal (mejorado)
-     - Compat: si lo llamas con 4 params, funciona igual.
-     - Nuevo: puedes pasar noLabel y onNo para “No guardar” etc.
   ========================= */
   function openConfirm(title, msg, yesLabel, onYes, noLabel, onNo){
     const b = $("confirmBackdrop");
@@ -850,8 +965,13 @@
 
   /* =========================
      Modales: Compromisos
+     - Soporta MODO NUEVO (solo input Nombre+datalist)
+     - Soporta MODO ANTIGUO (select fContact)
   ========================= */
   let editingCommitId = null;
+
+  // ✅ estado temporal del modal (para modo “Nombre” sin selector)
+  let modalWhoId = null;
 
   function openModal(el){
     if(!el) return;
@@ -882,26 +1002,11 @@
     }catch(e){ return null; }
   }
 
-  function getContactById(id){
-    return contacts.find(x=>x.id===id) || null;
-  }
-
-  function normalizeName(s){
-    return String(s||"").trim().replace(/\s+/g," ");
-  }
-  function findContactByName(name){
-    const n = normalizeName(name).toLowerCase();
-    if(!n) return null;
-    return contacts.find(c => normalizeName(c.name).toLowerCase() === n) || null;
-  }
-
   /* =========================
-     ✅ DATALIST Autocomplete (lista)
-     - Rellena #friendsDatalist con nombres de amigos
-     - Si el usuario elige un nombre existente, se marca el amigo automáticamente
+     ✅ Datalist (lista de amigos)
   ========================= */
   function fillFriendsDatalist(){
-    const dl = $("friendsDatalist");
+    const dl = $("friendsDatalist") || $("friendsList");
     if(!dl) return;
 
     dl.innerHTML = "";
@@ -918,28 +1023,8 @@
       });
   }
 
-  function tryAutoSelectFriendFromWhoInput(){
-    const sel = $("fContact");
-    const whoInput = $("fWho");
-    if(!sel || !whoInput) return;
-
-    // solo en modo “sin amigo”
-    if(sel.value !== "__custom__") return;
-
-    const raw = normalizeName(whoInput.value || "");
-    if(!raw) return;
-
-    const match = findContactByName(raw);
-    if(!match) return;
-
-    // ✅ seleccionar amigo automáticamente
-    sel.value = match.id;
-    rebuildContactSelect(match.id, "");
-    toast(`👥 Marcado: ${match.name || "Amigo"}`);
-  }
-
   /* =========================
-     ✅ (2) Cambiar label “Nombre (sin guardar)” -> “Nombre”
+     ✅ MODO ANTIGUO: selector fContact
   ========================= */
   function fixWhoLabel(){
     try{
@@ -987,10 +1072,7 @@
       ? "Escribe un nombre o elígelo de la lista."
       : "Elige un amigo guardado.";
 
-    // ✅ label (Nombre)
     fixWhoLabel();
-
-    // ✅ datalist siempre actualizado
     fillFriendsDatalist();
 
     if(isCustom && whoInput){
@@ -999,7 +1081,24 @@
     }
   }
 
-  function resolveWho(){
+  function tryAutoSelectFriendFromWhoInput_OLD(){
+    const sel = $("fContact");
+    const whoInput = $("fWho");
+    if(!sel || !whoInput) return;
+    if(sel.value !== "__custom__") return;
+
+    const raw = normalizeName(whoInput.value || "");
+    if(!raw) return;
+
+    const match = findContactByName(raw);
+    if(!match) return;
+
+    sel.value = match.id;
+    rebuildContactSelect(match.id, "");
+    toast(`👥 Marcado: ${match.name || "Amigo"}`);
+  }
+
+  function resolveWho_OLD(){
     const sel = $("fContact");
     const whoInput = $("fWho");
     if(!sel) return { whoId:null, whoName:"" };
@@ -1011,6 +1110,55 @@
     return { whoId:null, whoName: normalizeName(whoInput?.value || "") };
   }
 
+  /* =========================
+     ✅ MODO NUEVO: solo input “Nombre”
+     - input id esperado: fWho
+     - datalist id esperado: friendsDatalist (o friendsList)
+  ========================= */
+  function setModalWhoFromNameInput(){
+    const inp = $("fWho");
+    if(!inp) return;
+
+    const raw = normalizeName(inp.value || "");
+    if(!raw){
+      modalWhoId = null;
+      return;
+    }
+    const match = findContactByName(raw);
+    if(match){
+      modalWhoId = match.id;
+      // no toast agresivo mientras escribes; solo si viene de change/selección
+    }else{
+      modalWhoId = null;
+    }
+  }
+
+  function setNameInputForWho(whoId, whoName){
+    const inp = $("fWho");
+    if(!inp) return;
+
+    if(whoId){
+      const c = getContactById(whoId);
+      inp.value = c?.name || "";
+      modalWhoId = whoId;
+      return;
+    }
+    inp.value = whoName || "";
+    modalWhoId = null;
+    // por si el nombre coincide exacto con un amigo, lo marcamos:
+    setModalWhoFromNameInput();
+  }
+
+  function resolveWho_NEW(){
+    const inp = $("fWho");
+    const raw = normalizeName(inp?.value || "");
+    // Si coincide exacto, whoId gana
+    if(modalWhoId){
+      return { whoId: modalWhoId, whoName: "" };
+    }
+    return { whoId:null, whoName: raw };
+  }
+
   function openCommitModal(id, presetContactId){
     editingCommitId = id || null;
 
@@ -1019,7 +1167,13 @@
     const whoId = it?.whoId || presetContactId || null;
     const whoName = it?.whoName || "";
 
-    rebuildContactSelect(whoId, whoName);
+    // ✅ Si existe selector antiguo, úsalo (retrocompat)
+    if($("fContact")){
+      rebuildContactSelect(whoId, whoName);
+    }else{
+      fillFriendsDatalist();
+      setNameInputForWho(whoId, whoName);
+    }
 
     const fWhat = $("fWhat");
     const fWhen = $("fWhen");
@@ -1040,6 +1194,39 @@
   function closeCommitModal(){
     closeModal($("backdrop"));
     editingCommitId = null;
+    modalWhoId = null;
+  }
+
+  function proceedMaybeSaveNewFriend(rawName, onLinked, onCustom){
+    if(!rawName){
+      onCustom();
+      return;
+    }
+    const existing = findContactByName(rawName);
+    if(existing){
+      onLinked(existing);
+      return;
+    }
+
+    openConfirm(
+      "¿Guardar nuevo amigo?",
+      `Has escrito “${rawName}”. ¿Quieres guardarlo en tus Amigos para reutilizarlo?`,
+      "Sí, guardar",
+      ()=>{
+        const newC = { id: uid(), name: rawName, note: "" };
+        contacts = [newC, ...contacts];
+        save(CONTACTS_KEY, contacts);
+
+        fillCommitFriendSelect();
+        fillFriendsDatalist();
+
+        onLinked(newC);
+      },
+      "No, solo para este",
+      ()=>{
+        onCustom();
+      }
+    );
   }
 
   function saveCommitFromForm(){
@@ -1059,17 +1246,13 @@
     const remindMin = Number(fRemind?.value || 0) || 0;
     const afterMin = Number(fAfter?.value || 0) || 0;
 
-    const sel = $("fContact");
-    const whoInput = $("fWho");
-    const rawCustomName = normalizeName(whoInput?.value || "");
-
     const now = new Date().toISOString();
 
     const proceedSave = (who)=>{
       if(editingCommitId){
         const idx = data.findIndex(x=>x.id===editingCommitId);
         if(idx >= 0){
-          data[idx] = {
+          data[idx] = normalizeStatus({
             ...data[idx],
             whoId: who.whoId,
             whoName: who.whoName,
@@ -1078,14 +1261,14 @@
             remindMin,
             afterMin,
             updatedAt: now
-          };
+          });
         }
         save(KEY, data);
         toast("✍️ Compromiso editado");
         closeCommitModal();
         openShareModal(data[idx]);
       }else{
-        const item = {
+        const item = normalizeStatus({
           id: uid(),
           whoId: who.whoId,
           whoName: who.whoName,
@@ -1093,11 +1276,10 @@
           when: whenIso,
           remindMin,
           afterMin,
-          done:false,
-          doneAt:null,
+          status:"pending",
           createdAt: now,
           updatedAt: null
-        };
+        });
         data = [item, ...data];
         save(KEY, data);
         toast("✅ Compromiso creado");
@@ -1108,53 +1290,43 @@
       renderAll();
     };
 
-    // ✅ Nuevo comportamiento:
-    // - Si estás en modo custom y el nombre coincide EXACTO con un amigo => se vincula
-    // - Si no coincide => al guardar preguntamos si quieres guardarlo
-    const isCustom = sel && sel.value === "__custom__";
+    // ✅ MODO ANTIGUO: selector
+    if($("fContact")){
+      const sel = $("fContact");
+      const whoInput = $("fWho");
+      const rawCustomName = normalizeName(whoInput?.value || "");
+      const isCustom = sel && sel.value === "__custom__";
 
-    if(isCustom){
-      // si el usuario no escribió nombre, permitimos “Sin nombre”
-      if(rawCustomName){
-        const existing = findContactByName(rawCustomName);
-        if(existing){
-          proceedSave({ whoId: existing.id, whoName: "" });
-          return;
-        }
-
-        openConfirm(
-          "¿Guardar nuevo amigo?",
-          `Has escrito “${rawCustomName}”. ¿Quieres guardarlo en tus Amigos para reutilizarlo?`,
-          "Sí, guardar",
-          ()=>{
-            const newC = { id: uid(), name: rawCustomName, note: "" };
-            contacts = [newC, ...contacts];
-            save(CONTACTS_KEY, contacts);
-
-            // refrescos
-            fillCommitFriendSelect();
-            fillFriendsDatalist();
-
-            // continuar guardado enlazado al nuevo amigo
-            proceedSave({ whoId: newC.id, whoName: "" });
-          },
-          "No, solo para este",
-          ()=>{
-            // continuar sin guardar amigo
-            proceedSave({ whoId: null, whoName: rawCustomName });
-          }
+      if(isCustom){
+        proceedMaybeSaveNewFriend(
+          rawCustomName,
+          (linked)=> proceedSave({ whoId: linked.id, whoName: "" }),
+          ()=> proceedSave({ whoId: null, whoName: rawCustomName })
         );
         return;
       }
 
-      // sin nombre escrito: guardar como custom vacío
-      proceedSave({ whoId:null, whoName:"" });
+      // modo amigo seleccionado normal
+      proceedSave(resolveWho_OLD());
       return;
     }
 
-    // modo amigo seleccionado normal
-    const who = resolveWho();
-    proceedSave(who);
+    // ✅ MODO NUEVO: solo Nombre + datalist
+    setModalWhoFromNameInput();
+    const whoResolved = resolveWho_NEW();
+
+    // Si NO hay whoId, preguntamos si guardar amigo (si hay nombre)
+    if(!whoResolved.whoId){
+      const raw = whoResolved.whoName || "";
+      proceedMaybeSaveNewFriend(
+        raw,
+        (linked)=> proceedSave({ whoId: linked.id, whoName: "" }),
+        ()=> proceedSave({ whoId: null, whoName: raw })
+      );
+      return;
+    }
+
+    proceedSave(whoResolved);
   }
 
   function deleteCommit(id){
@@ -1181,6 +1353,7 @@
     if($("btnCancel")) $("btnCancel").onclick = closeCommitModal;
     if($("btnSave")) $("btnSave").onclick = saveCommitFromForm;
 
+    // ✅ retrocompat selector
     const sel = $("fContact");
     if(sel){
       sel.addEventListener("change", ()=>{
@@ -1188,15 +1361,29 @@
       });
     }
 
-    // ✅ datalist: al escribir o elegir un valor del listado, si coincide exacto marca amigo
+    // ✅ input Nombre: en modo nuevo o para el custom del modo antiguo
     const who = $("fWho");
     if(who){
       who.addEventListener("input", ()=>{
-        tryAutoSelectFriendFromWhoInput();
+        if($("fContact")){
+          // modo antiguo: autoselect si coincide exacto
+          tryAutoSelectFriendFromWhoInput_OLD();
+        }else{
+          // modo nuevo
+          setModalWhoFromNameInput();
+        }
       });
-      // por si algún navegador no dispara input al elegir, cubrimos change también
       who.addEventListener("change", ()=>{
-        tryAutoSelectFriendFromWhoInput();
+        if($("fContact")){
+          tryAutoSelectFriendFromWhoInput_OLD();
+        }else{
+          setModalWhoFromNameInput();
+          // si eligió de la lista, mostramos feedback suave
+          if(modalWhoId){
+            const c = getContactById(modalWhoId);
+            if(c?.name) toast(`👥 Marcado: ${c.name}`);
+          }
+        }
       });
     }
   }
@@ -1246,7 +1433,6 @@
 
     save(CONTACTS_KEY, contacts);
 
-    // refrescos
     fillCommitFriendSelect();
     fillFriendsDatalist();
 
@@ -1267,13 +1453,12 @@
 
         data = data.map(it=>{
           if(it.whoId === id){
-            return { ...it, whoId:null, whoName: it.whoName || name || "Sin nombre", updatedAt: new Date().toISOString() };
+            return normalizeStatus({ ...it, whoId:null, whoName: it.whoName || name || "Sin nombre", updatedAt: new Date().toISOString() });
           }
           return it;
         });
         save(KEY, data);
 
-        // refrescos
         fillCommitFriendSelect();
         fillFriendsDatalist();
 
@@ -1318,6 +1503,7 @@
         remindMin: Number(item.remindMin||0) || 0,
         afterMin: Number(item.afterMin||0) || 0,
         createdAt: new Date().toISOString()
+        // status NO se sincroniza aún (fase 1: local)
       }
     };
   }
@@ -1477,7 +1663,7 @@
     const incoming = pkg.p;
     const now = new Date().toISOString();
 
-    const item = {
+    const item = normalizeStatus({
       id: uid(),
       whoId: incoming.whoId || null,
       whoName: incoming.whoId ? "" : (incoming.whoName || "Sin nombre"),
@@ -1485,11 +1671,10 @@
       when: incoming.when || null,
       remindMin: Number(incoming.remindMin||0) || 0,
       afterMin: Number(incoming.afterMin||0) || 0,
-      done:false,
-      doneAt:null,
+      status:"pending",
       createdAt: now,
       updatedAt: null
-    };
+    });
 
     const exists = data.some(x=>
       (x.what||"") === item.what &&
@@ -1514,7 +1699,7 @@
     try{ history.replaceState(null, "", appBaseUrl()); }catch(e){ location.hash = ""; }
 
     setPane("commitments");
-    setViewPending();
+    setView("pending");
     renderAll();
     return true;
   }
@@ -1635,7 +1820,7 @@
             contactsTextFilter = "";
             toast("🧹 Borrado");
             setPane("commitments");
-            setViewPending();
+            setView("pending");
             renderAll();
           }
         );
@@ -1679,6 +1864,9 @@
     const a11y = load(A11Y_KEY, { big:false });
     applyTextScale(!!a11y.big);
 
+    // ✅ migración de estados
+    migrateAllData();
+
     // listeners robustos
     bindA11yDelegation();
     bindBrandHome();
@@ -1690,7 +1878,7 @@
     bindSettings();
     bindInstall();
 
-    // ✅ label “Nombre”
+    // ✅ label “Nombre” (modo antiguo)
     fixWhoLabel();
 
     // ✅ datalist de amigos listo desde el inicio
