@@ -69,7 +69,7 @@
 
   /* =========================
      ✅ CSS SOLO para “lupa desplegable”
-     + ✅ CSS para autocomplete de amigos (modal)
+     (autocomplete ahora es datalist del HTML)
   ========================= */
   (function injectMiniToolsCss(){
     try{
@@ -114,41 +114,6 @@
           color:var(--muted);
           font-size:12.5px;
           line-height:1.35;
-        }
-
-        /* Autocomplete Amigos (modal) */
-        .whoAutoWrap{ margin-top:10px; }
-        .whoAutoTitle{
-          font-size:12.5px;
-          color:var(--muted);
-          margin:0 0 6px;
-          line-height:1.25;
-        }
-        .whoAutoList{
-          display:flex;
-          flex-wrap:wrap;
-          gap:8px;
-        }
-        .whoAutoChip{
-          border:1px solid var(--border);
-          background:var(--surface2);
-          box-shadow:var(--shadow2);
-          border-radius:999px;
-          padding:7px 10px;
-          font-weight:900;
-          cursor:pointer;
-          -webkit-tap-highlight-color:transparent;
-          display:inline-flex;
-          align-items:center;
-          gap:8px;
-          max-width:100%;
-        }
-        .whoAutoChip:active{ transform:translateY(1px); }
-        .whoAutoChip span{
-          overflow:hidden;
-          text-overflow:ellipsis;
-          white-space:nowrap;
-          max-width:220px;
         }
       `;
       document.head.appendChild(st);
@@ -931,80 +896,46 @@
   }
 
   /* =========================
-     ✅ (1) Autocomplete de amigos al escribir Nombre
-     - Se muestra SOLO cuando estás en “Sin amigo (escribir nombre)”
-     - Si eliges uno, se selecciona automáticamente el amigo (fContact)
+     ✅ DATALIST Autocomplete (lista)
+     - Rellena #friendsDatalist con nombres de amigos
+     - Si el usuario elige un nombre existente, se marca el amigo automáticamente
   ========================= */
-  function ensureWhoAutocompleteUi(){
-    const customField = $("customWhoField");
-    if(!customField) return;
+  function fillFriendsDatalist(){
+    const dl = $("friendsDatalist");
+    if(!dl) return;
 
-    if(customField.querySelector("#whoAutoWrap")) return;
+    dl.innerHTML = "";
 
-    const wrap = document.createElement("div");
-    wrap.className = "whoAutoWrap";
-    wrap.id = "whoAutoWrap";
-    wrap.innerHTML = `
-      <p class="whoAutoTitle" id="whoAutoTitle" style="display:none;">Coincide con tus amigos:</p>
-      <div class="whoAutoList" id="whoAutoList"></div>
-    `;
-    customField.appendChild(wrap);
+    contacts
+      .slice()
+      .sort((a,b)=> (a.name||"").localeCompare(b.name||"", "es"))
+      .forEach(c=>{
+        const name = normalizeName(c.name || "");
+        if(!name) return;
+        const opt = document.createElement("option");
+        opt.value = name;
+        dl.appendChild(opt);
+      });
   }
 
-  function renderWhoAutocomplete(){
-    ensureWhoAutocompleteUi();
-
+  function tryAutoSelectFriendFromWhoInput(){
     const sel = $("fContact");
     const whoInput = $("fWho");
-    const title = $("whoAutoTitle");
-    const list = $("whoAutoList");
-    if(!sel || !whoInput || !title || !list) return;
+    if(!sel || !whoInput) return;
 
-    // solo si estamos en modo custom
-    const isCustom = (sel.value === "__custom__");
-    if(!isCustom){
-      title.style.display = "none";
-      list.innerHTML = "";
-      return;
-    }
+    // solo en modo “sin amigo”
+    if(sel.value !== "__custom__") return;
 
-    const q = normalizeName(whoInput.value).toLowerCase();
-    if(!q){
-      title.style.display = "none";
-      list.innerHTML = "";
-      return;
-    }
+    const raw = normalizeName(whoInput.value || "");
+    if(!raw) return;
 
-    const hits = contacts
-      .slice()
-      .filter(c=>{
-        const n = normalizeName(c.name).toLowerCase();
-        return n.includes(q);
-      })
-      .sort((a,b)=> (a.name||"").localeCompare(b.name||"", "es"))
-      .slice(0, 6);
+    const match = findContactByName(raw);
+    if(!match) return;
 
-    if(!hits.length){
-      title.style.display = "none";
-      list.innerHTML = "";
-      return;
-    }
-
-    title.style.display = "";
-    list.innerHTML = "";
-
-    hits.forEach(c=>{
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "whoAutoChip";
-      b.innerHTML = `✅ <span>${esc(c.name || "Sin nombre")}</span>`;
-      b.addEventListener("click", ()=>{
-        sel.value = c.id;
-        rebuildContactSelect(c.id, "");
-        toast(`👥 Marcado: ${c.name || "Amigo"}`);
-      });
-      list.appendChild(b);
-    });
+    // ✅ seleccionar amigo automáticamente
+    sel.value = match.id;
+    rebuildContactSelect(match.id, "");
+    toast(`👥 Marcado: ${match.name || "Amigo"}`);
   }
 
   /* =========================
@@ -1053,18 +984,18 @@
     const isCustom = (sel.value === "__custom__");
     if(customField) customField.style.display = isCustom ? "" : "none";
     if(hint) hint.textContent = isCustom
-      ? "Escribe un nombre o marca un amigo sugerido."
+      ? "Escribe un nombre o elígelo de la lista."
       : "Elige un amigo guardado.";
 
     // ✅ label (Nombre)
     fixWhoLabel();
 
+    // ✅ datalist siempre actualizado
+    fillFriendsDatalist();
+
     if(isCustom && whoInput){
       whoInput.value = customName || "";
       setTimeout(()=>{ try{ whoInput.focus(); }catch(e){} }, 0);
-      renderWhoAutocomplete();
-    }else{
-      renderWhoAutocomplete();
     }
   }
 
@@ -1177,9 +1108,13 @@
       renderAll();
     };
 
+    // ✅ Nuevo comportamiento:
+    // - Si estás en modo custom y el nombre coincide EXACTO con un amigo => se vincula
+    // - Si no coincide => al guardar preguntamos si quieres guardarlo
     const isCustom = sel && sel.value === "__custom__";
 
     if(isCustom){
+      // si el usuario no escribió nombre, permitimos “Sin nombre”
       if(rawCustomName){
         const existing = findContactByName(rawCustomName);
         if(existing){
@@ -1195,21 +1130,29 @@
             const newC = { id: uid(), name: rawCustomName, note: "" };
             contacts = [newC, ...contacts];
             save(CONTACTS_KEY, contacts);
+
+            // refrescos
             fillCommitFriendSelect();
+            fillFriendsDatalist();
+
+            // continuar guardado enlazado al nuevo amigo
             proceedSave({ whoId: newC.id, whoName: "" });
           },
           "No, solo para este",
           ()=>{
+            // continuar sin guardar amigo
             proceedSave({ whoId: null, whoName: rawCustomName });
           }
         );
         return;
       }
 
+      // sin nombre escrito: guardar como custom vacío
       proceedSave({ whoId:null, whoName:"" });
       return;
     }
 
+    // modo amigo seleccionado normal
     const who = resolveWho();
     proceedSave(who);
   }
@@ -1245,11 +1188,15 @@
       });
     }
 
-    // ✅ autocomplete: al escribir en Nombre, mostrar sugerencias
+    // ✅ datalist: al escribir o elegir un valor del listado, si coincide exacto marca amigo
     const who = $("fWho");
     if(who){
       who.addEventListener("input", ()=>{
-        renderWhoAutocomplete();
+        tryAutoSelectFriendFromWhoInput();
+      });
+      // por si algún navegador no dispara input al elegir, cubrimos change también
+      who.addEventListener("change", ()=>{
+        tryAutoSelectFriendFromWhoInput();
       });
     }
   }
@@ -1298,7 +1245,11 @@
     }
 
     save(CONTACTS_KEY, contacts);
+
+    // refrescos
     fillCommitFriendSelect();
+    fillFriendsDatalist();
+
     closeContactModal();
     renderAll();
   }
@@ -1322,7 +1273,10 @@
         });
         save(KEY, data);
 
+        // refrescos
         fillCommitFriendSelect();
+        fillFriendsDatalist();
+
         toast("🗑️ Amigo eliminado");
         renderAll();
       }
@@ -1738,6 +1692,9 @@
 
     // ✅ label “Nombre”
     fixWhoLabel();
+
+    // ✅ datalist de amigos listo desde el inicio
+    fillFriendsDatalist();
 
     // importar si viene paquete en hash
     importFromHash();
