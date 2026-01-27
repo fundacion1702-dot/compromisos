@@ -17,7 +17,6 @@
   <!-- CSS separado -->
   <link rel="stylesheet" href="compromisos.css?v=1">
 
-  <!-- ✅ Evitar que el título/subtítulo “desaparezcan” con texto grande -->
   <style>
     @media (max-width:520px){
       .title, .subtitle{
@@ -55,6 +54,57 @@
       line-height:1;
     }
     .gearBtn:active{ transform:translateY(1px); }
+
+    /* =========================================================
+       ✅ CAMBIOS PEDIDOS (MAQUETACIÓN)
+       1) Topbar NO fija (se mueve con la página)
+       2) Píldoras centradas en el eje central de la pantalla
+       3) Engranaje subido (columna derecha, debajo de Texto grande)
+       4) Reducir hueco entre píldoras y contenido inferior
+    ========================================================= */
+
+    /* 1) Quitar sticky/fijo de la topbar */
+    .topbar{
+      position: static !important;
+      top: auto !important;
+    }
+
+    /* Colocación: fila superior (brand + acciones), fila inferior (píldoras centradas) */
+    .topbarInner{
+      align-items: flex-start !important;
+    }
+    .topActions{
+      display:flex !important;
+      flex-direction:column !important;
+      align-items:flex-end !important;
+      gap:10px !important;
+      padding-top:2px !important;
+    }
+
+    /* 2) Píldoras centradas en el eje central */
+    .pillsRow{
+      width:100%;
+      display:flex;
+      justify-content:center;
+      padding:8px 14px 10px;   /* ⬅️ más pegadas arriba */
+      margin-top:6px;          /* ⬅️ reduce hueco */
+    }
+    .pillsRow .pills{
+      width:100%;
+      max-width:520px;         /* centrado real en móvil */
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    /* 4) Reducir el hueco entre píldoras y lo de abajo (la “X” en tu foto) */
+    .wrap{
+      padding-top:10px !important;  /* antes quedaba demasiado aire */
+    }
+    .menuGrid{
+      margin-top:8px !important;    /* más cerca de las píldoras */
+    }
   </style>
 </head>
 
@@ -70,27 +120,33 @@
         </div>
       </div>
 
-      <!-- Accesibilidad arriba derecha + pills + ⚙️ ajustes pequeño -->
+      <!-- ✅ Columna derecha: Texto grande + Engranaje (subido) -->
       <div class="topActions">
         <button class="a11yBtn" id="btnA11yTop" type="button" title="Cambiar tamaño de letra">🔎 Texto grande</button>
-
-        <!-- ✅ Ajustes pasa a un icono pequeño -->
         <button class="gearBtn" id="btnSettingsGear" type="button" title="Ajustes" aria-label="Ajustes">⚙️</button>
+      </div>
+    </div>
 
-        <div class="pills" aria-label="Indicadores">
-          <!-- ✅ Orden pedido: Recibidos a la izquierda, Vencidos a la derecha -->
-          <button class="pillBtn good" id="btnReceived" type="button" title="Recibidos">
-            <span class="pillDot" aria-hidden="true"></span>
-            <span>Recibidos</span>
-            <span class="pillCount" id="bReceived">0</span>
-          </button>
+    <!-- ✅ PÍLDORAS centradas (fila independiente) -->
+    <div class="pillsRow" aria-label="Indicadores">
+      <div class="pills">
+        <button class="pillBtn" id="btnWaiting" type="button" title="En espera">
+          <span class="pillDot" aria-hidden="true" style="background:#9CA3AF;"></span>
+          <span>En espera</span>
+          <span class="pillCount" id="bWaiting">0</span>
+        </button>
 
-          <button class="pillBtn danger" id="btnOverdue" type="button" title="Vencidos">
-            <span class="pillDot" aria-hidden="true"></span>
-            <span>Vencidos</span>
-            <span class="pillCount" id="bOverdue">0</span>
-          </button>
-        </div>
+        <button class="pillBtn good" id="btnReceived" type="button" title="Recibidos">
+          <span class="pillDot" aria-hidden="true"></span>
+          <span>Recibidos</span>
+          <span class="pillCount" id="bReceived">0</span>
+        </button>
+
+        <button class="pillBtn danger" id="btnOverdue" type="button" title="Vencidos">
+          <span class="pillDot" aria-hidden="true"></span>
+          <span>Vencidos</span>
+          <span class="pillCount" id="bOverdue">0</span>
+        </button>
       </div>
     </div>
   </div>
@@ -109,7 +165,6 @@
         </div>
       </div>
 
-      <!-- ✅ NUEVO: En espera (sustituye al tile de Ajustes) -->
       <div class="tile" id="tileWaiting" role="button" tabindex="0">
         <div class="tileIcon"><span>⏳</span></div>
         <div class="tileText">
@@ -124,10 +179,10 @@
       <div class="tile" id="tileDone" role="button" tabindex="0">
         <div class="tileIcon"><span>✅</span></div>
         <div class="tileText">
-          <p class="tileTitle">Cerrados</p>
+          <p class="tileTitle">Hechos</p>
           <p class="tileMeta">
             <span class="badge good" id="tileDoneCount">0</span>
-            <span>finalizados</span>
+            <span>cerrados</span>
           </p>
         </div>
       </div>
@@ -148,15 +203,14 @@
     <div id="commitmentsPane" class="section" style="margin-top:14px;">
       <div class="sectionHead">
         <div>
-          <h2>Compromisos</h2>
-          <p>Todo ordenado y fácil de ver.</p>
+          <h2 id="commitPaneTitle">Compromisos</h2>
+          <p id="commitPaneSubtitle">Todo ordenado y fácil de ver.</p>
         </div>
 
-        <!-- ✅ Ahora 3 estados -->
-        <div class="segTabs" role="tablist" aria-label="Pendientes, En espera o Cerrados">
+        <div class="segTabs" role="tablist" aria-label="Pendientes, En espera o Hechos">
           <button class="segBtn active" id="tabPending" type="button">Pendientes</button>
           <button class="segBtn" id="tabWaiting" type="button">En espera</button>
-          <button class="segBtn" id="tabDone" type="button">Cerrados</button>
+          <button class="segBtn" id="tabDone" type="button">Hechos</button>
         </div>
       </div>
 
@@ -292,8 +346,6 @@
       <button class="navBtn active" id="tabCommitments" type="button"><span>🗓️ Compromisos</span></button>
       <button class="fab" id="fab" type="button" aria-label="Nuevo">＋</button>
       <button class="navBtn" id="tabContacts" type="button"><span>👥 Amigos</span></button>
-
-      <!-- compat / no layout -->
       <button class="navBtn" id="btnInstall" type="button" style="display:none;">⬇️ Instalar</button>
     </div>
   </div>
@@ -303,7 +355,6 @@
     <div class="installCard">
       <div class="installRow">
         <div>
-          <!-- ✅ Para evitar “texto suelto” si algo falla, por defecto van vacíos -->
           <p class="installTitle" id="installTitle"></p>
           <p class="installText" id="installText"></p>
         </div>
@@ -317,7 +368,7 @@
     </div>
   </div>
 
-  <!-- MODALES -->
+  <!-- MODALES (sin cambios) -->
   <div class="backdrop" id="backdrop" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal">
       <div class="modalHead">
@@ -326,16 +377,15 @@
       </div>
 
       <div class="modalBody">
-        <!-- ✅ NUEVO: campo único Nombre + datalist -->
         <div class="field">
-          <label class="label" for="fWho">Nombre</label>
-          <input id="fWho"
-                 type="text"
-                 list="friendsDatalist"
-                 placeholder="Ej: Laura / Mamá / Juan (del trabajo)"
-                 autocomplete="off"/>
-          <datalist id="friendsDatalist"></datalist>
-          <div class="hint" id="contactHint">Si coincide exacto con un amigo, se vincula automáticamente. Si no, te preguntará si quieres guardarlo.</div>
+          <label class="label" for="fContact">¿Con quién?</label>
+          <select id="fContact"></select>
+          <div class="hint" id="contactHint">Elige un amigo o escribe un nombre sin guardar.</div>
+        </div>
+
+        <div class="field" id="customWhoField" style="display:none">
+          <label class="label" for="fWho">Nombre (sin guardar)</label>
+          <input id="fWho" type="text" placeholder="Ej: Laura / Mamá / Juan (del trabajo)" autocomplete="off"/>
         </div>
 
         <div class="field">
