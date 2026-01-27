@@ -68,103 +68,6 @@
   }
 
   /* =========================
-     ✅ CSS de soporte (layout + lupa + fixes)
-  ========================= */
-  (function injectMiniToolsCss(){
-    try{
-      const st = document.createElement("style");
-      st.textContent = `
-        /* ✅ Topbar NO fija (que se mueva con scroll) */
-        .topbar{ position: static !important; top:auto !important; }
-        .topbarInner{ position: static !important; }
-
-        /* ✅ Recolocar topActions: Texto grande arriba derecha, pills centradas al eje, ⚙️ debajo */
-        .topActions{
-          display:grid !important;
-          grid-template-columns: 1fr auto;
-          grid-template-rows: auto auto auto; /* ✅ 3 filas */
-          column-gap: 12px;
-          row-gap: 6px;
-          align-items: center;
-        }
-        #btnA11yTop{ grid-column: 2; grid-row: 1; justify-self:end; }
-
-        /* ✅ MUY IMPORTANTE: pills ocupan TODAS las columnas para centrar respecto al eje de la página */
-        .pills{
-          grid-column: 1 / -1 !important; /* ✅ ocupa todo el ancho del grid */
-          grid-row: 2 !important;
-          justify-self: center !important;
-          width: 100% !important;
-          margin-top: 0 !important;
-
-          /* ✅ centrado real de los botones */
-          display: flex !important;
-          flex-wrap: wrap !important;
-          justify-content: center !important;
-          align-items: center !important;
-          gap: 12px !important;
-        }
-
-        #btnSettingsGear{
-          grid-column: 2 !important;
-          grid-row: 3 !important;  /* ✅ debajo de las pills */
-          justify-self: end !important;
-          align-self: end !important;
-        }
-
-        /* ✅ Evitar que la barra de estados “se coma” el último botón (Cerrados) */
-        .sectionHead{ flex-wrap: wrap !important; gap: 10px !important; }
-        .segTabs{ flex-wrap: wrap !important; gap: 8px !important; justify-content:flex-end !important; }
-        .segBtn{ white-space: nowrap !important; }
-
-        /* ✅ Botón buscar/filtrar “como al principio” (debajo del header, a la derecha) */
-        .miniTools{
-          padding:10px 14px 0;
-          display:flex;
-          justify-content:flex-end;
-        }
-        .miniBtn{
-          height:36px;
-          padding:0 12px;
-          border-radius:999px;
-          border:1px solid var(--border);
-          background:var(--surface2);
-          box-shadow:var(--shadow2);
-          font-weight:900;
-          cursor:pointer;
-          display:inline-flex;
-          align-items:center;
-          gap:8px;
-          -webkit-tap-highlight-color:transparent;
-        }
-        .miniBtn:active{ transform:translateY(1px); }
-        .miniPanel{
-          display:none;
-          padding:10px 14px 12px;
-          border-top:1px dashed rgba(229,231,235,.95);
-          background:linear-gradient(180deg,#fff,#fbfbfc);
-        }
-        .miniPanel.show{ display:block; }
-        .miniRow{
-          display:flex;
-          gap:10px;
-          flex-wrap:wrap;
-          align-items:flex-end;
-        }
-        .miniRow .field{ margin-top:0; flex:1; min-width:160px; }
-        .miniHint{
-          margin-top:8px;
-          color:var(--muted);
-          font-size:12.5px;
-          line-height:1.35;
-        }
-        .chip.status{ font-weight:900; }
-      `;
-      document.head.appendChild(st);
-    }catch(e){}
-  })();
-
-  /* =========================
      Estado / datos
   ========================= */
   let data = load(KEY, []);
@@ -338,7 +241,8 @@
   }
 
   /* =========================
-     Orden pills (Recibidos, En espera, Vencidos)
+     Pills (Recibidos, En espera, Vencidos)
+     ⚠️ IMPORTANTE: aquí NO tocamos layout con CSS inyectado.
   ========================= */
   function ensureWaitingPill(){
     try{
@@ -358,6 +262,7 @@
         <span class="pillCount" id="bWaiting">0</span>
       `;
 
+      // Por defecto la ponemos la primera (el CSS decide si queda en fila o abajo)
       pills.insertBefore(btn, pills.firstElementChild || null);
 
       btn.addEventListener("click", ()=>{
@@ -370,21 +275,21 @@
   }
 
   function fixPillsOrder(){
+    // Mantener orden DOM: En espera -> Recibidos -> Vencidos
     try{
       const pills = document.querySelector(".pills");
       if(!pills) return;
 
-      const get = (id)=> pills.querySelector("#"+id);
-      const w = get("btnWaitingTop");
-      const r = get("btnReceived");
-      const v = get("btnOverdue");
+      const w = pills.querySelector("#btnWaitingTop");
+      const r = pills.querySelector("#btnReceived");
+      const v = pills.querySelector("#btnOverdue");
 
       if(w) pills.appendChild(w);
       if(r) pills.appendChild(r);
       if(v) pills.appendChild(v);
 
       if(w) pills.insertBefore(w, pills.firstElementChild);
-      if(r) pills.insertBefore(r, v || null);
+      if(r && v) pills.insertBefore(r, v);
     }catch(e){}
   }
 
@@ -554,6 +459,7 @@
 
   /* =========================
      ✅ UI desplegable: Buscar / Filtrar
+     (solo DOM; el estilo lo controla compromisos.css)
   ========================= */
   function hideLegacyCommitFilters(paneEl){
     try{
@@ -1143,89 +1049,6 @@
       });
   }
 
-  function fixWhoLabel(){
-    try{
-      const customField = $("customWhoField");
-      if(!customField) return;
-      const lab = customField.querySelector("label");
-      if(!lab) return;
-      if(/nombre/i.test((lab.textContent||"").trim())){
-        lab.textContent = "Nombre";
-      }
-    }catch(e){}
-  }
-
-  function rebuildContactSelect(selectedId, customName){
-    const sel = $("fContact");
-    const customField = $("customWhoField");
-    const whoInput = $("fWho");
-    const hint = $("contactHint");
-    if(!sel) return;
-
-    sel.innerHTML = "";
-
-    const opt0 = document.createElement("option");
-    opt0.value = "__custom__";
-    opt0.textContent = "— Sin amigo (escribir nombre) —";
-    sel.appendChild(opt0);
-
-    contacts
-      .slice()
-      .sort((a,b)=> (a.name||"").localeCompare(b.name||"", "es"))
-      .forEach(c=>{
-        const opt = document.createElement("option");
-        opt.value = c.id;
-        opt.textContent = c.name || "Sin nombre";
-        sel.appendChild(opt);
-      });
-
-    if(selectedId) sel.value = selectedId;
-    else sel.value = "__custom__";
-
-    const isCustom = (sel.value === "__custom__");
-    if(customField) customField.style.display = isCustom ? "" : "none";
-    if(hint) hint.textContent = isCustom
-      ? "Escribe un nombre o elígelo de la lista."
-      : "Elige un amigo guardado.";
-
-    fixWhoLabel();
-    fillFriendsDatalist();
-
-    if(isCustom && whoInput){
-      whoInput.value = customName || "";
-      setTimeout(()=>{ try{ whoInput.focus(); }catch(e){} }, 0);
-    }
-  }
-
-  function tryAutoSelectFriendFromWhoInput_OLD(){
-    const sel = $("fContact");
-    const whoInput = $("fWho");
-    if(!sel || !whoInput) return;
-    if(sel.value !== "__custom__") return;
-
-    const raw = normalizeName(whoInput.value || "");
-    if(!raw) return;
-
-    const match = findContactByName(raw);
-    if(!match) return;
-
-    sel.value = match.id;
-    rebuildContactSelect(match.id, "");
-    toast(`👥 Marcado: ${match.name || "Amigo"}`);
-  }
-
-  function resolveWho_OLD(){
-    const sel = $("fContact");
-    const whoInput = $("fWho");
-    if(!sel) return { whoId:null, whoName:"" };
-
-    if(sel.value && sel.value !== "__custom__"){
-      const c = getContactById(sel.value);
-      return { whoId: c ? c.id : sel.value, whoName: "" };
-    }
-    return { whoId:null, whoName: normalizeName(whoInput?.value || "") };
-  }
-
   function setModalWhoFromNameInput(){
     const inp = $("fWho");
     if(!inp) return;
@@ -1266,12 +1089,8 @@
     const whoId = it?.whoId || presetContactId || null;
     const whoName = it?.whoName || "";
 
-    if($("fContact")){
-      rebuildContactSelect(whoId, whoName);
-    }else{
-      fillFriendsDatalist();
-      setNameInputForWho(whoId, whoName);
-    }
+    fillFriendsDatalist();
+    setNameInputForWho(whoId, whoName);
 
     const fWhat = $("fWhat");
     const fWhen = $("fWhen");
@@ -1380,25 +1199,6 @@
       renderAll();
     };
 
-    if($("fContact")){
-      const sel = $("fContact");
-      const whoInput = $("fWho");
-      const rawCustomName = normalizeName(whoInput?.value || "");
-      const isCustom = sel && sel.value === "__custom__";
-
-      if(isCustom){
-        proceedMaybeSaveNewFriend(
-          rawCustomName,
-          (linked)=> proceedSave({ whoId: linked.id, whoName: "" }),
-          ()=> proceedSave({ whoId: null, whoName: rawCustomName })
-        );
-        return;
-      }
-
-      proceedSave(resolveWho_OLD());
-      return;
-    }
-
     setModalWhoFromNameInput();
     const whoResolved = resolveWho_NEW();
 
@@ -1439,29 +1239,17 @@
     if($("btnCancel")) $("btnCancel").onclick = closeCommitModal;
     if($("btnSave")) $("btnSave").onclick = saveCommitFromForm;
 
-    const sel = $("fContact");
-    if(sel && sel.dataset.bound !== "1"){
-      sel.dataset.bound = "1";
-      sel.addEventListener("change", ()=>{
-        rebuildContactSelect(sel.value === "__custom__" ? null : sel.value, ($("fWho")?.value || ""));
-      });
-    }
-
     const who = $("fWho");
     if(who && who.dataset.bound !== "1"){
       who.dataset.bound = "1";
       who.addEventListener("input", ()=>{
-        if($("fContact")) tryAutoSelectFriendFromWhoInput_OLD();
-        else setModalWhoFromNameInput();
+        setModalWhoFromNameInput();
       });
       who.addEventListener("change", ()=>{
-        if($("fContact")) tryAutoSelectFriendFromWhoInput_OLD();
-        else{
-          setModalWhoFromNameInput();
-          if(modalWhoId){
-            const c = getContactById(modalWhoId);
-            if(c?.name) toast(`👥 Marcado: ${c.name}`);
-          }
+        setModalWhoFromNameInput();
+        if(modalWhoId){
+          const c = getContactById(modalWhoId);
+          if(c?.name) toast(`👥 Marcado: ${c.name}`);
         }
       });
     }
@@ -1956,7 +1744,6 @@
     bindSettings();
     bindInstall();
 
-    fixWhoLabel();
     fillFriendsDatalist();
 
     importFromHash();
