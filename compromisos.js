@@ -144,16 +144,33 @@
   let contactsTextFilter = "";    // búsqueda amigos
 
   /* =========================
-     ✅ FIX 1: Texto grande
-     - Problema real: el JS se ejecuta ANTES de que exista el DOM (botón sin listener)
-     - Solución: arrancar todo en DOMContentLoaded + delegación robusta
-     - Además: guard anti doble disparo
+     ✅ FIX 1: Texto grande (REAL)
+     - Forzamos el cambio de tamaño sin depender solo de reglas CSS (por si el CSS no está actualizado/caché)
+     - Seguimos manteniendo la clase bigText para el resto de estilos
   ========================= */
   function applyTextScale(big){
-    document.documentElement.style.setProperty("--fs", big ? "18px" : "16px");
-    document.documentElement.style.setProperty("--fsBig", big ? "20px" : "18px");
-    document.body.classList.toggle("bigText", !!big);
+    const basePx = big ? 19 : 16;     // ✅ más evidente
+    const bigPx  = big ? 22 : 18;
 
+    // Variables CSS (por compatibilidad con tu CSS)
+    try{
+      document.documentElement.style.setProperty("--fs", basePx + "px");
+      document.documentElement.style.setProperty("--fsBig", bigPx + "px");
+      document.body && document.body.style && (document.body.style.setProperty("--fs", basePx + "px"));
+      document.body && document.body.style && (document.body.style.setProperty("--fsBig", bigPx + "px"));
+    }catch(e){}
+
+    // ✅ Forzado directo (para que SIEMPRE se note aunque falten reglas)
+    try{
+      if(document.body){
+        document.body.style.fontSize = basePx + "px";
+      }
+    }catch(e){}
+
+    // Clase (para el resto de ajustes visuales que ya tienes en CSS)
+    if(document.body) document.body.classList.toggle("bigText", !!big);
+
+    // Etiqueta coherente
     const label = big ? "🔎 Texto normal" : "🔎 Texto grande";
     const bTop = $("btnA11yTop");
     const bSet = $("btnA11y");
@@ -173,7 +190,7 @@
     toast(next ? "🔎 Texto grande: ON" : "🔎 Texto grande: OFF");
   }
 
-  const _a11yGuard = { last: 0, lockMs: 420 };
+  const _a11yGuard = { last: 0, lockMs: 520 };
   function guardedToggle(e){
     const now = Date.now();
     if(now - _a11yGuard.last < _a11yGuard.lockMs) return;
@@ -183,7 +200,7 @@
     toggleTextScale();
   }
 
-  // ✅ Delegación: funciona aunque el botón se cree/cambie después
+  // ✅ Delegación: funciona aunque el botón cambie/esté en otro pane
   function bindA11yDelegation(){
     const matchA11y = (node)=>{
       if(!node) return null;
@@ -200,10 +217,11 @@
       guardedToggle(e);
     };
 
-    // Captura para ganar a cualquier overlay/listener previo
-    document.addEventListener("click", handler, true);
-    document.addEventListener("touchend", handler, true);
+    // Captura para ganar a cualquier listener previo
     document.addEventListener("pointerup", handler, true);
+    document.addEventListener("touchend", handler, true);
+    document.addEventListener("click", handler, true);
+
     document.addEventListener("keydown", (e)=>{
       if(e.key!=="Enter" && e.key!==" ") return;
       const el = matchA11y(document.activeElement);
@@ -213,9 +231,7 @@
   }
 
   /* =========================
-     ✅ FIX 2: Cambiar orden Vencidos / Recibidos
-     - El swap debe ser SIEMPRE: Recibidos izquierda, Vencidos derecha
-     - No dependemos de IDs: detectamos por texto
+     ✅ FIX 2: Orden Vencidos / Recibidos
   ========================= */
   function fixPillsOrder(){
     try{
@@ -233,28 +249,20 @@
       const elV = findByText("vencid");
       const elR = findByText("recibid");
 
-      // Si no se encuentran por texto, usamos los dos primeros
-      const a = elR || children[0];
-      const b = elV || children[1];
-
-      // Queremos: [Recibidos][Vencidos]
-      // Si el primero NO es recibidos (o si están al revés), reordenamos
-      const firstTxt = (pills.firstElementChild?.textContent || "").toLowerCase();
-      const ok = firstTxt.includes("recibid");
-      if(!ok){
-        // limpiar y reinsertar en orden deseado
-        if(elR && elV){
+      if(elR && elV){
+        // Queremos: Recibidos primero, Vencidos segundo
+        if(pills.firstElementChild !== elR){
           pills.insertBefore(elR, pills.firstElementChild);
-          pills.appendChild(elV);
-        }else{
-          // swap simple de los dos primeros
-          const x = children[0], y = children[1];
-          pills.insertBefore(y, x);
+        }
+        if(elR.nextElementSibling !== elV){
+          pills.insertBefore(elV, elR.nextElementSibling);
         }
       }else{
-        // Asegura que vencidos queda detrás si existen ambos
-        if(elR && elV && elR.nextElementSibling !== elV){
-          pills.insertBefore(elV, elR.nextElementSibling);
+        // fallback: swap simple
+        const x = children[0], y = children[1];
+        const firstTxt = (x.textContent || "").toLowerCase();
+        if(!firstTxt.includes("recibid")){
+          pills.insertBefore(y, x);
         }
       }
     }catch(e){}
@@ -262,8 +270,6 @@
 
   /* =========================
      ✅ FIX 3: Quitar texto “Instálala / Consejo”
-     - Lo más seguro: eliminar/ocultar el bloque de instalación (si existe)
-     - Y, por si viene “suelto”, ocultar esos textos exactos
   ========================= */
   function removeBottomInstallText(){
     try{
@@ -286,7 +292,7 @@
       blocks.forEach(el=>{
         const t = (el.textContent || "").trim().replace(/\s+/g," ");
         if(!t) return;
-        if((t === "Instálala Consejo") || (t === "Instálala\nConsejo") || (t === "Consejo Instálala")){
+        if((t === "Instálala Consejo") || (t === "Consejo Instálala")){
           el.style.display = "none";
         }
       });
@@ -702,7 +708,6 @@
       list.appendChild(card);
     });
 
-    // por si el render cambia el header
     fixPillsOrder();
     removeBottomInstallText();
   }
@@ -1471,16 +1476,12 @@
 
   /* =========================
      ✅ Install banner + service worker
-     - NO mostramos nada “por defecto” y además lo eliminamos si existe.
   ========================= */
   let deferredPrompt = null;
   function bindInstall(){
-    // Eliminamos cualquier rastro visible desde el arranque
     removeBottomInstallText();
 
     window.addEventListener("beforeinstallprompt", (e)=>{
-      // Si quieres reactivar un banner real más adelante, aquí lo hacemos.
-      // Por ahora: lo ignoramos para que no salga “Instálala / Consejo”.
       e.preventDefault();
       deferredPrompt = e;
     });
