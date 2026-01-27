@@ -69,7 +69,6 @@
 
   /* =========================
      ✅ CSS SOLO para “lupa desplegable”
-     (IMPORTANTE: NO tocamos topbar/título/pills desde JS)
   ========================= */
   (function injectMiniToolsCss(){
     try{
@@ -145,7 +144,8 @@
   let contactsTextFilter = "";    // búsqueda amigos
 
   /* =========================
-     Accesibilidad: Texto grande (robusto)
+     ✅ FIX 1: Texto grande (evitar doble toggle)
+     - Antes se disparaba pointer/click/touch y se alternaba 2 veces => “no funciona”
   ========================= */
   function applyTextScale(big){
     document.documentElement.style.setProperty("--fs", big ? "18px" : "16px");
@@ -171,6 +171,17 @@
     toast(next ? "🔎 Texto grande: ON" : "🔎 Texto grande: OFF");
   }
 
+  // ✅ guard anti-doble disparo (touch + click)
+  const _a11yGuard = { last: 0, lockMs: 420 };
+  function guardedToggle(e){
+    const now = Date.now();
+    if(now - _a11yGuard.last < _a11yGuard.lockMs) return;
+    _a11yGuard.last = now;
+    try{ e && e.preventDefault && e.preventDefault(); }catch(_){}
+    try{ e && e.stopPropagation && e.stopPropagation(); }catch(_){}
+    toggleTextScale();
+  }
+
   function bindA11yButtons(){
     const top = $("btnA11yTop");
     const inSettings = $("btnA11y");
@@ -179,25 +190,41 @@
       if(!el) return;
       el.style.pointerEvents = "auto";
 
-      const fire = (e)=>{
-        try{
-          e.preventDefault();
-          e.stopPropagation();
-        }catch(_){}
-        toggleTextScale();
-      };
-
-      // ✅ ultra robusto (móviles / PWA)
-      el.addEventListener("pointerup", fire, { passive:false });
-      el.addEventListener("click", fire, { passive:false });
-      el.addEventListener("touchend", fire, { passive:false });
+      // ✅ SOLO un evento principal + un extra para teclado
+      el.addEventListener("click", guardedToggle, { passive:false });
+      el.addEventListener("touchend", guardedToggle, { passive:false }); // iOS/Android PWA
       el.addEventListener("keydown", (e)=>{
-        if(e.key==="Enter" || e.key===" "){ fire(e); }
+        if(e.key==="Enter" || e.key===" "){ guardedToggle(e); }
       });
     };
 
     bind(top);
     bind(inSettings);
+  }
+
+  /* =========================
+     ✅ FIX 2: Cambiar orden Vencidos / Recibidos (sin tocar CSS)
+     - Queremos: Recibidos a la IZQ, Vencidos a la DCHA (centrados como ahora)
+  ========================= */
+  function fixPillsOrder(){
+    try{
+      const overdue = $("btnOverdue");
+      const receivedBtn = $("btnReceived");
+      const pills = overdue?.parentElement;
+      if(!pills || !receivedBtn || !overdue) return;
+
+      // asegura que ambos están dentro del mismo contenedor
+      if(receivedBtn.parentElement !== pills) return;
+
+      // si ahora está [Vencidos][Recibidos], lo dejamos [Recibidos][Vencidos]
+      if(pills.firstElementChild === overdue){
+        pills.insertBefore(receivedBtn, overdue);
+      }else{
+        // por si hay nodos extra, igual forzamos el orden correcto
+        pills.insertBefore(receivedBtn, pills.firstElementChild);
+        pills.appendChild(overdue);
+      }
+    }catch(e){}
   }
 
   /* =========================
@@ -291,7 +318,7 @@
 
   /* =========================
      ✅ UI desplegable: filtros/búsquedas
-     + ocultar “filtro grande” legacy (el del recuadro rojo)
+     + ocultar “filtro grande” legacy
   ========================= */
   function hideLegacyCommitFilters(paneEl){
     try{
@@ -302,7 +329,6 @@
         const inp = f.querySelector("input[type='text'], input[type='search']");
         const labelTxt = (lab?.textContent || "").trim().toLowerCase();
 
-        // Oculta cualquier bloque “Filtrar por amigo” que NO sea el de nuestro panel (commitFriendSel)
         if(labelTxt.includes("filtrar por amigo")){
           if(sel && sel.id !== "commitFriendSel"){
             f.style.display = "none";
@@ -311,7 +337,6 @@
           }
         }
 
-        // Si hay un buscador “grande” legacy dentro del pane, lo ocultamos
         if(labelTxt === "buscar" || labelTxt.includes("buscar")){
           if(inp && inp.id !== "commitSearchTxt"){
             f.style.display = "none";
@@ -329,10 +354,8 @@
 
     hideLegacyCommitFilters(paneEl);
 
-    // Si ya existe, no duplicar
     if($("miniCommitTools")) return;
 
-    // Inserta justo debajo del sectionHead (dentro del pane)
     const head = paneEl.querySelector(".sectionHead");
     if(!head) return;
 
@@ -521,7 +544,6 @@
   }
 
   function passesCommitFilters(it){
-    // friend filter
     if(commitFriendFilter && commitFriendFilter !== "all"){
       if(commitFriendFilter === "__none__"){
         if(it.whoId) return false;
@@ -530,7 +552,6 @@
       }
     }
 
-    // text filter
     const q = (commitTextFilter || "").trim().toLowerCase();
     if(q){
       const who = normalizedWho(it).toLowerCase();
@@ -643,7 +664,6 @@
       const card = document.createElement("div");
       card.className = "card";
 
-      // ✅ quitado “Amigo guardado en tu móvil.” si no hay nota
       const desc = (c.note || "").trim();
 
       card.innerHTML = `
@@ -676,6 +696,7 @@
     renderCommitments();
     renderContacts();
     updateCounts();
+    fixPillsOrder(); // ✅ asegura orden correcto en cada render
   }
 
   /* =========================
@@ -981,7 +1002,7 @@
     }
 
     save(CONTACTS_KEY, contacts);
-    fillCommitFriendSelect(); // refresca filtro
+    fillCommitFriendSelect();
     closeContactModal();
     renderAll();
   }
@@ -997,7 +1018,6 @@
         contacts = contacts.filter(x=>x.id!==id);
         save(CONTACTS_KEY, contacts);
 
-        // si había compromisos con whoId, los pasamos a whoName
         data = data.map(it=>{
           if(it.whoId === id){
             return { ...it, whoId:null, whoName: it.whoName || name || "Sin nombre", updatedAt: new Date().toISOString() };
@@ -1376,7 +1396,9 @@
   }
 
   /* =========================
-     Install banner + service worker
+     ✅ FIX 3: Quitar texto “Instálala / Consejo”
+     - Eliminamos el banner “forzado” que se mostraba siempre
+     - Solo aparece si el navegador lanza beforeinstallprompt
   ========================= */
   let deferredPrompt = null;
   function bindInstall(){
@@ -1386,18 +1408,22 @@
     const btnOpenChrome = $("btnOpenChrome");
     const btnCopyLink = $("btnCopyLink");
 
-    if(btnHide) btnHide.onclick = ()=> banner && banner.classList.remove("show");
+    if(!banner) return; // si no existe, nada
+
+    const hide = ()=> banner.classList.remove("show");
+    if(btnHide) btnHide.onclick = hide;
+
     if(btnCopyLink) btnCopyLink.onclick = ()=> copyText(appBaseUrl());
 
+    // ✅ Solo mostrar cuando el navegador lo permita
     window.addEventListener("beforeinstallprompt", (e)=>{
       e.preventDefault();
       deferredPrompt = e;
-      if(banner){
-        banner.classList.add("show");
-        if(btnInstallBanner) btnInstallBanner.style.display = "";
-        if(btnOpenChrome) btnOpenChrome.style.display = "none";
-        if(btnCopyLink) btnCopyLink.style.display = "";
-      }
+
+      banner.classList.add("show");
+      if(btnInstallBanner) btnInstallBanner.style.display = "";
+      if(btnOpenChrome) btnOpenChrome.style.display = "none";
+      if(btnCopyLink) btnCopyLink.style.display = "";
     });
 
     if(btnInstallBanner){
@@ -1406,18 +1432,9 @@
         deferredPrompt.prompt();
         try{ await deferredPrompt.userChoice; }catch(e){}
         deferredPrompt = null;
-        if(banner) banner.classList.remove("show");
+        hide();
       };
     }
-
-    setTimeout(()=>{
-      if(!deferredPrompt && banner){
-        banner.classList.add("show");
-        if(btnInstallBanner) btnInstallBanner.style.display = "none";
-        if(btnOpenChrome) btnOpenChrome.style.display = "";
-        if(btnCopyLink) btnCopyLink.style.display = "";
-      }
-    }, 1200);
 
     if(btnOpenChrome){
       btnOpenChrome.onclick = ()=>{
@@ -1425,6 +1442,12 @@
         copyText(appBaseUrl());
       };
     }
+
+    // ✅ si está ya instalada (standalone), no mostrar nunca
+    try{
+      const isStandalone = window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
+      if(isStandalone) hide();
+    }catch(e){}
 
     if("serviceWorker" in navigator){
       navigator.serviceWorker.register("sw.js").catch(()=>{});
@@ -1434,7 +1457,6 @@
   /* =========================
      Boot
   ========================= */
-  // normaliza ids en contactos antiguos
   (function normalizeContacts(){
     let changed = false;
     contacts = (contacts||[]).map(c=>{
@@ -1444,7 +1466,6 @@
     if(changed) save(CONTACTS_KEY, contacts);
   })();
 
-  // aplica accesibilidad guardada
   const a11y = load(A11Y_KEY, { big:false });
   applyTextScale(!!a11y.big);
 
@@ -1462,6 +1483,9 @@
 
   // refresca selects de filtro
   fillCommitFriendSelect();
+
+  // ✅ orden de pills desde el arranque
+  fixPillsOrder();
 
   renderAll();
 
