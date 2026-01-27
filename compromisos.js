@@ -78,21 +78,39 @@
         .topbar{ position: static !important; top:auto !important; }
         .topbarInner{ position: static !important; }
 
-        /* ✅ Pills más pegadas arriba */
-        .pills{ margin-top: 0 !important; }
-
-        /* ✅ Recolocar topActions: Texto grande arriba derecha y ⚙️ debajo */
+        /* ✅ Recolocar topActions: Texto grande arriba derecha, pills centradas al eje, ⚙️ debajo */
         .topActions{
           display:grid !important;
           grid-template-columns: 1fr auto;
-          grid-template-rows: auto auto;
+          grid-template-rows: auto auto auto; /* ✅ 3 filas */
           column-gap: 12px;
           row-gap: 6px;
           align-items: center;
         }
         #btnA11yTop{ grid-column: 2; grid-row: 1; justify-self:end; }
-        .pills{ grid-column: 1; grid-row: 2; justify-self:center; }
-        #btnSettingsGear{ grid-column: 2; grid-row: 2; justify-self:end; align-self:end; }
+
+        /* ✅ MUY IMPORTANTE: pills ocupan TODAS las columnas para centrar respecto al eje de la página */
+        .pills{
+          grid-column: 1 / -1 !important; /* ✅ ocupa todo el ancho del grid */
+          grid-row: 2 !important;
+          justify-self: center !important;
+          width: 100% !important;
+          margin-top: 0 !important;
+
+          /* ✅ centrado real de los botones */
+          display: flex !important;
+          flex-wrap: wrap !important;
+          justify-content: center !important;
+          align-items: center !important;
+          gap: 12px !important;
+        }
+
+        #btnSettingsGear{
+          grid-column: 2 !important;
+          grid-row: 3 !important;  /* ✅ debajo de las pills */
+          justify-self: end !important;
+          align-self: end !important;
+        }
 
         /* ✅ Evitar que la barra de estados “se coma” el último botón (Cerrados) */
         .sectionHead{ flex-wrap: wrap !important; gap: 10px !important; }
@@ -327,7 +345,6 @@
       const pills = document.querySelector(".pills");
       if(!pills) return;
 
-      // si ya existe, no tocar
       if($("btnWaitingTop")) return;
 
       const btn = document.createElement("button");
@@ -341,7 +358,6 @@
         <span class="pillCount" id="bWaiting">0</span>
       `;
 
-      // Insertar al inicio (izquierda)
       pills.insertBefore(btn, pills.firstElementChild || null);
 
       btn.addEventListener("click", ()=>{
@@ -358,10 +374,6 @@
       const pills = document.querySelector(".pills");
       if(!pills) return;
 
-      const children = Array.from(pills.children).filter(el=>el && el.nodeType===1);
-      if(children.length < 2) return;
-
-      // Queremos: En espera (si existe) / Recibidos / Vencidos
       const get = (id)=> pills.querySelector("#"+id);
       const w = get("btnWaitingTop");
       const r = get("btnReceived");
@@ -371,8 +383,6 @@
       if(r) pills.appendChild(r);
       if(v) pills.appendChild(v);
 
-      // Ahora reordenamos al final en el orden correcto
-      // (appendChild mueve el nodo si ya existe)
       if(w) pills.insertBefore(w, pills.firstElementChild);
       if(r) pills.insertBefore(r, v || null);
     }catch(e){}
@@ -436,7 +446,6 @@
       }
     }
 
-    // si vuelves a compromisos, restaura la vista anterior
     if(pane === "commitments"){
       setView(lastCommitView || "pending");
     }else{
@@ -495,7 +504,6 @@
     gear.dataset.bound = "1";
 
     gear.addEventListener("click", ()=>{
-      // toggle: si ya estás en ajustes, volver a compromisos
       if(pane === "settings"){
         setPane("commitments");
         return;
@@ -512,7 +520,6 @@
     if($("tabWaiting")) $("tabWaiting").onclick = ()=> setView("waiting");
     if($("tabDone")) $("tabDone").onclick = ()=> setView("closed");
 
-    // Tiles (menú)
     const bindTile = (id, fn)=>{
       const el = $(id);
       if(!el) return;
@@ -527,7 +534,6 @@
     bindTile("tileContacts", ()=>{ setPane("contacts"); });
     bindTile("tileSettings", ()=>{ setPane("settings"); });
 
-    // Pills (Recibidos / Vencidos / En espera)
     if($("btnOverdue")){
       $("btnOverdue").addEventListener("click", ()=>{
         setPane("commitments");
@@ -547,7 +553,7 @@
   }
 
   /* =========================
-     ✅ UI desplegable: Buscar / Filtrar (ARREGLADO)
+     ✅ UI desplegable: Buscar / Filtrar
   ========================= */
   function hideLegacyCommitFilters(paneEl){
     try{
@@ -586,7 +592,6 @@
     let tools = $("miniCommitTools");
     let panel = $("commitToolsPanel");
 
-    // si existen pero perdieron listeners, los re-bindeamos una vez
     const bindIfNeeded = ()=>{
       const btn = $("btnCommitTools");
       if(!btn || !panel) return;
@@ -675,14 +680,9 @@
 
     fillCommitFriendSelect();
 
-    // mantener estado abierto/cerrado
     const btn = $("btnCommitTools");
-    if(btn){
-      btn.setAttribute("aria-expanded", uiCommitFiltersOpen ? "true" : "false");
-    }
-    if(panel){
-      panel.classList.toggle("show", uiCommitFiltersOpen);
-    }
+    if(btn) btn.setAttribute("aria-expanded", uiCommitFiltersOpen ? "true" : "false");
+    if(panel) panel.classList.toggle("show", uiCommitFiltersOpen);
 
     bindIfNeeded();
   }
@@ -1093,8 +1093,6 @@
 
   /* =========================
      Modales: Compromisos
-     - Retrocompat selector fContact
-     - Modo nuevo: solo input fWho + datalist
   ========================= */
   let editingCommitId = null;
   let modalWhoId = null;
@@ -1145,7 +1143,6 @@
       });
   }
 
-  // ---- modo antiguo
   function fixWhoLabel(){
     try{
       const customField = $("customWhoField");
@@ -1229,7 +1226,6 @@
     return { whoId:null, whoName: normalizeName(whoInput?.value || "") };
   }
 
-  // ---- modo nuevo
   function setModalWhoFromNameInput(){
     const inp = $("fWho");
     if(!inp) return;
@@ -1384,7 +1380,6 @@
       renderAll();
     };
 
-    // MODO ANTIGUO
     if($("fContact")){
       const sel = $("fContact");
       const whoInput = $("fWho");
@@ -1404,7 +1399,6 @@
       return;
     }
 
-    // MODO NUEVO
     setModalWhoFromNameInput();
     const whoResolved = resolveWho_NEW();
 
@@ -1564,7 +1558,7 @@
   }
 
   /* =========================
-     Compartir: TEXTO + enlace #p=
+     Compartir (sin cambios)
   ========================= */
   let shareItem = null;
   let shareMode = "short"; // short | long
@@ -1949,7 +1943,6 @@
 
     migrateAllData();
 
-    // ✅ asegurar pill “En espera” arriba
     ensureWaitingPill();
 
     bindA11yDelegation();
@@ -1973,7 +1966,6 @@
     fixPillsOrder();
     removeBottomInstallText();
 
-    // ✅ título según estado actual
     updateCommitmentsHeading();
 
     renderAll();
