@@ -68,34 +68,13 @@
   }
 
   /* =========================
-     ✅ FIX layout: botón Texto grande arriba derecha SIEMPRE
-     + controles “lupa desplegable” para filtros/búsquedas
+     ✅ CSS SOLO para “lupa desplegable”
+     (IMPORTANTE: NO tocamos topbar/título/pills desde JS)
   ========================= */
-  (function injectUiCss(){
+  (function injectMiniToolsCss(){
     try{
       const st = document.createElement("style");
       st.textContent = `
-        /* Botón arriba derecha, sin romper el título */
-        .topbarInner{
-          grid-template-columns: 1fr auto !important;
-          align-items: start !important;
-        }
-        .topActions{
-          display:flex !important;
-          flex-direction:column !important;
-          align-items:flex-end !important;
-          justify-content:flex-start !important;
-          gap:10px !important;
-        }
-        .pills{
-          justify-content:flex-end !important;
-          flex-wrap:wrap !important;
-        }
-        #btnA11yTop{
-          margin:0 !important;
-        }
-
-        /* Filtros/buscadores tipo “lupa desplegable” */
         .miniTools{
           padding:12px 14px 0;
           display:flex;
@@ -135,15 +114,6 @@
           color:var(--muted);
           font-size:12.5px;
           line-height:1.35;
-        }
-
-        @media (max-width:520px){
-          .topbarInner{
-            grid-template-columns: 1fr auto !important;
-          }
-          .brand{ min-width:0 !important; }
-          .title, .subtitle{ max-width: calc(100vw - 140px) !important; }
-          .pills{ width:auto !important; }
         }
       `;
       document.head.appendChild(st);
@@ -208,9 +178,22 @@
     const bind = (el)=>{
       if(!el) return;
       el.style.pointerEvents = "auto";
-      el.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); toggleTextScale(); }, { passive:false });
-      // en algunos móviles el click se “pierde” si hay scroll: añadimos touchend
-      el.addEventListener("touchend", (e)=>{ e.preventDefault(); e.stopPropagation(); toggleTextScale(); }, { passive:false });
+
+      const fire = (e)=>{
+        try{
+          e.preventDefault();
+          e.stopPropagation();
+        }catch(_){}
+        toggleTextScale();
+      };
+
+      // ✅ ultra robusto (móviles / PWA)
+      el.addEventListener("pointerup", fire, { passive:false });
+      el.addEventListener("click", fire, { passive:false });
+      el.addEventListener("touchend", fire, { passive:false });
+      el.addEventListener("keydown", (e)=>{
+        if(e.key==="Enter" || e.key===" "){ fire(e); }
+      });
     };
 
     bind(top);
@@ -308,10 +291,43 @@
 
   /* =========================
      ✅ UI desplegable: filtros/búsquedas
+     + ocultar “filtro grande” legacy (el del recuadro rojo)
   ========================= */
+  function hideLegacyCommitFilters(paneEl){
+    try{
+      const fields = paneEl.querySelectorAll(".field");
+      fields.forEach((f)=>{
+        const lab = f.querySelector("label");
+        const sel = f.querySelector("select");
+        const inp = f.querySelector("input[type='text'], input[type='search']");
+        const labelTxt = (lab?.textContent || "").trim().toLowerCase();
+
+        // Oculta cualquier bloque “Filtrar por amigo” que NO sea el de nuestro panel (commitFriendSel)
+        if(labelTxt.includes("filtrar por amigo")){
+          if(sel && sel.id !== "commitFriendSel"){
+            f.style.display = "none";
+            const next = f.nextElementSibling;
+            if(next && next.classList.contains("hint")) next.style.display = "none";
+          }
+        }
+
+        // Si hay un buscador “grande” legacy dentro del pane, lo ocultamos
+        if(labelTxt === "buscar" || labelTxt.includes("buscar")){
+          if(inp && inp.id !== "commitSearchTxt"){
+            f.style.display = "none";
+            const next = f.nextElementSibling;
+            if(next && next.classList.contains("hint")) next.style.display = "none";
+          }
+        }
+      });
+    }catch(e){}
+  }
+
   function ensureCommitFiltersUi(){
     const paneEl = $("commitmentsPane");
     if(!paneEl) return;
+
+    hideLegacyCommitFilters(paneEl);
 
     // Si ya existe, no duplicar
     if($("miniCommitTools")) return;
@@ -383,7 +399,6 @@
     });
 
     fillCommitFriendSelect();
-    // aplica estado (cerrado por defecto)
     panel.classList.toggle("show", uiCommitFiltersOpen);
   }
 
