@@ -144,8 +144,10 @@
   let contactsTextFilter = "";    // búsqueda amigos
 
   /* =========================
-     ✅ FIX 1: Texto grande (evitar doble toggle)
-     - Antes se disparaba pointer/click/touch y se alternaba 2 veces => “no funciona”
+     ✅ FIX 1: Texto grande
+     - Problema real: el JS se ejecuta ANTES de que exista el DOM (botón sin listener)
+     - Solución: arrancar todo en DOMContentLoaded + delegación robusta
+     - Además: guard anti doble disparo
   ========================= */
   function applyTextScale(big){
     document.documentElement.style.setProperty("--fs", big ? "18px" : "16px");
@@ -171,7 +173,6 @@
     toast(next ? "🔎 Texto grande: ON" : "🔎 Texto grande: OFF");
   }
 
-  // ✅ guard anti-doble disparo (touch + click)
   const _a11yGuard = { last: 0, lockMs: 420 };
   function guardedToggle(e){
     const now = Date.now();
@@ -182,48 +183,113 @@
     toggleTextScale();
   }
 
-  function bindA11yButtons(){
-    const top = $("btnA11yTop");
-    const inSettings = $("btnA11y");
-
-    const bind = (el)=>{
-      if(!el) return;
-      el.style.pointerEvents = "auto";
-
-      // ✅ SOLO un evento principal + un extra para teclado
-      el.addEventListener("click", guardedToggle, { passive:false });
-      el.addEventListener("touchend", guardedToggle, { passive:false }); // iOS/Android PWA
-      el.addEventListener("keydown", (e)=>{
-        if(e.key==="Enter" || e.key===" "){ guardedToggle(e); }
-      });
+  // ✅ Delegación: funciona aunque el botón se cree/cambie después
+  function bindA11yDelegation(){
+    const matchA11y = (node)=>{
+      if(!node) return null;
+      const el = node.closest?.("#btnA11yTop,#btnA11y,.a11yBtn,[data-a11y='bigtext']");
+      if(!el) return null;
+      const txt = (el.textContent || "").toLowerCase();
+      if(!txt.includes("texto grande") && !txt.includes("texto normal")) return null;
+      return el;
     };
 
-    bind(top);
-    bind(inSettings);
+    const handler = (e)=>{
+      const el = matchA11y(e.target);
+      if(!el) return;
+      guardedToggle(e);
+    };
+
+    // Captura para ganar a cualquier overlay/listener previo
+    document.addEventListener("click", handler, true);
+    document.addEventListener("touchend", handler, true);
+    document.addEventListener("pointerup", handler, true);
+    document.addEventListener("keydown", (e)=>{
+      if(e.key!=="Enter" && e.key!==" ") return;
+      const el = matchA11y(document.activeElement);
+      if(!el) return;
+      guardedToggle(e);
+    }, true);
   }
 
   /* =========================
-     ✅ FIX 2: Cambiar orden Vencidos / Recibidos (sin tocar CSS)
-     - Queremos: Recibidos a la IZQ, Vencidos a la DCHA (centrados como ahora)
+     ✅ FIX 2: Cambiar orden Vencidos / Recibidos
+     - El swap debe ser SIEMPRE: Recibidos izquierda, Vencidos derecha
+     - No dependemos de IDs: detectamos por texto
   ========================= */
   function fixPillsOrder(){
     try{
-      const overdue = $("btnOverdue");
-      const receivedBtn = $("btnReceived");
-      const pills = overdue?.parentElement;
-      if(!pills || !receivedBtn || !overdue) return;
+      const pills = document.querySelector(".pills");
+      if(!pills) return;
 
-      // asegura que ambos están dentro del mismo contenedor
-      if(receivedBtn.parentElement !== pills) return;
+      const children = Array.from(pills.children).filter(el=>el && el.nodeType===1);
+      if(children.length < 2) return;
 
-      // si ahora está [Vencidos][Recibidos], lo dejamos [Recibidos][Vencidos]
-      if(pills.firstElementChild === overdue){
-        pills.insertBefore(receivedBtn, overdue);
+      const findByText = (needle)=>{
+        const n = needle.toLowerCase();
+        return children.find(el => (el.textContent || "").toLowerCase().includes(n)) || null;
+      };
+
+      const elV = findByText("vencid");
+      const elR = findByText("recibid");
+
+      // Si no se encuentran por texto, usamos los dos primeros
+      const a = elR || children[0];
+      const b = elV || children[1];
+
+      // Queremos: [Recibidos][Vencidos]
+      // Si el primero NO es recibidos (o si están al revés), reordenamos
+      const firstTxt = (pills.firstElementChild?.textContent || "").toLowerCase();
+      const ok = firstTxt.includes("recibid");
+      if(!ok){
+        // limpiar y reinsertar en orden deseado
+        if(elR && elV){
+          pills.insertBefore(elR, pills.firstElementChild);
+          pills.appendChild(elV);
+        }else{
+          // swap simple de los dos primeros
+          const x = children[0], y = children[1];
+          pills.insertBefore(y, x);
+        }
       }else{
-        // por si hay nodos extra, igual forzamos el orden correcto
-        pills.insertBefore(receivedBtn, pills.firstElementChild);
-        pills.appendChild(overdue);
+        // Asegura que vencidos queda detrás si existen ambos
+        if(elR && elV && elR.nextElementSibling !== elV){
+          pills.insertBefore(elV, elR.nextElementSibling);
+        }
       }
+    }catch(e){}
+  }
+
+  /* =========================
+     ✅ FIX 3: Quitar texto “Instálala / Consejo”
+     - Lo más seguro: eliminar/ocultar el bloque de instalación (si existe)
+     - Y, por si viene “suelto”, ocultar esos textos exactos
+  ========================= */
+  function removeBottomInstallText(){
+    try{
+      // 1) elimina banner si existe
+      const ban = document.querySelector("#installBanner, .installBanner");
+      if(ban) ban.remove();
+
+      // 2) oculta textos exactos sueltos
+      const candidates = document.querySelectorAll("a,button,div,span,p,li");
+      candidates.forEach(el=>{
+        if(!el || el.children.length) return;
+        const t = (el.textContent || "").trim();
+        if(t === "Instálala" || t === "Consejo"){
+          el.style.display = "none";
+        }
+      });
+
+      // 3) si hay un contenedor que contiene SOLO esas palabras, lo ocultamos
+      const blocks = document.querySelectorAll("div,section,footer,aside");
+      blocks.forEach(el=>{
+        const t = (el.textContent || "").trim().replace(/\s+/g," ");
+        if(!t) return;
+        if((t === "Instálala Consejo") || (t === "Instálala\nConsejo") || (t === "Consejo Instálala")){
+          el.style.display = "none";
+        }
+      });
     }catch(e){}
   }
 
@@ -635,6 +701,10 @@
 
       list.appendChild(card);
     });
+
+    // por si el render cambia el header
+    fixPillsOrder();
+    removeBottomInstallText();
   }
 
   function renderContacts(){
@@ -690,13 +760,17 @@
 
       list.appendChild(card);
     });
+
+    fixPillsOrder();
+    removeBottomInstallText();
   }
 
   function renderAll(){
     renderCommitments();
     renderContacts();
     updateCounts();
-    fixPillsOrder(); // ✅ asegura orden correcto en cada render
+    fixPillsOrder();
+    removeBottomInstallText();
   }
 
   /* =========================
@@ -1396,58 +1470,20 @@
   }
 
   /* =========================
-     ✅ FIX 3: Quitar texto “Instálala / Consejo”
-     - Eliminamos el banner “forzado” que se mostraba siempre
-     - Solo aparece si el navegador lanza beforeinstallprompt
+     ✅ Install banner + service worker
+     - NO mostramos nada “por defecto” y además lo eliminamos si existe.
   ========================= */
   let deferredPrompt = null;
   function bindInstall(){
-    const banner = $("installBanner");
-    const btnHide = $("btnHideBanner");
-    const btnInstallBanner = $("btnInstallBanner");
-    const btnOpenChrome = $("btnOpenChrome");
-    const btnCopyLink = $("btnCopyLink");
+    // Eliminamos cualquier rastro visible desde el arranque
+    removeBottomInstallText();
 
-    if(!banner) return; // si no existe, nada
-
-    const hide = ()=> banner.classList.remove("show");
-    if(btnHide) btnHide.onclick = hide;
-
-    if(btnCopyLink) btnCopyLink.onclick = ()=> copyText(appBaseUrl());
-
-    // ✅ Solo mostrar cuando el navegador lo permita
     window.addEventListener("beforeinstallprompt", (e)=>{
+      // Si quieres reactivar un banner real más adelante, aquí lo hacemos.
+      // Por ahora: lo ignoramos para que no salga “Instálala / Consejo”.
       e.preventDefault();
       deferredPrompt = e;
-
-      banner.classList.add("show");
-      if(btnInstallBanner) btnInstallBanner.style.display = "";
-      if(btnOpenChrome) btnOpenChrome.style.display = "none";
-      if(btnCopyLink) btnCopyLink.style.display = "";
     });
-
-    if(btnInstallBanner){
-      btnInstallBanner.onclick = async ()=>{
-        if(!deferredPrompt) return;
-        deferredPrompt.prompt();
-        try{ await deferredPrompt.userChoice; }catch(e){}
-        deferredPrompt = null;
-        hide();
-      };
-    }
-
-    if(btnOpenChrome){
-      btnOpenChrome.onclick = ()=>{
-        toast("Abre este enlace en Chrome para instalar.");
-        copyText(appBaseUrl());
-      };
-    }
-
-    // ✅ si está ya instalada (standalone), no mostrar nunca
-    try{
-      const isStandalone = window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
-      if(isStandalone) hide();
-    }catch(e){}
 
     if("serviceWorker" in navigator){
       navigator.serviceWorker.register("sw.js").catch(()=>{});
@@ -1455,7 +1491,7 @@
   }
 
   /* =========================
-     Boot
+     Boot (DOM READY)
   ========================= */
   (function normalizeContacts(){
     let changed = false;
@@ -1466,27 +1502,38 @@
     if(changed) save(CONTACTS_KEY, contacts);
   })();
 
-  const a11y = load(A11Y_KEY, { big:false });
-  applyTextScale(!!a11y.big);
+  function start(){
+    // aplica accesibilidad guardada
+    const a11y = load(A11Y_KEY, { big:false });
+    applyTextScale(!!a11y.big);
 
-  bindA11yButtons();
-  bindNav();
-  bindFab();
-  bindCommitModal();
-  bindContactModal();
-  bindShare();
-  bindSettings();
-  bindInstall();
+    // listeners robustos
+    bindA11yDelegation();
+    bindNav();
+    bindFab();
+    bindCommitModal();
+    bindContactModal();
+    bindShare();
+    bindSettings();
+    bindInstall();
 
-  // importar si viene paquete en hash
-  importFromHash();
+    // importar si viene paquete en hash
+    importFromHash();
 
-  // refresca selects de filtro
-  fillCommitFriendSelect();
+    // refresca selects de filtro
+    fillCommitFriendSelect();
 
-  // ✅ orden de pills desde el arranque
-  fixPillsOrder();
+    // orden y limpieza visual
+    fixPillsOrder();
+    removeBottomInstallText();
 
-  renderAll();
+    renderAll();
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", start, { once:true });
+  }else{
+    start();
+  }
 
 })();
