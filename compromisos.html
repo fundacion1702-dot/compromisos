@@ -309,8 +309,17 @@
         </div>
 
         <div class="field" id="customWhoField" style="display:none">
-          <label class="label" for="fWho">Nombre (sin guardar)</label>
-          <input id="fWho" type="text" placeholder="Ej: Laura / Mamá / Juan (del trabajo)" autocomplete="off"/>
+          <!-- ✅ pedido: quitar “(sin guardar)” -->
+          <label class="label" for="fWho">Nombre</label>
+
+          <!-- ✅ lista/autocomplete nativa (se rellena por JS con tus Amigos) -->
+          <input id="fWho"
+                 type="text"
+                 placeholder="Ej: Laura / Mamá / Juan (del trabajo)"
+                 autocomplete="off"
+                 list="friendsDatalist"/>
+
+          <datalist id="friendsDatalist"></datalist>
         </div>
 
         <div class="field">
