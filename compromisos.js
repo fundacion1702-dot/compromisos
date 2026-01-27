@@ -400,8 +400,8 @@
     view = newView;
 
     const a = $("tabPending");
-    const w = $("tabWaiting"); // puede no existir aún
-    const c = $("tabDone");    // lo reutilizamos como Cerrados
+    const w = $("tabWaiting");
+    const c = $("tabDone");
 
     if(a) a.classList.toggle("active", view==="pending");
     if(w) w.classList.toggle("active", view==="waiting");
@@ -415,8 +415,16 @@
     if($("tabContacts")) $("tabContacts").onclick = ()=> setPane("contacts");
 
     if($("tabPending")) $("tabPending").onclick = ()=> setView("pending");
-    if($("tabWaiting")) $("tabWaiting").onclick = ()=> setView("waiting"); // opcional
-    if($("tabDone")) $("tabDone").onclick = ()=> setView("closed"); // Cerrados
+    if($("tabWaiting")) $("tabWaiting").onclick = ()=> setView("waiting");
+    if($("tabDone")) $("tabDone").onclick = ()=> setView("closed");
+
+    // ✅ NUEVO: botón ⚙️ arriba a la derecha => Ajustes
+    const gear = $("btnSettingsGear");
+    if(gear){
+      gear.addEventListener("click", ()=>{
+        setPane("settings");
+      });
+    }
 
     // Tiles (menú)
     const bindTile = (id, fn)=>{
@@ -428,9 +436,10 @@
       });
     };
     bindTile("tilePending", ()=>{ setPane("commitments"); setView("pending"); });
-    bindTile("tileWaiting", ()=>{ setPane("commitments"); setView("waiting"); }); // opcional
+    bindTile("tileWaiting", ()=>{ setPane("commitments"); setView("waiting"); });
     bindTile("tileDone", ()=>{ setPane("commitments"); setView("closed"); });
     bindTile("tileContacts", ()=>{ setPane("contacts"); });
+    // (tileSettings puede no existir; dejamos compat)
     bindTile("tileSettings", ()=>{ setPane("settings"); });
 
     // Pills
@@ -1112,8 +1121,6 @@
 
   /* =========================
      ✅ MODO NUEVO: solo input “Nombre”
-     - input id esperado: fWho
-     - datalist id esperado: friendsDatalist (o friendsList)
   ========================= */
   function setModalWhoFromNameInput(){
     const inp = $("fWho");
@@ -1127,7 +1134,6 @@
     const match = findContactByName(raw);
     if(match){
       modalWhoId = match.id;
-      // no toast agresivo mientras escribes; solo si viene de change/selección
     }else{
       modalWhoId = null;
     }
@@ -1145,14 +1151,12 @@
     }
     inp.value = whoName || "";
     modalWhoId = null;
-    // por si el nombre coincide exacto con un amigo, lo marcamos:
     setModalWhoFromNameInput();
   }
 
   function resolveWho_NEW(){
     const inp = $("fWho");
     const raw = normalizeName(inp?.value || "");
-    // Si coincide exacto, whoId gana
     if(modalWhoId){
       return { whoId: modalWhoId, whoName: "" };
     }
@@ -1262,11 +1266,30 @@
             afterMin,
             updatedAt: now
           });
+          save(KEY, data);
+          toast("✍️ Compromiso editado");
+          closeCommitModal();
+          openShareModal(data[idx]);
+        }else{
+          // ultra-safe: si no existe (raro), lo tratamos como nuevo
+          const item = normalizeStatus({
+            id: uid(),
+            whoId: who.whoId,
+            whoName: who.whoName,
+            what,
+            when: whenIso,
+            remindMin,
+            afterMin,
+            status:"pending",
+            createdAt: now,
+            updatedAt: null
+          });
+          data = [item, ...data];
+          save(KEY, data);
+          toast("✅ Compromiso creado");
+          closeCommitModal();
+          openShareModal(item);
         }
-        save(KEY, data);
-        toast("✍️ Compromiso editado");
-        closeCommitModal();
-        openShareModal(data[idx]);
       }else{
         const item = normalizeStatus({
           id: uid(),
@@ -1306,7 +1329,6 @@
         return;
       }
 
-      // modo amigo seleccionado normal
       proceedSave(resolveWho_OLD());
       return;
     }
@@ -1315,7 +1337,6 @@
     setModalWhoFromNameInput();
     const whoResolved = resolveWho_NEW();
 
-    // Si NO hay whoId, preguntamos si guardar amigo (si hay nombre)
     if(!whoResolved.whoId){
       const raw = whoResolved.whoName || "";
       proceedMaybeSaveNewFriend(
@@ -1361,15 +1382,13 @@
       });
     }
 
-    // ✅ input Nombre: en modo nuevo o para el custom del modo antiguo
+    // ✅ input Nombre
     const who = $("fWho");
     if(who){
       who.addEventListener("input", ()=>{
         if($("fContact")){
-          // modo antiguo: autoselect si coincide exacto
           tryAutoSelectFriendFromWhoInput_OLD();
         }else{
-          // modo nuevo
           setModalWhoFromNameInput();
         }
       });
@@ -1378,7 +1397,6 @@
           tryAutoSelectFriendFromWhoInput_OLD();
         }else{
           setModalWhoFromNameInput();
-          // si eligió de la lista, mostramos feedback suave
           if(modalWhoId){
             const c = getContactById(modalWhoId);
             if(c?.name) toast(`👥 Marcado: ${c.name}`);
@@ -1503,7 +1521,6 @@
         remindMin: Number(item.remindMin||0) || 0,
         afterMin: Number(item.afterMin||0) || 0,
         createdAt: new Date().toISOString()
-        // status NO se sincroniza aún (fase 1: local)
       }
     };
   }
@@ -1577,6 +1594,7 @@
   }
 
   function openShareModal(item){
+    if(!item) return;
     shareItem = item;
     shareMode = "short";
 
