@@ -309,16 +309,13 @@
         </div>
 
         <div class="field" id="customWhoField" style="display:none">
-          <!-- ✅ pedido: quitar “(sin guardar)” -->
           <label class="label" for="fWho">Nombre</label>
-
-          <!-- ✅ lista/autocomplete nativa (se rellena por JS con tus Amigos) -->
           <input id="fWho"
                  type="text"
                  placeholder="Ej: Laura / Mamá / Juan (del trabajo)"
                  autocomplete="off"
                  list="friendsDatalist"/>
-
+          <!-- ✅ datalist: aquí se rellenará desde compromisos.js -->
           <datalist id="friendsDatalist"></datalist>
         </div>
 
