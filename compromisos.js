@@ -68,14 +68,40 @@
   }
 
   /* =========================
-     ✅ CSS extra: tools + tabs + topbar NO fija + gear debajo de texto grande
+     ✅ CSS de soporte (layout + lupa + fixes)
   ========================= */
   (function injectMiniToolsCss(){
     try{
       const st = document.createElement("style");
       st.textContent = `
+        /* ✅ Topbar NO fija (que se mueva con scroll) */
+        .topbar{ position: static !important; top:auto !important; }
+        .topbarInner{ position: static !important; }
+
+        /* ✅ Pills más pegadas arriba */
+        .pills{ margin-top: 0 !important; }
+
+        /* ✅ Recolocar topActions: Texto grande arriba derecha y ⚙️ debajo */
+        .topActions{
+          display:grid !important;
+          grid-template-columns: 1fr auto;
+          grid-template-rows: auto auto;
+          column-gap: 12px;
+          row-gap: 6px;
+          align-items: center;
+        }
+        #btnA11yTop{ grid-column: 2; grid-row: 1; justify-self:end; }
+        .pills{ grid-column: 1; grid-row: 2; justify-self:center; }
+        #btnSettingsGear{ grid-column: 2; grid-row: 2; justify-self:end; align-self:end; }
+
+        /* ✅ Evitar que la barra de estados “se coma” el último botón (Cerrados) */
+        .sectionHead{ flex-wrap: wrap !important; gap: 10px !important; }
+        .segTabs{ flex-wrap: wrap !important; gap: 8px !important; justify-content:flex-end !important; }
+        .segBtn{ white-space: nowrap !important; }
+
+        /* ✅ Botón buscar/filtrar “como al principio” (debajo del header, a la derecha) */
         .miniTools{
-          padding:12px 14px 0;
+          padding:10px 14px 0;
           display:flex;
           justify-content:flex-end;
         }
@@ -115,47 +141,6 @@
           line-height:1.35;
         }
         .chip.status{ font-weight:900; }
-
-        /* ✅ Topbar NO fija (se mueve con el scroll) */
-        .topbar{
-          position: static !important;
-          top:auto !important;
-        }
-        body{ padding-top:0 !important; }
-        .wrap{ padding-top:0 !important; }
-
-        /* ✅ Tabs no se cortan: wrap + scroll suave */
-        .sectionHead{
-          flex-wrap: wrap !important;
-          gap: 10px !important;
-        }
-        .segTabs{
-          max-width: 100%;
-          overflow-x: auto;
-          -webkit-overflow-scrolling: touch;
-          scrollbar-width: none;
-        }
-        .segTabs::-webkit-scrollbar{ display:none; }
-        .segTabs .segBtn{
-          flex: 0 0 auto !important;
-          white-space: nowrap !important;
-        }
-
-        /* ✅ Rueda ⚙️ debajo de Texto grande, a la derecha */
-        .topActions{
-          flex-wrap: wrap !important;
-          gap: 10px !important;
-          align-items: center;
-        }
-        #btnSettingsGear{
-          flex-basis: 100% !important;
-          margin-left: auto !important;
-          align-self: flex-end !important;
-        }
-        .topActions .pills{
-          width: 100%;
-          justify-content: center;
-        }
       `;
       document.head.appendChild(st);
     }catch(e){}
@@ -176,6 +161,7 @@
 
   let pane = "commitments"; // commitments | contacts | settings
   let view = "pending";     // pending | waiting | closed
+  let lastCommitView = "pending";
 
   // ✅ filtros/búsquedas (desplegable)
   let uiCommitFiltersOpen = false;
@@ -185,12 +171,8 @@
   let commitTextFilter = "";      // búsqueda en texto / quién
   let contactsTextFilter = "";    // búsqueda amigos
 
-  // ✅ para toggle de Ajustes
-  let lastPaneBeforeSettings = "commitments";
-  let lastViewBeforeSettings = "pending";
-
   /* =========================
-     ✅ Migración de datos: done -> status
+     ✅ Migración: done -> status
      status: pending | waiting | closed
   ========================= */
   function normalizeStatus(it){
@@ -291,7 +273,7 @@
   }
 
   /* =========================
-     ✅ Click en logo/título => ir a pantalla principal
+     Click en logo/título => home
   ========================= */
   function bindBrandHome(){
     const brand = document.querySelector(".brand");
@@ -338,8 +320,39 @@
   }
 
   /* =========================
-     ✅ Orden pills + limpieza “Instálala/Consejo”
+     Orden pills (Recibidos, En espera, Vencidos)
   ========================= */
+  function ensureWaitingPill(){
+    try{
+      const pills = document.querySelector(".pills");
+      if(!pills) return;
+
+      // si ya existe, no tocar
+      if($("btnWaitingTop")) return;
+
+      const btn = document.createElement("button");
+      btn.className = "pillBtn";
+      btn.id = "btnWaitingTop";
+      btn.type = "button";
+      btn.title = "En espera";
+      btn.innerHTML = `
+        <span class="pillDot" aria-hidden="true"></span>
+        <span>En espera</span>
+        <span class="pillCount" id="bWaiting">0</span>
+      `;
+
+      // Insertar al inicio (izquierda)
+      pills.insertBefore(btn, pills.firstElementChild || null);
+
+      btn.addEventListener("click", ()=>{
+        setPane("commitments");
+        setView("waiting");
+        const w = data.filter(x=>x.status==="waiting").length;
+        toast(w ? `⏳ En espera: ${w}` : "Nada en espera");
+      });
+    }catch(e){}
+  }
+
   function fixPillsOrder(){
     try{
       const pills = document.querySelector(".pills");
@@ -348,32 +361,26 @@
       const children = Array.from(pills.children).filter(el=>el && el.nodeType===1);
       if(children.length < 2) return;
 
-      const findByText = (needle)=>{
-        const n = needle.toLowerCase();
-        return children.find(el => (el.textContent || "").toLowerCase().includes(n)) || null;
-      };
+      // Queremos: En espera (si existe) / Recibidos / Vencidos
+      const get = (id)=> pills.querySelector("#"+id);
+      const w = get("btnWaitingTop");
+      const r = get("btnReceived");
+      const v = get("btnOverdue");
 
-      const elV = findByText("vencid");
-      const elR = findByText("recibid");
+      if(w) pills.appendChild(w);
+      if(r) pills.appendChild(r);
+      if(v) pills.appendChild(v);
 
-      const firstTxt = (pills.firstElementChild?.textContent || "").toLowerCase();
-      const ok = firstTxt.includes("recibid");
-      if(!ok){
-        if(elR && elV){
-          pills.insertBefore(elR, pills.firstElementChild);
-          pills.appendChild(elV);
-        }else{
-          const x = children[0], y = children[1];
-          pills.insertBefore(y, x);
-        }
-      }else{
-        if(elR && elV && elR.nextElementSibling !== elV){
-          pills.insertBefore(elV, elR.nextElementSibling);
-        }
-      }
+      // Ahora reordenamos al final en el orden correcto
+      // (appendChild mueve el nodo si ya existe)
+      if(w) pills.insertBefore(w, pills.firstElementChild);
+      if(r) pills.insertBefore(r, v || null);
     }catch(e){}
   }
 
+  /* =========================
+     Quitar “Instálala / Consejo”
+  ========================= */
   function removeBottomInstallText(){
     try{
       const ban = document.querySelector("#installBanner, .installBanner");
@@ -400,7 +407,7 @@
   }
 
   /* =========================
-     Navegación panes/vistas
+     Navegación panes
   ========================= */
   function safeShow(el, show){
     if(!el) return;
@@ -429,12 +436,41 @@
       }
     }
 
-    renderAll();
+    // si vuelves a compromisos, restaura la vista anterior
+    if(pane === "commitments"){
+      setView(lastCommitView || "pending");
+    }else{
+      renderAll();
+    }
+
     try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
+  }
+
+  function titleForView(v){
+    if(v==="waiting") return "En espera";
+    if(v==="closed") return "Cerrados";
+    return "Pendientes";
+  }
+
+  function updateCommitmentsHeading(){
+    try{
+      const paneEl = $("commitmentsPane");
+      if(!paneEl) return;
+      const h2 = paneEl.querySelector(".sectionHead h2");
+      if(h2) h2.textContent = titleForView(view);
+
+      const p = paneEl.querySelector(".sectionHead p");
+      if(p){
+        if(view==="pending") p.textContent = "Por hacer (lo tengo yo pendiente).";
+        else if(view==="waiting") p.textContent = "Yo ya respondí; queda pendiente la otra persona.";
+        else p.textContent = "Finalizados / ya no requieren nada.";
+      }
+    }catch(e){}
   }
 
   function setView(newView){
     view = newView;
+    if(pane === "commitments") lastCommitView = newView;
 
     const a = $("tabPending");
     const w = $("tabWaiting");
@@ -444,40 +480,28 @@
     if(w) w.classList.toggle("active", view==="waiting");
     if(c) c.classList.toggle("active", view==="closed");
 
+    updateCommitmentsHeading();
     renderCommitments();
   }
 
   /* =========================
-     ✅ Pills: añadir “En espera” si no existe + navegación
+     ✅ Botón ⚙️: abrir/cerrar ajustes
   ========================= */
-  function ensureWaitingPill(){
-    const pills = document.querySelector(".pills");
-    if(!pills) return;
+  function bindSettingsGear(){
+    const gear = $("btnSettingsGear");
+    if(!gear) return;
 
-    if($("btnWaiting")) return;
+    if(gear.dataset.bound === "1") return;
+    gear.dataset.bound = "1";
 
-    const btn = document.createElement("button");
-    btn.className = "pillBtn";
-    btn.id = "btnWaiting";
-    btn.type = "button";
-    btn.title = "En espera";
-    btn.innerHTML = `
-      <span class="pillDot" aria-hidden="true"></span>
-      <span>En espera</span>
-      <span class="pillCount" id="bWaiting">0</span>
-    `;
-
-    const r = $("btnReceived");
-    const v = $("btnOverdue");
-    if(r && r.parentElement === pills){
-      if(v && v.parentElement === pills){
-        pills.insertBefore(btn, v);
-      }else{
-        pills.appendChild(btn);
+    gear.addEventListener("click", ()=>{
+      // toggle: si ya estás en ajustes, volver a compromisos
+      if(pane === "settings"){
+        setPane("commitments");
+        return;
       }
-    }else{
-      pills.insertBefore(btn, pills.firstChild || null);
-    }
+      setPane("settings");
+    });
   }
 
   function bindNav(){
@@ -503,26 +527,7 @@
     bindTile("tileContacts", ()=>{ setPane("contacts"); });
     bindTile("tileSettings", ()=>{ setPane("settings"); });
 
-    // ✅ Gear: toggle ajustes
-    const gear = $("btnSettingsGear");
-    if(gear){
-      gear.addEventListener("click", ()=>{
-        if(pane === "settings"){
-          const backPane = lastPaneBeforeSettings || "commitments";
-          setPane(backPane);
-          if(backPane === "commitments"){
-            setView(lastViewBeforeSettings || "pending");
-          }
-          return;
-        }
-        // guardar estado actual antes de abrir ajustes
-        lastPaneBeforeSettings = pane || "commitments";
-        lastViewBeforeSettings = view || "pending";
-        setPane("settings");
-      });
-    }
-
-    // Pills
+    // Pills (Recibidos / Vencidos / En espera)
     if($("btnOverdue")){
       $("btnOverdue").addEventListener("click", ()=>{
         setPane("commitments");
@@ -539,18 +544,10 @@
         toast(c ? `📥 Recibidos: ${c}` : "Sin recibidos");
       });
     }
-    document.addEventListener("click", (e)=>{
-      const t = e.target?.closest?.("#btnWaiting");
-      if(!t) return;
-      setPane("commitments");
-      setView("waiting");
-      const w = data.filter(x=>x.status==="waiting").length;
-      toast(w ? `⏳ En espera: ${w}` : "Sin 'En espera'");
-    }, true);
   }
 
   /* =========================
-     ✅ UI desplegable: filtros/búsquedas (botón vuelve a su sitio original)
+     ✅ UI desplegable: Buscar / Filtrar (ARREGLADO)
   ========================= */
   function hideLegacyCommitFilters(paneEl){
     try{
@@ -586,83 +583,108 @@
 
     hideLegacyCommitFilters(paneEl);
 
-    // ya existe
-    if($("commitToolsPanel") && $("miniCommitTools")){
-      fillCommitFriendSelect();
-      $("commitToolsPanel").classList.toggle("show", uiCommitFiltersOpen);
+    let tools = $("miniCommitTools");
+    let panel = $("commitToolsPanel");
+
+    // si existen pero perdieron listeners, los re-bindeamos una vez
+    const bindIfNeeded = ()=>{
       const btn = $("btnCommitTools");
-      if(btn) btn.setAttribute("aria-expanded", uiCommitFiltersOpen ? "true" : "false");
-      return;
+      if(!btn || !panel) return;
+      if(btn.dataset.bound === "1") return;
+      btn.dataset.bound = "1";
+
+      btn.addEventListener("click", (e)=>{
+        e.preventDefault();
+        uiCommitFiltersOpen = !uiCommitFiltersOpen;
+        btn.setAttribute("aria-expanded", uiCommitFiltersOpen ? "true" : "false");
+        panel.classList.toggle("show", uiCommitFiltersOpen);
+        if(uiCommitFiltersOpen){
+          setTimeout(()=>{ try{ $("commitSearchTxt").focus(); }catch(_){} }, 0);
+        }
+      });
+
+      const clearBtn = $("commitClearBtn");
+      if(clearBtn && clearBtn.dataset.bound !== "1"){
+        clearBtn.dataset.bound = "1";
+        clearBtn.addEventListener("click", ()=>{
+          commitFriendFilter = "all";
+          commitTextFilter = "";
+          fillCommitFriendSelect();
+          const inp = $("commitSearchTxt");
+          if(inp) inp.value = "";
+          renderCommitments();
+        });
+      }
+
+      const txt = $("commitSearchTxt");
+      if(txt && txt.dataset.bound !== "1"){
+        txt.dataset.bound = "1";
+        txt.addEventListener("input", ()=>{
+          commitTextFilter = (txt.value || "").trim();
+          renderCommitments();
+        });
+      }
+
+      const sel = $("commitFriendSel");
+      if(sel && sel.dataset.bound !== "1"){
+        sel.dataset.bound = "1";
+        sel.addEventListener("change", ()=>{
+          commitFriendFilter = sel.value || "all";
+          renderCommitments();
+        });
+      }
+    };
+
+    if(!tools){
+      const head = paneEl.querySelector(".sectionHead");
+      if(!head) return;
+
+      tools = document.createElement("div");
+      tools.className = "miniTools";
+      tools.id = "miniCommitTools";
+      tools.innerHTML = `
+        <button class="miniBtn" id="btnCommitTools" type="button" aria-expanded="false">
+          🔍 Buscar / Filtrar
+        </button>
+      `;
+
+      panel = document.createElement("div");
+      panel.className = "miniPanel";
+      panel.id = "commitToolsPanel";
+      panel.innerHTML = `
+        <div class="miniRow">
+          <div class="field">
+            <label class="label" for="commitFriendSel">Filtrar por amigo</label>
+            <select id="commitFriendSel"></select>
+          </div>
+          <div class="field">
+            <label class="label" for="commitSearchTxt">Buscar</label>
+            <input id="commitSearchTxt" type="text" placeholder="Ej: Ana / PDF / 20€" autocomplete="off"/>
+          </div>
+          <div class="field" style="flex:0 0 auto; min-width:auto;">
+            <label class="label" style="opacity:0;">.</label>
+            <button class="btn" id="commitClearBtn" type="button">🧹 Limpiar</button>
+          </div>
+        </div>
+        <div class="miniHint">Se aplica sobre la lista actual (<b>Pendientes</b>, <b>En espera</b> o <b>Cerrados</b>).</div>
+      `;
+
+      head.insertAdjacentElement("afterend", tools);
+      tools.insertAdjacentElement("afterend", panel);
     }
 
-    const head = paneEl.querySelector(".sectionHead");
-    if(!head) return;
-
-    // ✅ botón en su sitio: justo bajo sectionHead
-    const tools = document.createElement("div");
-    tools.className = "miniTools";
-    tools.id = "miniCommitTools";
-    tools.innerHTML = `
-      <button class="miniBtn" id="btnCommitTools" type="button" aria-expanded="false">
-        🔍 Buscar / Filtrar
-      </button>
-    `;
-
-    const panel = document.createElement("div");
-    panel.className = "miniPanel";
-    panel.id = "commitToolsPanel";
-    panel.innerHTML = `
-      <div class="miniRow">
-        <div class="field">
-          <label class="label" for="commitFriendSel">Filtrar por amigo</label>
-          <select id="commitFriendSel"></select>
-        </div>
-        <div class="field">
-          <label class="label" for="commitSearchTxt">Buscar</label>
-          <input id="commitSearchTxt" type="text" placeholder="Ej: Ana / PDF / 20€" autocomplete="off"/>
-        </div>
-        <div class="field" style="flex:0 0 auto; min-width:auto;">
-          <label class="label" style="opacity:0;">.</label>
-          <button class="btn" id="commitClearBtn" type="button">🧹 Limpiar</button>
-        </div>
-      </div>
-      <div class="miniHint">Se aplica sobre la lista actual (<b>Pendientes</b>, <b>En espera</b> o <b>Cerrados</b>).</div>
-    `;
-
-    head.insertAdjacentElement("afterend", tools);
-    tools.insertAdjacentElement("afterend", panel);
-
-    const btn = $("btnCommitTools");
-    btn.addEventListener("click", ()=>{
-      uiCommitFiltersOpen = !uiCommitFiltersOpen;
-      btn.setAttribute("aria-expanded", uiCommitFiltersOpen ? "true" : "false");
-      panel.classList.toggle("show", uiCommitFiltersOpen);
-      if(uiCommitFiltersOpen){
-        setTimeout(()=>{ try{ $("commitSearchTxt").focus(); }catch(e){} }, 0);
-      }
-    });
-
-    $("commitClearBtn").addEventListener("click", ()=>{
-      commitFriendFilter = "all";
-      commitTextFilter = "";
-      fillCommitFriendSelect();
-      const inp = $("commitSearchTxt");
-      if(inp) inp.value = "";
-      renderCommitments();
-    });
-
-    $("commitSearchTxt").addEventListener("input", ()=>{
-      commitTextFilter = ($("commitSearchTxt").value || "").trim();
-      renderCommitments();
-    });
-
-    $("commitFriendSel").addEventListener("change", ()=>{
-      commitFriendFilter = $("commitFriendSel").value || "all";
-      renderCommitments();
-    });
-
     fillCommitFriendSelect();
-    panel.classList.toggle("show", uiCommitFiltersOpen);
+
+    // mantener estado abierto/cerrado
+    const btn = $("btnCommitTools");
+    if(btn){
+      btn.setAttribute("aria-expanded", uiCommitFiltersOpen ? "true" : "false");
+    }
+    if(panel){
+      panel.classList.toggle("show", uiCommitFiltersOpen);
+    }
+
+    bindIfNeeded();
   }
 
   function fillCommitFriendSelect(){
@@ -697,63 +719,68 @@
     const paneEl = $("contactsPane");
     if(!paneEl) return;
 
-    if($("miniContactsTools")) return;
+    if(!$("miniContactsTools")){
+      const head = paneEl.querySelector(".sectionHead");
+      if(!head) return;
 
-    const head = paneEl.querySelector(".sectionHead");
-    if(!head) return;
+      const tools = document.createElement("div");
+      tools.className = "miniTools";
+      tools.id = "miniContactsTools";
+      tools.innerHTML = `
+        <button class="miniBtn" id="btnContactsTools" type="button" aria-expanded="false">
+          🔍 Buscar amigos
+        </button>
+      `;
 
-    const tools = document.createElement("div");
-    tools.className = "miniTools";
-    tools.id = "miniContactsTools";
-    tools.innerHTML = `
-      <button class="miniBtn" id="btnContactsTools" type="button" aria-expanded="false">
-        🔍 Buscar amigos
-      </button>
-    `;
-
-    const panel = document.createElement("div");
-    panel.className = "miniPanel";
-    panel.id = "contactsToolsPanel";
-    panel.innerHTML = `
-      <div class="miniRow">
-        <div class="field">
-          <label class="label" for="contactsSearchTxt">Buscar</label>
-          <input id="contactsSearchTxt" type="text" placeholder="Ej: Ana / Trabajo" autocomplete="off"/>
+      const panel = document.createElement("div");
+      panel.className = "miniPanel";
+      panel.id = "contactsToolsPanel";
+      panel.innerHTML = `
+        <div class="miniRow">
+          <div class="field">
+            <label class="label" for="contactsSearchTxt">Buscar</label>
+            <input id="contactsSearchTxt" type="text" placeholder="Ej: Ana / Trabajo" autocomplete="off"/>
+          </div>
+          <div class="field" style="flex:0 0 auto; min-width:auto;">
+            <label class="label" style="opacity:0;">.</label>
+            <button class="btn" id="contactsClearBtn" type="button">🧹 Limpiar</button>
+          </div>
         </div>
-        <div class="field" style="flex:0 0 auto; min-width:auto;">
-          <label class="label" style="opacity:0;">.</label>
-          <button class="btn" id="contactsClearBtn" type="button">🧹 Limpiar</button>
-        </div>
-      </div>
-      <div class="miniHint">Busca por nombre o nota del amigo.</div>
-    `;
+        <div class="miniHint">Busca por nombre o nota del amigo.</div>
+      `;
 
-    head.insertAdjacentElement("afterend", tools);
-    tools.insertAdjacentElement("afterend", panel);
+      head.insertAdjacentElement("afterend", tools);
+      tools.insertAdjacentElement("afterend", panel);
+    }
 
     const btn = $("btnContactsTools");
-    btn.addEventListener("click", ()=>{
-      uiContactsSearchOpen = !uiContactsSearchOpen;
-      btn.setAttribute("aria-expanded", uiContactsSearchOpen ? "true" : "false");
-      panel.classList.toggle("show", uiContactsSearchOpen);
-      if(uiContactsSearchOpen){
-        setTimeout(()=>{ try{ $("contactsSearchTxt").focus(); }catch(e){} }, 0);
-      }
-    });
+    const panel = $("contactsToolsPanel");
+    if(btn && panel && btn.dataset.bound !== "1"){
+      btn.dataset.bound = "1";
+      btn.addEventListener("click", ()=>{
+        uiContactsSearchOpen = !uiContactsSearchOpen;
+        btn.setAttribute("aria-expanded", uiContactsSearchOpen ? "true" : "false");
+        panel.classList.toggle("show", uiContactsSearchOpen);
+        if(uiContactsSearchOpen){
+          setTimeout(()=>{ try{ $("contactsSearchTxt").focus(); }catch(_){} }, 0);
+        }
+      });
 
-    $("contactsClearBtn").addEventListener("click", ()=>{
-      contactsTextFilter = "";
-      const inp = $("contactsSearchTxt");
-      if(inp) inp.value = "";
-      renderContacts();
-    });
+      $("contactsClearBtn").addEventListener("click", ()=>{
+        contactsTextFilter = "";
+        const inp = $("contactsSearchTxt");
+        if(inp) inp.value = "";
+        renderContacts();
+      });
 
-    $("contactsSearchTxt").addEventListener("input", ()=>{
-      contactsTextFilter = ($("contactsSearchTxt").value || "").trim();
-      renderContacts();
-    });
+      $("contactsSearchTxt").addEventListener("input", ()=>{
+        contactsTextFilter = ($("contactsSearchTxt").value || "").trim();
+        renderContacts();
+      });
+    }
 
-    panel.classList.toggle("show", uiContactsSearchOpen);
+    if(btn) btn.setAttribute("aria-expanded", uiContactsSearchOpen ? "true" : "false");
+    if(panel) panel.classList.toggle("show", uiContactsSearchOpen);
   }
 
   /* =========================
@@ -826,8 +853,8 @@
   }
 
   function renderCommitments(){
-    ensureWaitingPill();
     ensureCommitFiltersUi();
+    updateCommitmentsHeading();
     updateCounts();
 
     const list = $("list");
@@ -867,9 +894,7 @@
 
       const stChip = `<span class="chip status">${esc(statusLabel(it.status))}</span>`;
 
-      const btnPrimary =
-        it.status==="closed" ? "↩️ Reabrir" : "✅ Cerrar";
-
+      const btnPrimary = it.status==="closed" ? "↩️ Reabrir" : "✅ Cerrar";
       const btnSecondary =
         it.status==="pending" ? "⏳ En espera" :
         it.status==="waiting" ? "🟣 Pendiente" :
@@ -1021,7 +1046,7 @@
   }
 
   /* =========================
-     FAB + binds base
+     FAB
   ========================= */
   function bindFab(){
     const fab = $("fab");
@@ -1068,6 +1093,8 @@
 
   /* =========================
      Modales: Compromisos
+     - Retrocompat selector fContact
+     - Modo nuevo: solo input fWho + datalist
   ========================= */
   let editingCommitId = null;
   let modalWhoId = null;
@@ -1104,7 +1131,6 @@
   function fillFriendsDatalist(){
     const dl = $("friendsDatalist") || $("friendsList");
     if(!dl) return;
-
     dl.innerHTML = "";
 
     contacts
@@ -1119,13 +1145,16 @@
       });
   }
 
+  // ---- modo antiguo
   function fixWhoLabel(){
     try{
       const customField = $("customWhoField");
       if(!customField) return;
       const lab = customField.querySelector("label");
       if(!lab) return;
-      lab.textContent = "Nombre";
+      if(/nombre/i.test((lab.textContent||"").trim())){
+        lab.textContent = "Nombre";
+      }
     }catch(e){}
   }
 
@@ -1200,15 +1229,13 @@
     return { whoId:null, whoName: normalizeName(whoInput?.value || "") };
   }
 
+  // ---- modo nuevo
   function setModalWhoFromNameInput(){
     const inp = $("fWho");
     if(!inp) return;
 
     const raw = normalizeName(inp.value || "");
-    if(!raw){
-      modalWhoId = null;
-      return;
-    }
+    if(!raw){ modalWhoId = null; return; }
     const match = findContactByName(raw);
     modalWhoId = match ? match.id : null;
   }
@@ -1231,9 +1258,7 @@
   function resolveWho_NEW(){
     const inp = $("fWho");
     const raw = normalizeName(inp?.value || "");
-    if(modalWhoId){
-      return { whoId: modalWhoId, whoName: "" };
-    }
+    if(modalWhoId) return { whoId: modalWhoId, whoName: "" };
     return { whoId:null, whoName: raw };
   }
 
@@ -1275,15 +1300,9 @@
   }
 
   function proceedMaybeSaveNewFriend(rawName, onLinked, onCustom){
-    if(!rawName){
-      onCustom();
-      return;
-    }
+    if(!rawName){ onCustom(); return; }
     const existing = findContactByName(rawName);
-    if(existing){
-      onLinked(existing);
-      return;
-    }
+    if(existing){ onLinked(existing); return; }
 
     openConfirm(
       "¿Guardar nuevo amigo?",
@@ -1300,9 +1319,7 @@
         onLinked(newC);
       },
       "No, solo para este",
-      ()=>{
-        onCustom();
-      }
+      ()=> onCustom()
     );
   }
 
@@ -1367,6 +1384,7 @@
       renderAll();
     };
 
+    // MODO ANTIGUO
     if($("fContact")){
       const sel = $("fContact");
       const whoInput = $("fWho");
@@ -1386,6 +1404,7 @@
       return;
     }
 
+    // MODO NUEVO
     setModalWhoFromNameInput();
     const whoResolved = resolveWho_NEW();
 
@@ -1427,22 +1446,23 @@
     if($("btnSave")) $("btnSave").onclick = saveCommitFromForm;
 
     const sel = $("fContact");
-    if(sel){
+    if(sel && sel.dataset.bound !== "1"){
+      sel.dataset.bound = "1";
       sel.addEventListener("change", ()=>{
         rebuildContactSelect(sel.value === "__custom__" ? null : sel.value, ($("fWho")?.value || ""));
       });
     }
 
     const who = $("fWho");
-    if(who){
+    if(who && who.dataset.bound !== "1"){
+      who.dataset.bound = "1";
       who.addEventListener("input", ()=>{
         if($("fContact")) tryAutoSelectFriendFromWhoInput_OLD();
         else setModalWhoFromNameInput();
       });
       who.addEventListener("change", ()=>{
-        if($("fContact")){
-          tryAutoSelectFriendFromWhoInput_OLD();
-        }else{
+        if($("fContact")) tryAutoSelectFriendFromWhoInput_OLD();
+        else{
           setModalWhoFromNameInput();
           if(modalWhoId){
             const c = getContactById(modalWhoId);
@@ -1544,10 +1564,10 @@
   }
 
   /* =========================
-     Compartir
+     Compartir: TEXTO + enlace #p=
   ========================= */
   let shareItem = null;
-  let shareMode = "short";
+  let shareMode = "short"; // short | long
 
   function encodePackage(pkg){
     const json = JSON.stringify(pkg);
@@ -1895,7 +1915,7 @@
   }
 
   /* =========================
-     ✅ Install banner + service worker
+     Service worker
   ========================= */
   let deferredPrompt = null;
   function bindInstall(){
@@ -1912,7 +1932,7 @@
   }
 
   /* =========================
-     Boot (DOM READY)
+     Boot
   ========================= */
   (function normalizeContacts(){
     let changed = false;
@@ -1929,9 +1949,13 @@
 
     migrateAllData();
 
+    // ✅ asegurar pill “En espera” arriba
+    ensureWaitingPill();
+
     bindA11yDelegation();
     bindBrandHome();
     bindNav();
+    bindSettingsGear();
     bindFab();
     bindCommitModal();
     bindContactModal();
@@ -1939,15 +1963,18 @@
     bindSettings();
     bindInstall();
 
-    ensureWaitingPill();
     fixWhoLabel();
     fillFriendsDatalist();
 
     importFromHash();
+
     fillCommitFriendSelect();
 
     fixPillsOrder();
     removeBottomInstallText();
+
+    // ✅ título según estado actual
+    updateCommitmentsHeading();
 
     renderAll();
   }
