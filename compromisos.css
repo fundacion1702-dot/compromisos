@@ -99,7 +99,8 @@ html.bigText body .badge{ font-size:13px; height:24px; }
 .wrap{
   width:min(var(--max), calc(100% - 24px));
   margin:0 auto;
-  padding:14px 0 calc(var(--bottomH) + 22px + env(safe-area-inset-bottom));
+  /* ✅ menos espacio arriba (reduce hueco “X”) */
+  padding:10px 0 calc(var(--bottomH) + 22px + env(safe-area-inset-bottom));
 }
 
 /* =========================
@@ -117,8 +118,9 @@ html.bigText body .badge{ font-size:13px; height:24px; }
 .topbarInner{
   width:min(var(--max), calc(100% - 24px));
   margin:0 auto;
-  padding:12px 0;
-  position:relative; /* ✅ ancla del botón absoluto */
+  /* ✅ compacta un poco el bloque superior (sube píldoras) */
+  padding:10px 0 10px;
+  position:relative; /* ✅ ancla de botones absolutos */
 }
 
 /* Brand */
@@ -127,7 +129,7 @@ html.bigText body .badge{ font-size:13px; height:24px; }
   align-items:center;
   gap:10px;
   min-width:0;
-  padding-right:220px; /* ✅ reserva para el botón arriba derecha */
+  padding-right:220px; /* ✅ reserva para botones derecha */
 }
 .logo{
   width:42px;height:42px;
@@ -162,19 +164,28 @@ html.bigText body .badge{ font-size:13px; height:24px; }
 
 /* TOP actions */
 .topActions{
-  /* ✅ importante: NO relative aquí, para que el botón se ancle a topbarInner */
   position:static;
   width:100%;
-  margin-top:10px; /* espacio bajo título */
+  /* ✅ menos separación bajo título (sube píldoras) */
+  margin-top:6px;
 }
 
-/* Botón A11Y: arriba derecha, alineado con el título */
+/* Botón A11Y: arriba derecha */
 #btnA11yTop{
   position:absolute !important;
-  top:12px !important;
+  top:10px !important;
   right:0 !important;
   z-index:80 !important;
   pointer-events:auto !important;
+}
+
+/* ✅ Engranaje: absoluto a la derecha, debajo de “Texto grande”
+   (así NO ocupa línea y NO empuja las píldoras hacia abajo) */
+#btnSettingsGear{
+  position:absolute !important;
+  right:0 !important;
+  top:54px !important;  /* ajustado para caer “en el círculo rojo” */
+  z-index:75 !important;
 }
 
 /* Botón estilo */
@@ -199,7 +210,7 @@ html.bigText body .badge{ font-size:13px; height:24px; }
 }
 .a11yBtn:active{ transform:translateY(1px); }
 
-/* Pills: debajo, centradas */
+/* Pills: centradas y más arriba */
 .pills{
   display:flex;
   gap:10px;
@@ -210,10 +221,13 @@ html.bigText body .badge{ font-size:13px; height:24px; }
   max-width:100%;
   position:relative;
   z-index:10;
+
+  /* ✅ las acercamos más al título (sin cambiar tamaño) */
+  margin-top:6px;
 }
 
-/* ✅ ORDEN INVERTIDO (como pides):
-   Recibidos a la izquierda, Vencidos a la derecha (ambos centrados) */
+/* ✅ ORDEN:
+   Recibidos a la izquierda, Vencidos a la derecha */
 #btnReceived{ order:1; }
 #btnOverdue{ order:2; }
 
@@ -266,7 +280,8 @@ html.bigText body .badge{ font-size:13px; height:24px; }
 
 /* Menú grid */
 .menuGrid{
-  margin-top:14px;
+  /* ✅ menos separación con las píldoras (reduce hueco “X”) */
+  margin-top:10px;
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:12px;
