@@ -68,7 +68,7 @@
   }
 
   /* =========================
-     ✅ CSS extra: herramientas + tabs + topbar NO fija + top tools placement
+     ✅ CSS extra: tools + tabs + topbar NO fija + gear debajo de texto grande
   ========================= */
   (function injectMiniToolsCss(){
     try{
@@ -116,7 +116,7 @@
         }
         .chip.status{ font-weight:900; }
 
-        /* ✅ (3) Topbar NO fija */
+        /* ✅ Topbar NO fija (se mueve con el scroll) */
         .topbar{
           position: static !important;
           top:auto !important;
@@ -124,7 +124,7 @@
         body{ padding-top:0 !important; }
         .wrap{ padding-top:0 !important; }
 
-        /* ✅ (2) Tabs no se cortan: wrap + scroll suave */
+        /* ✅ Tabs no se cortan: wrap + scroll suave */
         .sectionHead{
           flex-wrap: wrap !important;
           gap: 10px !important;
@@ -141,15 +141,15 @@
           white-space: nowrap !important;
         }
 
-        /* ✅ (5) Botón herramientas debajo de Texto grande, alineado a la derecha */
+        /* ✅ Rueda ⚙️ debajo de Texto grande, a la derecha */
         .topActions{
           flex-wrap: wrap !important;
           gap: 10px !important;
           align-items: center;
         }
-        #btnCommitToolsTop{
-          flex-basis: 100% !important; /* fuerza línea nueva */
-          margin-left: auto !important; /* a la derecha */
+        #btnSettingsGear{
+          flex-basis: 100% !important;
+          margin-left: auto !important;
           align-self: flex-end !important;
         }
         .topActions .pills{
@@ -184,6 +184,10 @@
   let commitFriendFilter = "all"; // all | __none__ | <contactId>
   let commitTextFilter = "";      // búsqueda en texto / quién
   let contactsTextFilter = "";    // búsqueda amigos
+
+  // ✅ para toggle de Ajustes
+  let lastPaneBeforeSettings = "commitments";
+  let lastViewBeforeSettings = "pending";
 
   /* =========================
      ✅ Migración de datos: done -> status
@@ -444,7 +448,7 @@
   }
 
   /* =========================
-     ✅ (4) Añadir píldora “En espera” si no existe + clicks a sección
+     ✅ Pills: añadir “En espera” si no existe + navegación
   ========================= */
   function ensureWaitingPill(){
     const pills = document.querySelector(".pills");
@@ -463,7 +467,6 @@
       <span class="pillCount" id="bWaiting">0</span>
     `;
 
-    // Insertar entre Recibidos y Vencidos (si existen)
     const r = $("btnReceived");
     const v = $("btnOverdue");
     if(r && r.parentElement === pills){
@@ -477,61 +480,6 @@
     }
   }
 
-  /* =========================
-     ✅ (5) Botón herramientas en TOPBAR, debajo de Texto grande
-  ========================= */
-  function ensureTopToolsButton(){
-    const topActions = document.querySelector(".topActions");
-    if(!topActions) return;
-
-    if($("btnCommitToolsTop")) return;
-
-    const btn = document.createElement("button");
-    btn.className = "miniBtn";
-    btn.id = "btnCommitToolsTop";
-    btn.type = "button";
-    btn.setAttribute("aria-expanded","false");
-    btn.textContent = "🔍 Buscar / Filtrar";
-
-    // Insertar justo después de Texto grande (ideal) o al final
-    const a11y = $("btnA11yTop");
-    if(a11y && a11y.parentElement === topActions){
-      if(a11y.nextSibling) topActions.insertBefore(btn, a11y.nextSibling);
-      else topActions.appendChild(btn);
-    }else{
-      topActions.appendChild(btn);
-    }
-  }
-
-  function hideLegacyMiniToolsButton(){
-    const legacy = $("miniCommitTools");
-    if(legacy) legacy.style.display = "none";
-  }
-
-  function toggleCommitTools(force){
-    ensureCommitFiltersUi(); // garantiza panel y selects
-
-    const panel = $("commitToolsPanel");
-    if(!panel) return;
-
-    const next = (typeof force === "boolean") ? force : !uiCommitFiltersOpen;
-    uiCommitFiltersOpen = next;
-
-    panel.classList.toggle("show", uiCommitFiltersOpen);
-
-    const bTop = $("btnCommitToolsTop");
-    const bLegacy = $("btnCommitTools");
-    if(bTop) bTop.setAttribute("aria-expanded", uiCommitFiltersOpen ? "true" : "false");
-    if(bLegacy) bLegacy.setAttribute("aria-expanded", uiCommitFiltersOpen ? "true" : "false");
-
-    if(uiCommitFiltersOpen){
-      setTimeout(()=>{ try{ $("commitSearchTxt")?.focus(); }catch(e){} }, 0);
-    }
-  }
-
-  /* =========================
-     Bind navegación
-  ========================= */
   function bindNav(){
     if($("tabCommitments")) $("tabCommitments").onclick = ()=> setPane("commitments");
     if($("tabContacts")) $("tabContacts").onclick = ()=> setPane("contacts");
@@ -553,13 +501,26 @@
     bindTile("tileWaiting", ()=>{ setPane("commitments"); setView("waiting"); });
     bindTile("tileDone", ()=>{ setPane("commitments"); setView("closed"); });
     bindTile("tileContacts", ()=>{ setPane("contacts"); });
-
-    // (Ajustes en tile antiguo si existiera)
     bindTile("tileSettings", ()=>{ setPane("settings"); });
 
-    // ✅ Gear de arriba abre Ajustes
+    // ✅ Gear: toggle ajustes
     const gear = $("btnSettingsGear");
-    if(gear) gear.addEventListener("click", ()=> setPane("settings"));
+    if(gear){
+      gear.addEventListener("click", ()=>{
+        if(pane === "settings"){
+          const backPane = lastPaneBeforeSettings || "commitments";
+          setPane(backPane);
+          if(backPane === "commitments"){
+            setView(lastViewBeforeSettings || "pending");
+          }
+          return;
+        }
+        // guardar estado actual antes de abrir ajustes
+        lastPaneBeforeSettings = pane || "commitments";
+        lastViewBeforeSettings = view || "pending";
+        setPane("settings");
+      });
+    }
 
     // Pills
     if($("btnOverdue")){
@@ -578,7 +539,6 @@
         toast(c ? `📥 Recibidos: ${c}` : "Sin recibidos");
       });
     }
-    // ✅ nueva pill: En espera
     document.addEventListener("click", (e)=>{
       const t = e.target?.closest?.("#btnWaiting");
       if(!t) return;
@@ -590,8 +550,7 @@
   }
 
   /* =========================
-     ✅ UI desplegable: filtros/búsquedas
-     (panel sigue en commitmentsPane, pero se abre desde el botón top)
+     ✅ UI desplegable: filtros/búsquedas (botón vuelve a su sitio original)
   ========================= */
   function hideLegacyCommitFilters(paneEl){
     try{
@@ -627,17 +586,27 @@
 
     hideLegacyCommitFilters(paneEl);
 
-    // ya existe panel
-    if($("commitToolsPanel")){
+    // ya existe
+    if($("commitToolsPanel") && $("miniCommitTools")){
       fillCommitFriendSelect();
+      $("commitToolsPanel").classList.toggle("show", uiCommitFiltersOpen);
+      const btn = $("btnCommitTools");
+      if(btn) btn.setAttribute("aria-expanded", uiCommitFiltersOpen ? "true" : "false");
       return;
     }
 
     const head = paneEl.querySelector(".sectionHead");
     if(!head) return;
 
-    // (legacy) si existía, lo ocultamos
-    hideLegacyMiniToolsButton();
+    // ✅ botón en su sitio: justo bajo sectionHead
+    const tools = document.createElement("div");
+    tools.className = "miniTools";
+    tools.id = "miniCommitTools";
+    tools.innerHTML = `
+      <button class="miniBtn" id="btnCommitTools" type="button" aria-expanded="false">
+        🔍 Buscar / Filtrar
+      </button>
+    `;
 
     const panel = document.createElement("div");
     panel.className = "miniPanel";
@@ -660,9 +629,19 @@
       <div class="miniHint">Se aplica sobre la lista actual (<b>Pendientes</b>, <b>En espera</b> o <b>Cerrados</b>).</div>
     `;
 
-    head.insertAdjacentElement("afterend", panel);
+    head.insertAdjacentElement("afterend", tools);
+    tools.insertAdjacentElement("afterend", panel);
 
-    // binds panel
+    const btn = $("btnCommitTools");
+    btn.addEventListener("click", ()=>{
+      uiCommitFiltersOpen = !uiCommitFiltersOpen;
+      btn.setAttribute("aria-expanded", uiCommitFiltersOpen ? "true" : "false");
+      panel.classList.toggle("show", uiCommitFiltersOpen);
+      if(uiCommitFiltersOpen){
+        setTimeout(()=>{ try{ $("commitSearchTxt").focus(); }catch(e){} }, 0);
+      }
+    });
+
     $("commitClearBtn").addEventListener("click", ()=>{
       commitFriendFilter = "all";
       commitTextFilter = "";
@@ -847,7 +826,6 @@
   }
 
   function renderCommitments(){
-    ensureTopToolsButton();
     ensureWaitingPill();
     ensureCommitFiltersUi();
     updateCounts();
@@ -1055,7 +1033,7 @@
   }
 
   /* =========================
-     Confirm modal (mejorado)
+     Confirm modal
   ========================= */
   function openConfirm(title, msg, yesLabel, onYes, noLabel, onNo){
     const b = $("confirmBackdrop");
@@ -1090,7 +1068,6 @@
 
   /* =========================
      Modales: Compromisos
-     - Soporta modo antiguo (select) y modo nuevo (solo Nombre)
   ========================= */
   let editingCommitId = null;
   let modalWhoId = null;
@@ -1567,7 +1544,7 @@
   }
 
   /* =========================
-     Compartir: TEXTO COMPLETO + enlace importable #p=
+     Compartir
   ========================= */
   let shareItem = null;
   let shareMode = "short";
@@ -1935,29 +1912,6 @@
   }
 
   /* =========================
-     ✅ (1) Fix definitivo: botón herramientas abre/cierra SIEMPRE
-     - delegación global (por si el botón aparece tras render)
-  ========================= */
-  function bindToolsDelegation(){
-    document.addEventListener("click", (e)=>{
-      const btn = e.target?.closest?.("#btnCommitToolsTop,#btnCommitTools");
-      if(!btn) return;
-      // solo si estamos en compromisos
-      if(pane !== "commitments") setPane("commitments");
-      toggleCommitTools();
-    }, true);
-
-    document.addEventListener("keydown", (e)=>{
-      if(e.key!=="Enter" && e.key!==" ") return;
-      const btn = document.activeElement?.closest?.("#btnCommitToolsTop,#btnCommitTools");
-      if(!btn) return;
-      e.preventDefault();
-      if(pane !== "commitments") setPane("commitments");
-      toggleCommitTools();
-    }, true);
-  }
-
-  /* =========================
      Boot (DOM READY)
   ========================= */
   (function normalizeContacts(){
@@ -1985,16 +1939,11 @@
     bindSettings();
     bindInstall();
 
-    // ✅ herramientas + top button + nueva pill
-    bindToolsDelegation();
-    ensureTopToolsButton();
     ensureWaitingPill();
-
     fixWhoLabel();
     fillFriendsDatalist();
 
     importFromHash();
-
     fillCommitFriendSelect();
 
     fixPillsOrder();
