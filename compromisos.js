@@ -69,6 +69,7 @@
 
   /* =========================
      ✅ CSS SOLO para “lupa desplegable”
+     + ✅ CSS para autocomplete de amigos (modal)
   ========================= */
   (function injectMiniToolsCss(){
     try{
@@ -114,6 +115,41 @@
           font-size:12.5px;
           line-height:1.35;
         }
+
+        /* Autocomplete Amigos (modal) */
+        .whoAutoWrap{ margin-top:10px; }
+        .whoAutoTitle{
+          font-size:12.5px;
+          color:var(--muted);
+          margin:0 0 6px;
+          line-height:1.25;
+        }
+        .whoAutoList{
+          display:flex;
+          flex-wrap:wrap;
+          gap:8px;
+        }
+        .whoAutoChip{
+          border:1px solid var(--border);
+          background:var(--surface2);
+          box-shadow:var(--shadow2);
+          border-radius:999px;
+          padding:7px 10px;
+          font-weight:900;
+          cursor:pointer;
+          -webkit-tap-highlight-color:transparent;
+          display:inline-flex;
+          align-items:center;
+          gap:8px;
+          max-width:100%;
+        }
+        .whoAutoChip:active{ transform:translateY(1px); }
+        .whoAutoChip span{
+          overflow:hidden;
+          text-overflow:ellipsis;
+          white-space:nowrap;
+          max-width:220px;
+        }
       `;
       document.head.appendChild(st);
     }catch(e){}
@@ -144,26 +180,12 @@
   let contactsTextFilter = "";    // búsqueda amigos
 
   /* =========================
-     ✅ FIX 1: Texto grande (REAL)
+     ✅ FIX 1: Texto grande
   ========================= */
   function applyTextScale(big){
-    const basePx = big ? 19 : 16;
-    const bigPx  = big ? 22 : 18;
-
-    try{
-      document.documentElement.style.setProperty("--fs", basePx + "px");
-      document.documentElement.style.setProperty("--fsBig", bigPx + "px");
-      document.body && document.body.style && (document.body.style.setProperty("--fs", basePx + "px"));
-      document.body && document.body.style && (document.body.style.setProperty("--fsBig", bigPx + "px"));
-    }catch(e){}
-
-    try{
-      if(document.body){
-        document.body.style.fontSize = basePx + "px";
-      }
-    }catch(e){}
-
-    if(document.body) document.body.classList.toggle("bigText", !!big);
+    document.documentElement.style.setProperty("--fs", big ? "18px" : "16px");
+    document.documentElement.style.setProperty("--fsBig", big ? "20px" : "18px");
+    document.body.classList.toggle("bigText", !!big);
 
     const label = big ? "🔎 Texto normal" : "🔎 Texto grande";
     const bTop = $("btnA11yTop");
@@ -184,7 +206,7 @@
     toast(next ? "🔎 Texto grande: ON" : "🔎 Texto grande: OFF");
   }
 
-  const _a11yGuard = { last: 0, lockMs: 520 };
+  const _a11yGuard = { last: 0, lockMs: 420 };
   function guardedToggle(e){
     const now = Date.now();
     if(now - _a11yGuard.last < _a11yGuard.lockMs) return;
@@ -210,10 +232,9 @@
       guardedToggle(e);
     };
 
-    document.addEventListener("pointerup", handler, true);
-    document.addEventListener("touchend", handler, true);
     document.addEventListener("click", handler, true);
-
+    document.addEventListener("touchend", handler, true);
+    document.addEventListener("pointerup", handler, true);
     document.addEventListener("keydown", (e)=>{
       if(e.key!=="Enter" && e.key!==" ") return;
       const el = matchA11y(document.activeElement);
@@ -223,16 +244,14 @@
   }
 
   /* =========================
-     ✅ NUEVO: click en logo/título => ir a pantalla principal
-     - Funciona estés en la pantalla que estés
-     - Principal = Compromisos + vista Pendientes
+     ✅ Click en logo/título => ir a pantalla principal
+     (Compromisos + Pendientes)
   ========================= */
   function bindBrandHome(){
     const brand = document.querySelector(".brand");
     if(brand){
       try{
         brand.style.cursor = "pointer";
-        // accesibilidad (sin tocar HTML)
         if(!brand.hasAttribute("tabindex")) brand.setAttribute("tabindex","0");
         brand.setAttribute("role","button");
         brand.setAttribute("aria-label","Ir a pantalla principal");
@@ -252,7 +271,6 @@
       try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(_){ window.scrollTo(0,0); }
     };
 
-    // Captura para que funcione incluso si hay listeners encima
     document.addEventListener("click", (e)=>{
       const el = isBrandTarget(e.target);
       if(!el) return;
@@ -274,7 +292,8 @@
   }
 
   /* =========================
-     ✅ FIX 2: Orden Vencidos / Recibidos
+     ✅ FIX 2: Cambiar orden Vencidos / Recibidos
+     - Recibidos izquierda, Vencidos derecha
   ========================= */
   function fixPillsOrder(){
     try{
@@ -292,18 +311,19 @@
       const elV = findByText("vencid");
       const elR = findByText("recibid");
 
-      if(elR && elV){
-        if(pills.firstElementChild !== elR){
+      const firstTxt = (pills.firstElementChild?.textContent || "").toLowerCase();
+      const ok = firstTxt.includes("recibid");
+      if(!ok){
+        if(elR && elV){
           pills.insertBefore(elR, pills.firstElementChild);
-        }
-        if(elR.nextElementSibling !== elV){
-          pills.insertBefore(elV, elR.nextElementSibling);
+          pills.appendChild(elV);
+        }else{
+          const x = children[0], y = children[1];
+          pills.insertBefore(y, x);
         }
       }else{
-        const x = children[0], y = children[1];
-        const firstTxt = (x.textContent || "").toLowerCase();
-        if(!firstTxt.includes("recibid")){
-          pills.insertBefore(y, x);
+        if(elR && elV && elR.nextElementSibling !== elV){
+          pills.insertBefore(elV, elR.nextElementSibling);
         }
       }
     }catch(e){}
@@ -330,7 +350,7 @@
       blocks.forEach(el=>{
         const t = (el.textContent || "").trim().replace(/\s+/g," ");
         if(!t) return;
-        if((t === "Instálala Consejo") || (t === "Consejo Instálala")){
+        if((t === "Instálala Consejo") || (t === "Instálala\nConsejo") || (t === "Consejo Instálala")){
           el.style.display = "none";
         }
       });
@@ -393,6 +413,7 @@
     if($("tabPending")) $("tabPending").onclick = setViewPending;
     if($("tabDone")) $("tabDone").onclick = setViewDone;
 
+    // Tiles (menú)
     const bindTile = (id, fn)=>{
       const el = $(id);
       if(!el) return;
@@ -406,6 +427,7 @@
     bindTile("tileContacts", ()=>{ setPane("contacts"); });
     bindTile("tileSettings", ()=>{ setPane("settings"); });
 
+    // Pills
     if($("btnOverdue")){
       $("btnOverdue").addEventListener("click", ()=>{
         setPane("commitments");
@@ -826,9 +848,11 @@
   }
 
   /* =========================
-     Confirm modal
+     Confirm modal (mejorado)
+     - Compat: si lo llamas con 4 params, funciona igual.
+     - Nuevo: puedes pasar noLabel y onNo para “No guardar” etc.
   ========================= */
-  function openConfirm(title, msg, yesLabel, onYes){
+  function openConfirm(title, msg, yesLabel, onYes, noLabel, onNo){
     const b = $("confirmBackdrop");
     if(!b) return;
 
@@ -841,6 +865,7 @@
     if(t) t.textContent = title || "Confirmar";
     if(m) m.textContent = msg || "";
     if(yes) yes.textContent = yesLabel || "Sí, continuar";
+    if(no) no.textContent = noLabel || "Cancelar";
 
     b.classList.add("show");
     b.setAttribute("aria-hidden","false");
@@ -853,8 +878,8 @@
       if(x) x.onclick = null;
     };
 
-    if(no) no.onclick = close;
-    if(x) x.onclick = close;
+    if(no) no.onclick = ()=>{ close(); try{ onNo && onNo(); }catch(e){} };
+    if(x) x.onclick  = ()=>{ close(); try{ onNo && onNo(); }catch(e){} };
     if(yes) yes.onclick = ()=>{ close(); try{ onYes && onYes(); }catch(e){} };
   }
 
@@ -896,6 +921,111 @@
     return contacts.find(x=>x.id===id) || null;
   }
 
+  function normalizeName(s){
+    return String(s||"").trim().replace(/\s+/g," ");
+  }
+  function findContactByName(name){
+    const n = normalizeName(name).toLowerCase();
+    if(!n) return null;
+    return contacts.find(c => normalizeName(c.name).toLowerCase() === n) || null;
+  }
+
+  /* =========================
+     ✅ (1) Autocomplete de amigos al escribir Nombre
+     - Se muestra SOLO cuando estás en “Sin amigo (escribir nombre)”
+     - Si eliges uno, se selecciona automáticamente el amigo (fContact)
+  ========================= */
+  function ensureWhoAutocompleteUi(){
+    const customField = $("customWhoField");
+    if(!customField) return;
+
+    if(customField.querySelector("#whoAutoWrap")) return;
+
+    const wrap = document.createElement("div");
+    wrap.className = "whoAutoWrap";
+    wrap.id = "whoAutoWrap";
+    wrap.innerHTML = `
+      <p class="whoAutoTitle" id="whoAutoTitle" style="display:none;">Coincide con tus amigos:</p>
+      <div class="whoAutoList" id="whoAutoList"></div>
+    `;
+    customField.appendChild(wrap);
+  }
+
+  function renderWhoAutocomplete(){
+    ensureWhoAutocompleteUi();
+
+    const sel = $("fContact");
+    const whoInput = $("fWho");
+    const title = $("whoAutoTitle");
+    const list = $("whoAutoList");
+    if(!sel || !whoInput || !title || !list) return;
+
+    // solo si estamos en modo custom
+    const isCustom = (sel.value === "__custom__");
+    if(!isCustom){
+      title.style.display = "none";
+      list.innerHTML = "";
+      return;
+    }
+
+    const q = normalizeName(whoInput.value).toLowerCase();
+    if(!q){
+      title.style.display = "none";
+      list.innerHTML = "";
+      return;
+    }
+
+    const hits = contacts
+      .slice()
+      .filter(c=>{
+        const n = normalizeName(c.name).toLowerCase();
+        return n.includes(q);
+      })
+      .sort((a,b)=> (a.name||"").localeCompare(b.name||"", "es"))
+      .slice(0, 6);
+
+    if(!hits.length){
+      title.style.display = "none";
+      list.innerHTML = "";
+      return;
+    }
+
+    title.style.display = "";
+    list.innerHTML = "";
+
+    hits.forEach(c=>{
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "whoAutoChip";
+      b.innerHTML = `✅ <span>${esc(c.name || "Sin nombre")}</span>`;
+      b.addEventListener("click", ()=>{
+        // Selecciona amigo y cambia UI automáticamente
+        sel.value = c.id;
+        // Disparar rebuild como si el usuario cambiara el select
+        rebuildContactSelect(c.id, "");
+        toast(`👥 Marcado: ${c.name || "Amigo"}`);
+      });
+      list.appendChild(b);
+    });
+  }
+
+  /* =========================
+     ✅ (2) Cambiar label “Nombre (sin guardar)” -> “Nombre”
+     - Lo hacemos por JS para no depender de tocar el HTML
+  ========================= */
+  function fixWhoLabel(){
+    try{
+      const customField = $("customWhoField");
+      if(!customField) return;
+      const lab = customField.querySelector("label");
+      if(!lab) return;
+      const t = (lab.textContent || "").trim();
+      if(/nombre/i.test(t)){
+        lab.textContent = "Nombre";
+      }
+    }catch(e){}
+  }
+
   function rebuildContactSelect(selectedId, customName){
     const sel = $("fContact");
     const customField = $("customWhoField");
@@ -926,12 +1056,20 @@
     const isCustom = (sel.value === "__custom__");
     if(customField) customField.style.display = isCustom ? "" : "none";
     if(hint) hint.textContent = isCustom
-      ? "Escribe un nombre sin guardarlo (solo para este compromiso)."
+      ? "Escribe un nombre o marca un amigo sugerido."
       : "Elige un amigo guardado.";
+
+    // ✅ label (Nombre)
+    fixWhoLabel();
 
     if(isCustom && whoInput){
       whoInput.value = customName || "";
+      // ✅ refrescar sugerencias
       setTimeout(()=>{ try{ whoInput.focus(); }catch(e){} }, 0);
+      renderWhoAutocomplete();
+    }else{
+      // si no es custom, limpiar sugerencias
+      renderWhoAutocomplete();
     }
   }
 
@@ -944,7 +1082,7 @@
       const c = getContactById(sel.value);
       return { whoId: c ? c.id : sel.value, whoName: "" };
     }
-    return { whoId:null, whoName: (whoInput?.value || "").trim() };
+    return { whoId:null, whoName: normalizeName(whoInput?.value || "") };
   }
 
   function openCommitModal(id, presetContactId){
@@ -994,50 +1132,102 @@
     const whenIso = fromLocalInputValue(fWhen?.value || "");
     const remindMin = Number(fRemind?.value || 0) || 0;
     const afterMin = Number(fAfter?.value || 0) || 0;
-    const who = resolveWho();
+
+    const sel = $("fContact");
+    const whoInput = $("fWho");
+    const rawCustomName = normalizeName(whoInput?.value || "");
 
     const now = new Date().toISOString();
 
-    if(editingCommitId){
-      const idx = data.findIndex(x=>x.id===editingCommitId);
-      if(idx >= 0){
-        data[idx] = {
-          ...data[idx],
+    const proceedSave = (who)=>{
+      if(editingCommitId){
+        const idx = data.findIndex(x=>x.id===editingCommitId);
+        if(idx >= 0){
+          data[idx] = {
+            ...data[idx],
+            whoId: who.whoId,
+            whoName: who.whoName,
+            what,
+            when: whenIso,
+            remindMin,
+            afterMin,
+            updatedAt: now
+          };
+        }
+        save(KEY, data);
+        toast("✍️ Compromiso editado");
+        closeCommitModal();
+        openShareModal(data[idx]);
+      }else{
+        const item = {
+          id: uid(),
           whoId: who.whoId,
           whoName: who.whoName,
           what,
           when: whenIso,
           remindMin,
           afterMin,
-          updatedAt: now
+          done:false,
+          doneAt:null,
+          createdAt: now,
+          updatedAt: null
         };
+        data = [item, ...data];
+        save(KEY, data);
+        toast("✅ Compromiso creado");
+        closeCommitModal();
+        openShareModal(item);
       }
-      save(KEY, data);
-      toast("✍️ Compromiso editado");
-      closeCommitModal();
-      openShareModal(data[idx]);
-    }else{
-      const item = {
-        id: uid(),
-        whoId: who.whoId,
-        whoName: who.whoName,
-        what,
-        when: whenIso,
-        remindMin,
-        afterMin,
-        done:false,
-        doneAt:null,
-        createdAt: now,
-        updatedAt: null
-      };
-      data = [item, ...data];
-      save(KEY, data);
-      toast("✅ Compromiso creado");
-      closeCommitModal();
-      openShareModal(item);
+
+      renderAll();
+    };
+
+    // ✅ Nuevo comportamiento:
+    // - si estás en modo custom y el nombre coincide con un amigo, lo marcamos automáticamente
+    // - si no coincide, al guardar preguntamos si quieres crear ese amigo
+    const isCustom = sel && sel.value === "__custom__";
+
+    if(isCustom){
+      // si el usuario no escribió nombre, permitimos “Sin nombre”
+      if(rawCustomName){
+        const existing = findContactByName(rawCustomName);
+        if(existing){
+          // Auto-vincular al amigo existente
+          proceedSave({ whoId: existing.id, whoName: "" });
+          return;
+        }
+
+        openConfirm(
+          "¿Guardar nuevo amigo?",
+          `Has escrito “${rawCustomName}”. ¿Quieres guardarlo en tus Amigos para reutilizarlo?`,
+          "Sí, guardar",
+          ()=>{
+            // crear contacto
+            const newC = { id: uid(), name: rawCustomName, note: "" };
+            contacts = [newC, ...contacts];
+            save(CONTACTS_KEY, contacts);
+            fillCommitFriendSelect();
+
+            // continuar guardado enlazado al nuevo amigo
+            proceedSave({ whoId: newC.id, whoName: "" });
+          },
+          "No, solo para este",
+          ()=>{
+            // continuar sin guardar amigo
+            proceedSave({ whoId: null, whoName: rawCustomName });
+          }
+        );
+        return;
+      }
+
+      // sin nombre escrito: guardar como custom vacío
+      proceedSave({ whoId:null, whoName:"" });
+      return;
     }
 
-    renderAll();
+    // modo amigo seleccionado normal
+    const who = resolveWho();
+    proceedSave(who);
   }
 
   function deleteCommit(id){
@@ -1070,6 +1260,14 @@
         rebuildContactSelect(sel.value === "__custom__" ? null : sel.value, ($("fWho")?.value || ""));
       });
     }
+
+    // ✅ autocomplete: al escribir en Nombre, mostrar sugerencias
+    const who = $("fWho");
+    if(who){
+      who.addEventListener("input", ()=>{
+        renderWhoAutocomplete();
+      });
+    }
   }
 
   /* =========================
@@ -1097,8 +1295,8 @@
   }
 
   function saveContactFromForm(){
-    const name = ($("cName")?.value || "").trim();
-    const note = ($("cNote")?.value || "").trim();
+    const name = normalizeName($("cName")?.value || "");
+    const note = normalizeName($("cNote")?.value || "");
 
     if(!name){
       toast("Escribe un nombre.");
@@ -1158,7 +1356,7 @@
   }
 
   /* =========================
-     Compartir
+     Compartir: TEXTO COMPLETO + enlace importable #p=
   ========================= */
   let shareItem = null;
   let shareMode = "short"; // short | long
@@ -1539,11 +1737,13 @@
   })();
 
   function start(){
+    // aplica accesibilidad guardada
     const a11y = load(A11Y_KEY, { big:false });
     applyTextScale(!!a11y.big);
 
+    // listeners robustos
     bindA11yDelegation();
-    bindBrandHome();   // ✅ NUEVO
+    bindBrandHome();
     bindNav();
     bindFab();
     bindCommitModal();
@@ -1552,9 +1752,16 @@
     bindSettings();
     bindInstall();
 
+    // ✅ label “Nombre”
+    fixWhoLabel();
+
+    // importar si viene paquete en hash
     importFromHash();
+
+    // refresca selects de filtro
     fillCommitFriendSelect();
 
+    // orden y limpieza visual
     fixPillsOrder();
     removeBottomInstallText();
 
