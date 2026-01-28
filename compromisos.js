@@ -68,7 +68,7 @@
   }
 
   /* =========================
-     ✅ CSS de soporte (layout + lupa + fixes)
+     ✅ CSS de soporte (layout + lupa + fixes + autocompletar)
   ========================= */
   (function injectMiniToolsCss(){
     try{
@@ -159,6 +159,58 @@
           line-height:1.35;
         }
         .chip.status{ font-weight:900; }
+
+        /* =========================
+           ✅ AUTOCOMPLETE PROPIO (Nombre)
+           - sustituye al datalist nativo (Android suele fallar)
+           ========================= */
+        .whoAutoWrap{ position:relative; }
+        .whoSuggest{
+          position:absolute;
+          left:0; right:0;
+          top:calc(100% + 8px);
+          z-index:999;
+          background:var(--surface);
+          border:1px solid var(--border);
+          border-radius:16px;
+          box-shadow:0 18px 50px rgba(17,24,39,.16);
+          overflow:hidden;
+          display:none;
+        }
+        .whoSuggest.show{ display:block; }
+        .whoSuggest .row{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:10px;
+          padding:10px 12px;
+          cursor:pointer;
+          -webkit-tap-highlight-color:transparent;
+          border-top:1px solid rgba(229,231,235,.75);
+        }
+        .whoSuggest .row:first-child{ border-top:none; }
+        .whoSuggest .row:active{ transform:translateY(1px); }
+        .whoSuggest .name{
+          font-weight:950;
+          letter-spacing:.2px;
+          font-size:14px;
+          margin:0;
+          color:var(--text);
+          overflow:hidden;
+          text-overflow:ellipsis;
+          white-space:nowrap;
+        }
+        .whoSuggest .meta{
+          font-size:12px;
+          color:var(--muted);
+          white-space:nowrap;
+        }
+        .whoSuggest .emptyRow{
+          padding:10px 12px;
+          font-size:12.5px;
+          color:var(--muted);
+          background:linear-gradient(180deg,#fff,#fbfbfc);
+        }
       `;
       document.head.appendChild(st);
     }catch(e){}
@@ -1097,6 +1149,11 @@
   let editingCommitId = null;
   let modalWhoId = null;
 
+  // ✅ autocomplete propio
+  let whoSuggestEl = null;
+  let whoSuggestBound = false;
+  let whoSuggestHideTm = null;
+
   function openModal(el){
     if(!el) return;
     el.classList.add("show");
@@ -1141,6 +1198,142 @@
         opt.value = name;
         dl.appendChild(opt);
       });
+  }
+
+  /* =========================
+     ✅ Autocomplete propio (lista que filtra mientras escribes)
+  ========================= */
+  function ensureWhoAutocompleteUi(){
+    const inp = $("fWho");
+    if(!inp) return;
+
+    // envolver el input en un contenedor relativo (sin tocar el HTML original)
+    const field = inp.closest(".field");
+    if(field && !field.classList.contains("whoAutoWrap")){
+      field.classList.add("whoAutoWrap");
+    }
+
+    if(!whoSuggestEl){
+      whoSuggestEl = document.createElement("div");
+      whoSuggestEl.id = "whoSuggest";
+      whoSuggestEl.className = "whoSuggest";
+      if(field){
+        // lo ponemos al final del field para que quede bajo el input
+        field.appendChild(whoSuggestEl);
+      }else{
+        inp.insertAdjacentElement("afterend", whoSuggestEl);
+      }
+    }
+  }
+
+  function normalizeForSearch(s){
+    return String(s||"")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g,"")
+      .trim();
+  }
+
+  function buildWhoSuggestions(query){
+    const q = normalizeForSearch(query);
+    const items = contacts
+      .slice()
+      .filter(c => normalizeName(c?.name || ""))
+      .sort((a,b)=> (a.name||"").localeCompare(b.name||"", "es"));
+
+    if(!q){
+      return items.slice(0, 8);
+    }
+
+    const filtered = items.filter(c=>{
+      const n = normalizeForSearch(c.name || "");
+      return n.includes(q);
+    });
+
+    return filtered.slice(0, 10);
+  }
+
+  function showWhoSuggest(list){
+    if(!whoSuggestEl) return;
+    if(!list || !list.length){
+      whoSuggestEl.innerHTML = `<div class="emptyRow">No hay coincidencias (puedes guardarlo al crear).</div>`;
+      whoSuggestEl.classList.add("show");
+      return;
+    }
+
+    whoSuggestEl.innerHTML = list.map(c=>{
+      const nm = esc(normalizeName(c.name || "Sin nombre"));
+      const meta = c.note ? esc(String(c.note)) : "";
+      return `
+        <div class="row" data-id="${esc(c.id)}" data-name="${nm}">
+          <div style="min-width:0;">
+            <p class="name">${nm}</p>
+            ${meta ? `<div class="meta">${meta}</div>` : `<div class="meta">Amigo</div>`}
+          </div>
+          <div class="meta">↩︎</div>
+        </div>
+      `;
+    }).join("");
+
+    whoSuggestEl.classList.add("show");
+  }
+
+  function hideWhoSuggest(){
+    if(!whoSuggestEl) return;
+    whoSuggestEl.classList.remove("show");
+  }
+
+  function commitWhoFromSuggestion(id, name){
+    const inp = $("fWho");
+    if(!inp) return;
+    inp.value = normalizeName(name || "");
+    modalWhoId = id || null;
+    hideWhoSuggest();
+    // cursor al final
+    try{
+      const v = inp.value;
+      inp.setSelectionRange(v.length, v.length);
+    }catch(e){}
+    toast("👥 Seleccionado");
+  }
+
+  function bindWhoAutocomplete(){
+    if(whoSuggestBound) return;
+    whoSuggestBound = true;
+
+    // click dentro del panel
+    document.addEventListener("click", (e)=>{
+      const row = e.target?.closest?.("#whoSuggest .row");
+      if(row){
+        e.preventDefault();
+        e.stopPropagation();
+        const id = row.getAttribute("data-id") || "";
+        const name = row.getAttribute("data-name") || "";
+        commitWhoFromSuggestion(id, name);
+        return;
+      }
+
+      // click fuera => cerrar
+      const inp = $("fWho");
+      if(!inp) return;
+      if(e.target === inp) return;
+      if(e.target?.closest?.("#whoSuggest")) return;
+      hideWhoSuggest();
+    }, true);
+  }
+
+  function updateWhoSuggestFromInput(){
+    ensureWhoAutocompleteUi();
+    const inp = $("fWho");
+    if(!inp || !whoSuggestEl) return;
+
+    const list = buildWhoSuggestions(inp.value || "");
+    showWhoSuggest(list);
+  }
+
+  function scheduleHideWhoSuggest(){
+    clearTimeout(whoSuggestHideTm);
+    whoSuggestHideTm = setTimeout(()=> hideWhoSuggest(), 120);
   }
 
   function fixWhoLabel(){
@@ -1269,8 +1462,19 @@
     if($("fContact")){
       rebuildContactSelect(whoId, whoName);
     }else{
-      fillFriendsDatalist();
+      fillFriendsDatalist(); // lo mantenemos, pero NO dependemos de datalist
       setNameInputForWho(whoId, whoName);
+      ensureWhoAutocompleteUi();
+      // si hay nombre, que muestre sugerencias ya filtradas
+      setTimeout(()=>{
+        try{
+          const inp = $("fWho");
+          if(inp){
+            inp.focus();
+            updateWhoSuggestFromInput();
+          }
+        }catch(e){}
+      }, 0);
     }
 
     const fWhat = $("fWhat");
@@ -1290,6 +1494,7 @@
   }
 
   function closeCommitModal(){
+    hideWhoSuggest();
     closeModal($("backdrop"));
     editingCommitId = null;
     modalWhoId = null;
@@ -1399,6 +1604,7 @@
       return;
     }
 
+    // ✅ input único (Nombre)
     setModalWhoFromNameInput();
     const whoResolved = resolveWho_NEW();
 
@@ -1450,18 +1656,55 @@
     const who = $("fWho");
     if(who && who.dataset.bound !== "1"){
       who.dataset.bound = "1";
+
+      // ✅ aseguramos UI y binding del autocomplete propio
+      ensureWhoAutocompleteUi();
+      bindWhoAutocomplete();
+
       who.addEventListener("input", ()=>{
-        if($("fContact")) tryAutoSelectFriendFromWhoInput_OLD();
-        else setModalWhoFromNameInput();
-      });
-      who.addEventListener("change", ()=>{
-        if($("fContact")) tryAutoSelectFriendFromWhoInput_OLD();
-        else{
+        if($("fContact")){
+          tryAutoSelectFriendFromWhoInput_OLD();
+        }else{
           setModalWhoFromNameInput();
+          updateWhoSuggestFromInput(); // ✅ lista filtrada mientras escribe
+        }
+      });
+
+      // al enfocar, mostramos sugerencias
+      who.addEventListener("focus", ()=>{
+        if(!$("fContact")){
+          setModalWhoFromNameInput();
+          updateWhoSuggestFromInput();
+        }
+      });
+
+      // al perder foco, ocultamos con pequeño delay para permitir click en lista
+      who.addEventListener("blur", ()=>{
+        if(!$("fContact")){
+          scheduleHideWhoSuggest();
+        }
+      });
+
+      who.addEventListener("change", ()=>{
+        if($("fContact")){
+          tryAutoSelectFriendFromWhoInput_OLD();
+        }else{
+          setModalWhoFromNameInput();
+          // si coincide exacto, avisamos como antes
           if(modalWhoId){
             const c = getContactById(modalWhoId);
             if(c?.name) toast(`👥 Marcado: ${c.name}`);
           }
+        }
+      });
+
+      // teclas: Enter => si hay coincidencia exacta, fija modalWhoId; si no, solo cierra lista
+      who.addEventListener("keydown", (e)=>{
+        if(e.key === "Enter"){
+          setModalWhoFromNameInput();
+          hideWhoSuggest();
+        }else if(e.key === "Escape"){
+          hideWhoSuggest();
         }
       });
     }
