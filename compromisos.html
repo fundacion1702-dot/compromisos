@@ -249,3 +249,202 @@
           </div>
         </div>
 
+
+<!-- Notificaciones -->
+        <div class="card">
+          <div class="cardTop">
+            <div class="who">
+              <p class="name">Notificaciones</p>
+              <p class="meta"><span class="chip">🔔 Recordatorios</span></p>
+            </div>
+            <div class="switch" id="swNotif" role="switch" aria-checked="false" tabindex="0" aria-label="Activar notificaciones">
+              <span class="knob"></span>
+            </div>
+          </div>
+
+          <div class="desc" id="notifHint">ℹ️ Pulsa “Permitir” para recibir recordatorios.</div>
+
+          <div class="actions">
+            <button class="btn primary" id="btnNotifPerm" type="button">✅ Permitir</button>
+          </div>
+        </div>
+
+        <!-- Borrar todo -->
+        <div class="card">
+          <div class="cardTop">
+            <div class="who">
+              <p class="name">Mantenimiento</p>
+              <p class="meta"><span class="chip">🧹 Reinicio</span></p>
+            </div>
+            <div class="due">⚠️</div>
+          </div>
+          <div class="actions">
+            <button class="btn danger" id="btnResetAll" type="button">🧹 Borrar todo</button>
+          </div>
+          <div class="hint">Borra compromisos, amigos y ajustes del móvil.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="bottomBar">
+    <div class="bottomInner">
+      <button class="navBtn active" id="tabCommitments" type="button"><span>🗓️ Compromisos</span></button>
+      <button class="fab" id="fab" type="button" aria-label="Nuevo">＋</button>
+      <button class="navBtn" id="tabContacts" type="button"><span>👥 Amigos</span></button>
+
+      <!-- compat / no layout -->
+      <button class="navBtn" id="btnInstall" type="button" style="display:none;">⬇️ Instalar</button>
+    </div>
+  </div>
+
+  <!-- Banner instalación -->
+  <div class="installBanner" id="installBanner" aria-hidden="true">
+    <div class="installCard">
+      <div class="installRow">
+        <div>
+          <!-- ✅ Para evitar “texto suelto” si algo falla, por defecto van vacíos -->
+          <p class="installTitle" id="installTitle"></p>
+          <p class="installText" id="installText"></p>
+        </div>
+        <button class="iconBtn" id="btnHideBanner" type="button" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="actions" style="margin-top:10px;">
+        <button class="btn primary" id="btnInstallBanner" type="button" style="display:none;">⬇️ Instalar</button>
+        <button class="btn" id="btnOpenChrome" type="button" style="display:none;">🌐 Abrir en Chrome</button>
+        <button class="btn" id="btnCopyLink" type="button" style="display:none;">🔗 Copiar enlace</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALES -->
+  <div class="backdrop" id="backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal">
+      <div class="modalHead">
+        <h3 id="modalTitle">Nuevo compromiso</h3>
+        <button class="iconBtn" id="btnClose" type="button" aria-label="Cerrar">✕</button>
+      </div>
+
+      <div class="modalBody">
+        <!-- ✅ NUEVO: campo único Nombre (sin datalist nativo para evitar flecha) -->
+        <div class="field">
+          <label class="label" for="fWho">Nombre</label>
+          <input id="fWho"
+                 type="text"
+                 placeholder="Ej: Laura / Mamá / Juan (del trabajo)"
+                 autocomplete="off"/>
+          <!-- (el JS genera el desplegable bonito; esto ya NO usa <datalist>) -->
+          <div class="hint" id="contactHint">Si coincide exacto con un amigo, se vincula automáticamente. Si no, te preguntará si quieres guardarlo.</div>
+        </div>
+
+        <div class="field">
+          <label class="label" for="fWhat">¿Qué se acordó?</label>
+          <textarea id="fWhat" placeholder="Ej: Te paso el PDF / Te devuelvo 20€ / Quedamos el jueves…"></textarea>
+        </div>
+
+        <div class="twoCol">
+          <div class="field">
+            <label class="label" for="fWhen">¿Para cuándo?</label>
+            <input id="fWhen" type="datetime-local"/>
+            <div class="hint">Puedes dejarlo sin fecha.</div>
+          </div>
+
+          <div class="field">
+            <label class="label" for="fRemind">Recordatorio (por fecha)</label>
+            <select id="fRemind">
+              <option value="0">Ninguno</option>
+              <option value="5">5 min antes</option>
+              <option value="15">15 min antes</option>
+              <option value="60">1 hora antes</option>
+              <option value="1440">1 día antes</option>
+            </select>
+            <div class="hint">Requiere fecha.</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label" for="fAfter">Avisar “desde ahora” (viaja en el enlace)</label>
+          <select id="fAfter">
+            <option value="0">No</option>
+            <option value="5">En 5 minutos</option>
+            <option value="15">En 15 minutos</option>
+            <option value="60">En 1 hora</option>
+            <option value="180">En 3 horas</option>
+            <option value="1440">Mañana (24h)</option>
+          </select>
+          <div class="hint">El receptor debe abrir el enlace para que se programe en su móvil.</div>
+        </div>
+
+        <div class="hint">Al guardar, se abrirá el modal de <b>Compartir</b>.</div>
+      </div>
+
+      <div class="modalFoot">
+        <button class="btn danger" id="btnCancel" type="button">Cancelar</button>
+        <button class="btn good" id="btnSave" type="button">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="backdrop" id="cBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal">
+      <div class="modalHead">
+        <h3 id="cModalTitle">Nuevo amigo</h3>
+        <button class="iconBtn" id="cBtnClose" type="button" aria-label="Cerrar">✕</button>
+      </div>
+
+      <div class="modalBody">
+        <div class="field">
+          <label class="label" for="cName">Nombre</label>
+          <input id="cName" type="text" placeholder="Ej: Laura" autocomplete="off"/>
+        </div>
+        <div class="field">
+          <label class="label" for="cNote">Nota (opcional)</label>
+          <input id="cNote" type="text" placeholder="Ej: Trabajo / Vecina / Familia" autocomplete="off"/>
+        </div>
+        <div class="hint">Esto solo se guarda en tu móvil.</div>
+      </div>
+
+      <div class="modalFoot">
+        <button class="btn danger" id="cBtnCancel" type="button">Cancelar</button>
+        <button class="btn good" id="cBtnSave" type="button">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="backdrop" id="pinBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal">
+      <div class="modalHead">
+        <h3 id="pinTitle">Configurar PIN</h3>
+        <button class="iconBtn" id="pinClose" type="button" aria-label="Cerrar">✕</button>
+      </div>
+
+      <div class="modalBody">
+        <div class="hint" id="pinHint" style="margin-top:0"></div>
+
+        <div class="field" id="pinOldWrap" style="display:none">
+          <label class="label" for="pinOld">PIN actual</label>
+          <input id="pinOld" inputmode="numeric" autocomplete="off" pattern="[0-9]*" maxlength="4" placeholder="••••"/>
+        </div>
+
+        <div class="field" id="pinNewWrap">
+          <label class="label" for="pinNew">Nuevo PIN (4 dígitos)</label>
+          <input id="pinNew" inputmode="numeric" autocomplete="off" pattern="[0-9]*" maxlength="4" placeholder="••••"/>
+        </div>
+
+        <div class="field" id="pinNew2Wrap">
+          <label class="label" for="pinNew2">Repite el PIN</label>
+          <input id="pinNew2" inputmode="numeric" autocomplete="off" pattern="[0-9]*" maxlength="4" placeholder="••••"/>
+        </div>
+
+        <div class="hint" id="pinHelp">Consejo: usa un PIN que solo tú sepas.</div>
+      </div>
+
+      <div class="modalFoot">
+        <button class="btn danger" id="pinCancel" type="button">Cancelar</button>
+        <button class="btn good" id="pinOk" type="button">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+
