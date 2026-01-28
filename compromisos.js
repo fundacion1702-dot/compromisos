@@ -1,3 +1,1093 @@
+/* compromisos.js (COMPLETO) */
+(function(){
+  "use strict";
+
+  /* =========================
+     Helpers básicos
+  ========================= */
+  const $ = (id) => document.getElementById(id);
+
+  const KEY = "compromisos.data.v1";
+  const CONTACTS_KEY = "compromisos.contacts.v1";
+  const SETTINGS_KEY = "compromisos.settings.v1";
+  const RECEIVED_KEY = "compromisos.received.v1";
+  const A11Y_KEY = "compromisos.a11y.v1";
+
+  function safeJsonParse(s, fallback){
+    try{ return JSON.parse(s); }catch(e){ return fallback; }
+  }
+  function load(key, fallback){
+    const v = localStorage.getItem(key);
+    if(v == null) return fallback;
+    return safeJsonParse(v, fallback);
+  }
+  function save(key, val){
+    localStorage.setItem(key, JSON.stringify(val));
+  }
+  function uid(){
+    return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  }
+  function esc(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+  function toast(msg){
+    const t = $("toast");
+    if(!t) return;
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toast._tm);
+    toast._tm = setTimeout(()=> t.classList.remove("show"), 2200);
+  }
+  function fmtDate(iso){
+    try{
+      if(!iso) return "";
+      const d = (iso instanceof Date) ? iso : new Date(iso);
+      if(isNaN(d.getTime())) return "";
+      return d.toLocaleString("es-ES", {
+        year:"numeric", month:"2-digit", day:"2-digit",
+        hour:"2-digit", minute:"2-digit"
+      });
+    }catch(e){ return ""; }
+  }
+  function isOverdue(iso){
+    if(!iso) return false;
+    const t = new Date(iso).getTime();
+    if(!isFinite(t)) return false;
+    return t < Date.now();
+  }
+  function appBaseUrl(){
+    const u = new URL(location.href);
+    u.hash = "";
+    u.search = "";
+    return u.toString();
+  }
+
+  /* =========================
+     ✅ CSS de soporte (layout + lupa + fixes + autocompletado)
+  ========================= */
+  (function injectMiniToolsCss(){
+    try{
+      const st = document.createElement("style");
+      st.textContent = `
+        /* ✅ Topbar NO fija (que se mueva con scroll) */
+        .topbar{ position: static !important; top:auto !important; }
+        .topbarInner{ position: static !important; }
+
+        /* ✅ Recolocar topActions: Texto grande arriba derecha, pills centradas al eje, ⚙️ debajo */
+        .topActions{
+          display:grid !important;
+          grid-template-columns: 1fr auto;
+          grid-template-rows: auto auto auto; /* ✅ 3 filas */
+          column-gap: 12px;
+          row-gap: 6px;
+          align-items: center;
+        }
+        #btnA11yTop{ grid-column: 2; grid-row: 1; justify-self:end; }
+
+        /* ✅ MUY IMPORTANTE: pills ocupan TODAS las columnas para centrar respecto al eje de la página */
+        .pills{
+          grid-column: 1 / -1 !important; /* ✅ ocupa todo el ancho del grid */
+          grid-row: 2 !important;
+          justify-self: center !important;
+          width: 100% !important;
+          margin-top: 0 !important;
+
+          /* ✅ centrado real de los botones */
+          display: flex !important;
+          flex-wrap: wrap !important;
+          justify-content: center !important;
+          align-items: center !important;
+          gap: 12px !important;
+        }
+
+        #btnSettingsGear{
+          grid-column: 2 !important;
+          grid-row: 3 !important;  /* ✅ debajo de las pills */
+          justify-self: end !important;
+          align-self: end !important;
+        }
+
+        /* ✅ Evitar que la barra de estados “se coma” el último botón (Cerrados) */
+        .sectionHead{ flex-wrap: wrap !important; gap: 10px !important; }
+        .segTabs{ flex-wrap: wrap !important; gap: 8px !important; justify-content:flex-end !important; }
+        .segBtn{ white-space: nowrap !important; }
+
+        /* ✅ Botón buscar/filtrar “como al principio” (debajo del header, a la derecha) */
+        .miniTools{
+          padding:10px 14px 0;
+          display:flex;
+          justify-content:flex-end;
+        }
+        .miniBtn{
+          height:36px;
+          padding:0 12px;
+          border-radius:999px;
+          border:1px solid var(--border);
+          background:var(--surface2);
+          box-shadow:var(--shadow2);
+          font-weight:900;
+          cursor:pointer;
+          display:inline-flex;
+          align-items:center;
+          gap:8px;
+          -webkit-tap-highlight-color:transparent;
+        }
+        .miniBtn:active{ transform:translateY(1px); }
+        .miniPanel{
+          display:none;
+          padding:10px 14px 12px;
+          border-top:1px dashed rgba(229,231,235,.95);
+          background:linear-gradient(180deg,#fff,#fbfbfc);
+        }
+        .miniPanel.show{ display:block; }
+        .miniRow{
+          display:flex;
+          gap:10px;
+          flex-wrap:wrap;
+          align-items:flex-end;
+        }
+        .miniRow .field{ margin-top:0; flex:1; min-width:160px; }
+        .miniHint{
+          margin-top:8px;
+          color:var(--muted);
+          font-size:12.5px;
+          line-height:1.35;
+        }
+        .chip.status{ font-weight:900; }
+
+        /* =========================
+           ✅ Autocompletado (mismo estilo en “Nombre” y en “Buscar”)
+           - Lista flotante justo debajo del input
+           - Solo visible cuando escribes
+           - Sin flechitas raras del datalist nativo
+        ========================= */
+        .acPanel{
+          position:fixed;
+          z-index:9999;
+          min-width:220px;
+          max-width:calc(100vw - 24px);
+          background:var(--surface);
+          border:1px solid var(--border);
+          box-shadow:0 22px 60px rgba(17,24,39,.18);
+          border-radius:16px;
+          overflow:hidden;
+          display:none;
+        }
+        .acPanel.show{ display:block; }
+        .acList{ display:flex; flex-direction:column; }
+        .acItem{
+          padding:10px 12px;
+          display:flex;
+          align-items:center;
+          gap:10px;
+          cursor:pointer;
+          -webkit-tap-highlight-color:transparent;
+          border-top:1px solid rgba(229,231,235,.85);
+          font-weight:900;
+          font-size:16px; /* ✅ un poquito más grande */
+          line-height:1.15;
+        }
+        .acItem:first-child{ border-top:none; }
+        .acItem:active{ background:rgba(37,99,235,.08); }
+        .acIcon{
+          width:28px; height:28px;
+          border-radius:12px;
+          display:grid;
+          place-items:center;
+          background:var(--surface2);
+          border:1px solid rgba(229,231,235,.9);
+          flex:0 0 auto;
+          font-size:14px;
+        }
+        .acText{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .acHint{
+          padding:8px 12px;
+          font-size:12.5px;
+          color:var(--muted);
+          background:linear-gradient(180deg,#fff,#fbfbfc);
+          border-top:1px solid rgba(229,231,235,.9);
+        }
+      `;
+      document.head.appendChild(st);
+    }catch(e){}
+  })();
+
+  /* =========================
+     Estado / datos
+  ========================= */
+  let data = load(KEY, []);
+  let contacts = load(CONTACTS_KEY, []);
+  let settings = load(SETTINGS_KEY, {
+    pinEnabled:false,
+    autoLockMin:0,
+    rememberMin:0,
+    notifEnabled:false
+  });
+  let received = load(RECEIVED_KEY, { c:0, lastAt:null });
+
+  let pane = "commitments"; // commitments | contacts | settings
+  let view = "pending";     // pending | waiting | closed
+  let lastCommitView = "pending";
+
+  // ✅ filtros/búsquedas (desplegable)
+  let uiCommitFiltersOpen = false;
+  let uiContactsSearchOpen = false;
+
+  let commitFriendFilter = "all"; // all | __none__ | <contactId>
+  let commitTextFilter = "";      // búsqueda en texto / quién
+  let contactsTextFilter = "";    // búsqueda amigos
+
+  /* =========================
+     ✅ Autocompletado flotante (reutilizable)
+     - Lo usamos en:
+       1) Modal “Nombre” (fWho)
+       2) Buscar compromisos (commitSearchTxt)
+  ========================= */
+  const AC = (function(){
+    let panel = null;
+    let list = null;
+    let hint = null;
+    let activeInput = null;
+    let activeOnPick = null;
+    let activeGetItems = null;
+    let lastQuery = "";
+    let bound = false;
+
+    function ensure(){
+      if(panel) return;
+      panel = document.createElement("div");
+      panel.className = "acPanel";
+      panel.id = "acPanel";
+
+      list = document.createElement("div");
+      list.className = "acList";
+
+      hint = document.createElement("div");
+      hint.className = "acHint";
+      hint.textContent = "Escribe para ver sugerencias.";
+
+      panel.appendChild(list);
+      panel.appendChild(hint);
+      document.body.appendChild(panel);
+
+      if(bound) return;
+      bound = true;
+
+      // cerrar al tocar fuera
+      document.addEventListener("pointerdown", (e)=>{
+        if(!panel.classList.contains("show")) return;
+        const t = e.target;
+        if(t === activeInput) return;
+        if(panel.contains(t)) return;
+        hide();
+      }, true);
+
+      window.addEventListener("scroll", ()=>{
+        if(panel.classList.contains("show")) position();
+      }, true);
+
+      window.addEventListener("resize", ()=>{
+        if(panel.classList.contains("show")) position();
+      }, true);
+    }
+
+    function position(){
+      if(!activeInput || !panel) return;
+      const r = activeInput.getBoundingClientRect();
+      const gap = 6;
+      const top = Math.min(window.innerHeight - 12, r.bottom + gap);
+      const left = Math.max(12, r.left);
+      const width = Math.max(220, Math.min(r.width, window.innerWidth - 24));
+      panel.style.top = top + "px";
+      panel.style.left = left + "px";
+      panel.style.width = width + "px";
+      panel.style.maxHeight = Math.min(260, window.innerHeight - top - 12) + "px";
+      panel.style.overflow = "auto";
+    }
+
+    function hide(){
+      if(!panel) return;
+      panel.classList.remove("show");
+      activeInput = null;
+      activeOnPick = null;
+      activeGetItems = null;
+      lastQuery = "";
+      try{ list.innerHTML = ""; }catch(_){}
+    }
+
+    function render(items, q){
+      if(!panel) return;
+      list.innerHTML = "";
+
+      if(!q){
+        hint.textContent = "Escribe para ver sugerencias.";
+      }else{
+        hint.textContent = items.length ? "Toca para seleccionar." : "Sin coincidencias.";
+      }
+
+      items.forEach((it)=>{
+        const row = document.createElement("div");
+        row.className = "acItem";
+        row.innerHTML = `
+          <span class="acIcon" aria-hidden="true">${esc(it.icon || "👤")}</span>
+          <span class="acText">${esc(it.value)}</span>
+        `;
+        row.addEventListener("click", ()=>{
+          try{
+            if(activeInput) activeInput.value = it.value;
+            if(activeOnPick) activeOnPick(it);
+          }catch(e){}
+          hide();
+        });
+        list.appendChild(row);
+      });
+
+      position();
+      panel.classList.toggle("show", true);
+    }
+
+    function normalize(s){
+      return String(s||"").trim().replace(/\s+/g," ");
+    }
+
+    function setUpFor(input, getItems, onPick){
+      ensure();
+      activeInput = input;
+      activeGetItems = getItems;
+      activeOnPick = onPick;
+
+      const q = normalize(input.value);
+      lastQuery = q;
+
+      if(!q){
+        hide();
+        return;
+      }
+
+      const items = (getItems(q) || []).slice(0, 8);
+      render(items, q);
+    }
+
+    function attach(input, getItems, onPick){
+      if(!input) return;
+      if(input.dataset.acBound === "1") return;
+      input.dataset.acBound = "1";
+
+      const onInput = ()=>{
+        setUpFor(input, getItems, onPick);
+      };
+
+      input.addEventListener("input", onInput);
+      input.addEventListener("focus", onInput);
+
+      input.addEventListener("blur", ()=>{
+        // pequeño delay para permitir click en la lista
+        setTimeout(()=>{
+          if(document.activeElement === input) return;
+          hide();
+        }, 140);
+      });
+
+      input.addEventListener("keydown", (e)=>{
+        if(e.key === "Escape"){
+          hide();
+        }
+      });
+    }
+
+    return { attach, hide, normalize };
+  })();
+
+  /* =========================
+     ✅ Migración: done -> status
+     status: pending | waiting | closed
+  ========================= */
+  function normalizeStatus(it){
+    const nowIso = new Date().toISOString();
+
+    let status = it.status;
+    if(status !== "pending" && status !== "waiting" && status !== "closed"){
+      if(it.done === true) status = "closed";
+      else status = "pending";
+    }
+
+    const done = (status === "closed");
+    const closedAt = it.closedAt || it.doneAt || (done ? (it.doneAt || nowIso) : null);
+
+    return {
+      ...it,
+      status,
+      done,
+      doneAt: done ? (it.doneAt || closedAt) : null,
+      closedAt: done ? closedAt : null
+    };
+  }
+
+  function migrateAllData(){
+    let changed = false;
+    data = (data || []).map(it=>{
+      const before = JSON.stringify({ status:it.status, done:it.done, doneAt:it.doneAt, closedAt:it.closedAt });
+      const afterObj = normalizeStatus(it);
+      const after = JSON.stringify({ status:afterObj.status, done:afterObj.done, doneAt:afterObj.doneAt, closedAt:afterObj.closedAt });
+      if(before !== after) changed = true;
+      return afterObj;
+    });
+    if(changed) save(KEY, data);
+  }
+
+  /* =========================
+     ✅ Texto grande
+  ========================= */
+  function applyTextScale(big){
+    document.documentElement.style.setProperty("--fs", big ? "18px" : "16px");
+    document.documentElement.style.setProperty("--fsBig", big ? "20px" : "18px");
+    document.body.classList.toggle("bigText", !!big);
+
+    const label = big ? "🔎 Texto normal" : "🔎 Texto grande";
+    const bTop = $("btnA11yTop");
+    const bSet = $("btnA11y");
+    if(bTop) bTop.textContent = label;
+    if(bSet) bSet.textContent = label;
+  }
+
+  function setTextScale(big){
+    save(A11Y_KEY, { big: !!big });
+    applyTextScale(!!big);
+  }
+
+  function toggleTextScale(){
+    const cur = load(A11Y_KEY, { big:false });
+    const next = !cur.big;
+    setTextScale(next);
+    toast(next ? "🔎 Texto grande: ON" : "🔎 Texto grande: OFF");
+  }
+
+  const _a11yGuard = { last: 0, lockMs: 420 };
+  function guardedToggle(e){
+    const now = Date.now();
+    if(now - _a11yGuard.last < _a11yGuard.lockMs) return;
+    _a11yGuard.last = now;
+    try{ e && e.preventDefault && e.preventDefault(); }catch(_){}
+    try{ e && e.stopPropagation && e.stopPropagation(); }catch(_){}
+    toggleTextScale();
+  }
+
+  function bindA11yDelegation(){
+    const matchA11y = (node)=>{
+      if(!node) return null;
+      const el = node.closest?.("#btnA11yTop,#btnA11y,.a11yBtn,[data-a11y='bigtext']");
+      if(!el) return null;
+      const txt = (el.textContent || "").toLowerCase();
+      if(!txt.includes("texto grande") && !txt.includes("texto normal")) return null;
+      return el;
+    };
+
+    const handler = (e)=>{
+      const el = matchA11y(e.target);
+      if(!el) return;
+      guardedToggle(e);
+    };
+
+    document.addEventListener("click", handler, true);
+    document.addEventListener("touchend", handler, true);
+    document.addEventListener("pointerup", handler, true);
+    document.addEventListener("keydown", (e)=>{
+      if(e.key!=="Enter" && e.key!==" ") return;
+      const el = matchA11y(document.activeElement);
+      if(!el) return;
+      guardedToggle(e);
+    }, true);
+  }
+
+  /* =========================
+     Click en logo/título => home
+  ========================= */
+  function bindBrandHome(){
+    const brand = document.querySelector(".brand");
+    if(brand){
+      try{
+        brand.style.cursor = "pointer";
+        if(!brand.hasAttribute("tabindex")) brand.setAttribute("tabindex","0");
+        brand.setAttribute("role","button");
+        brand.setAttribute("aria-label","Ir a pantalla principal");
+      }catch(e){}
+    }
+
+    const isBrandTarget = (node)=>{
+      if(!node) return null;
+      return node.closest?.(".brand, .brand .logo, .brand .titleBox, .brand .title, .brand .subtitle") || null;
+    };
+
+    const goHome = (e)=>{
+      try{ e && e.preventDefault && e.preventDefault(); }catch(_){}
+      try{ e && e.stopPropagation && e.stopPropagation(); }catch(_){}
+      setPane("commitments");
+      setView("pending");
+      try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(_){ window.scrollTo(0,0); }
+    };
+
+    document.addEventListener("click", (e)=>{
+      const el = isBrandTarget(e.target);
+      if(!el) return;
+      goHome(e);
+    }, true);
+
+    document.addEventListener("touchend", (e)=>{
+      const el = isBrandTarget(e.target);
+      if(!el) return;
+      goHome(e);
+    }, { capture:true, passive:false });
+
+    document.addEventListener("keydown", (e)=>{
+      if(e.key!=="Enter" && e.key!==" ") return;
+      const el = isBrandTarget(document.activeElement);
+      if(!el) return;
+      goHome(e);
+    }, true);
+  }
+
+  /* =========================
+     Orden pills (Recibidos, En espera, Vencidos)
+  ========================= */
+  function ensureWaitingPill(){
+    try{
+      const pills = document.querySelector(".pills");
+      if(!pills) return;
+
+      if($("btnWaitingTop")) return;
+
+      const btn = document.createElement("button");
+      btn.className = "pillBtn";
+      btn.id = "btnWaitingTop";
+      btn.type = "button";
+      btn.title = "En espera";
+      btn.innerHTML = `
+        <span class="pillDot" aria-hidden="true"></span>
+        <span>En espera</span>
+        <span class="pillCount" id="bWaiting">0</span>
+      `;
+
+      pills.insertBefore(btn, pills.firstElementChild || null);
+
+      btn.addEventListener("click", ()=>{
+        setPane("commitments");
+        setView("waiting");
+        const w = data.filter(x=>x.status==="waiting").length;
+        toast(w ? `⏳ En espera: ${w}` : "Nada en espera");
+      });
+    }catch(e){}
+  }
+
+  function fixPillsOrder(){
+    try{
+      const pills = document.querySelector(".pills");
+      if(!pills) return;
+
+      const get = (id)=> pills.querySelector("#"+id);
+      const w = get("btnWaitingTop");
+      const r = get("btnReceived");
+      const v = get("btnOverdue");
+
+      if(w) pills.appendChild(w);
+      if(r) pills.appendChild(r);
+      if(v) pills.appendChild(v);
+
+      if(w) pills.insertBefore(w, pills.firstElementChild);
+      if(r) pills.insertBefore(r, v || null);
+    }catch(e){}
+  }
+
+  /* =========================
+     Quitar “Instálala / Consejo”
+  ========================= */
+  function removeBottomInstallText(){
+    try{
+      const ban = document.querySelector("#installBanner, .installBanner");
+      if(ban) ban.remove();
+
+      const candidates = document.querySelectorAll("a,button,div,span,p,li");
+      candidates.forEach(el=>{
+        if(!el || el.children.length) return;
+        const t = (el.textContent || "").trim();
+        if(t === "Instálala" || t === "Consejo"){
+          el.style.display = "none";
+        }
+      });
+
+      const blocks = document.querySelectorAll("div,section,footer,aside");
+      blocks.forEach(el=>{
+        const t = (el.textContent || "").trim().replace(/\s+/g," ");
+        if(!t) return;
+        if((t === "Instálala Consejo") || (t === "Instálala\nConsejo") || (t === "Consejo Instálala")){
+          el.style.display = "none";
+        }
+      });
+    }catch(e){}
+  }
+
+  /* =========================
+     Navegación panes
+  ========================= */
+  function safeShow(el, show){
+    if(!el) return;
+    el.style.display = show ? "" : "none";
+  }
+
+  function setPane(newPane){
+    pane = newPane;
+
+    const tC = $("tabCommitments");
+    const tA = $("tabContacts");
+
+    if(tC) tC.classList.toggle("active", pane==="commitments");
+    if(tA) tA.classList.toggle("active", pane==="contacts");
+
+    safeShow($("commitmentsPane"), pane==="commitments");
+    safeShow($("contactsPane"), pane==="contacts");
+    safeShow($("settingsPane"), pane==="settings");
+
+    const fab = $("fab");
+    if(fab){
+      if(pane === "settings") fab.style.display = "none";
+      else{
+        fab.style.display = "grid";
+        fab.setAttribute("aria-label", pane==="contacts" ? "Nuevo amigo" : "Nuevo compromiso");
+      }
+    }
+
+    if(pane === "commitments"){
+      setView(lastCommitView || "pending");
+    }else{
+      renderAll();
+    }
+
+    try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
+  }
+
+  function titleForView(v){
+    if(v==="waiting") return "En espera";
+    if(v==="closed") return "Cerrados";
+    return "Pendientes";
+  }
+
+  function updateCommitmentsHeading(){
+    try{
+      const paneEl = $("commitmentsPane");
+      if(!paneEl) return;
+      const h2 = paneEl.querySelector(".sectionHead h2");
+      if(h2) h2.textContent = titleForView(view);
+
+      const p = paneEl.querySelector(".sectionHead p");
+      if(p){
+        if(view==="pending") p.textContent = "Por hacer (lo tengo yo pendiente).";
+        else if(view==="waiting") p.textContent = "Yo ya respondí; queda pendiente la otra persona.";
+        else p.textContent = "Finalizados / ya no requieren nada.";
+      }
+    }catch(e){}
+  }
+
+  function setView(newView){
+    view = newView;
+    if(pane === "commitments") lastCommitView = newView;
+
+    const a = $("tabPending");
+    const w = $("tabWaiting");
+    const c = $("tabDone");
+
+    if(a) a.classList.toggle("active", view==="pending");
+    if(w) w.classList.toggle("active", view==="waiting");
+    if(c) c.classList.toggle("active", view==="closed");
+
+    updateCommitmentsHeading();
+    renderCommitments();
+  }
+
+  /* =========================
+     ✅ Botón ⚙️: abrir/cerrar ajustes
+  ========================= */
+  function bindSettingsGear(){
+    const gear = $("btnSettingsGear");
+    if(!gear) return;
+
+    if(gear.dataset.bound === "1") return;
+    gear.dataset.bound = "1";
+
+    gear.addEventListener("click", ()=>{
+      if(pane === "settings"){
+        setPane("commitments");
+        return;
+      }
+      setPane("settings");
+    });
+  }
+
+  function bindNav(){
+    if($("tabCommitments")) $("tabCommitments").onclick = ()=> setPane("commitments");
+    if($("tabContacts")) $("tabContacts").onclick = ()=> setPane("contacts");
+
+    if($("tabPending")) $("tabPending").onclick = ()=> setView("pending");
+    if($("tabWaiting")) $("tabWaiting").onclick = ()=> setView("waiting");
+    if($("tabDone")) $("tabDone").onclick = ()=> setView("closed");
+
+    const bindTile = (id, fn)=>{
+      const el = $(id);
+      if(!el) return;
+      el.addEventListener("click", fn);
+      el.addEventListener("keydown", (e)=>{
+        if(e.key==="Enter" || e.key===" "){ e.preventDefault(); fn(); }
+      });
+    };
+    bindTile("tilePending", ()=>{ setPane("commitments"); setView("pending"); });
+    bindTile("tileWaiting", ()=>{ setPane("commitments"); setView("waiting"); });
+    bindTile("tileDone", ()=>{ setPane("commitments"); setView("closed"); });
+    bindTile("tileContacts", ()=>{ setPane("contacts"); });
+    bindTile("tileSettings", ()=>{ setPane("settings"); });
+
+    if($("btnOverdue")){
+      $("btnOverdue").addEventListener("click", ()=>{
+        setPane("commitments");
+        setView("pending");
+        const overdue = data.filter(x=> x.status==="pending" && isOverdue(x.when)).length;
+        toast(overdue ? `⏰ ${overdue} vencido(s)` : "Sin vencidos ✅");
+      });
+    }
+    if($("btnReceived")){
+      $("btnReceived").addEventListener("click", ()=>{
+        setPane("commitments");
+        setView("pending");
+        const c = Math.max(0, Number(received?.c || 0));
+        toast(c ? `📥 Recibidos: ${c}` : "Sin recibidos");
+      });
+    }
+  }
+
+  /* =========================
+     ✅ UI desplegable: Buscar / Filtrar
+  ========================= */
+  function hideLegacyCommitFilters(paneEl){
+    try{
+      const fields = paneEl.querySelectorAll(".field");
+      fields.forEach((f)=>{
+        const lab = f.querySelector("label");
+        const sel = f.querySelector("select");
+        const inp = f.querySelector("input[type='text'], input[type='search']");
+        const labelTxt = (lab?.textContent || "").trim().toLowerCase();
+
+        if(labelTxt.includes("filtrar por amigo")){
+          if(sel && sel.id !== "commitFriendSel"){
+            f.style.display = "none";
+            const next = f.nextElementSibling;
+            if(next && next.classList.contains("hint")) next.style.display = "none";
+          }
+        }
+
+        if(labelTxt === "buscar" || labelTxt.includes("buscar")){
+          if(inp && inp.id !== "commitSearchTxt"){
+            f.style.display = "none";
+            const next = f.nextElementSibling;
+            if(next && next.classList.contains("hint")) next.style.display = "none";
+          }
+        }
+      });
+    }catch(e){}
+  }
+
+  function ensureCommitFiltersUi(){
+    const paneEl = $("commitmentsPane");
+    if(!paneEl) return;
+
+    hideLegacyCommitFilters(paneEl);
+
+    let tools = $("miniCommitTools");
+    let panel = $("commitToolsPanel");
+
+    const bindIfNeeded = ()=>{
+      const btn = $("btnCommitTools");
+      if(!btn || !panel) return;
+      if(btn.dataset.bound === "1") return;
+      btn.dataset.bound = "1";
+
+      btn.addEventListener("click", (e)=>{
+        e.preventDefault();
+        uiCommitFiltersOpen = !uiCommitFiltersOpen;
+        btn.setAttribute("aria-expanded", uiCommitFiltersOpen ? "true" : "false");
+        panel.classList.toggle("show", uiCommitFiltersOpen);
+        if(uiCommitFiltersOpen){
+          setTimeout(()=>{ try{ $("commitSearchTxt").focus(); }catch(_){} }, 0);
+        }else{
+          try{ AC.hide(); }catch(_){}
+        }
+      });
+
+      const clearBtn = $("commitClearBtn");
+      if(clearBtn && clearBtn.dataset.bound !== "1"){
+        clearBtn.dataset.bound = "1";
+        clearBtn.addEventListener("click", ()=>{
+          commitFriendFilter = "all";
+          commitTextFilter = "";
+          fillCommitFriendSelect();
+          const inp = $("commitSearchTxt");
+          if(inp) inp.value = "";
+          try{ AC.hide(); }catch(_){}
+          renderCommitments();
+        });
+      }
+
+      const txt = $("commitSearchTxt");
+      if(txt && txt.dataset.bound !== "1"){
+        txt.dataset.bound = "1";
+        txt.addEventListener("input", ()=>{
+          commitTextFilter = (txt.value || "").trim();
+          renderCommitments();
+        });
+      }
+
+      const sel = $("commitFriendSel");
+      if(sel && sel.dataset.bound !== "1"){
+        sel.dataset.bound = "1";
+        sel.addEventListener("change", ()=>{
+          commitFriendFilter = sel.value || "all";
+          renderCommitments();
+        });
+      }
+    };
+
+    if(!tools){
+      const head = paneEl.querySelector(".sectionHead");
+      if(!head) return;
+
+      tools = document.createElement("div");
+      tools.className = "miniTools";
+      tools.id = "miniCommitTools";
+      tools.innerHTML = `
+        <button class="miniBtn" id="btnCommitTools" type="button" aria-expanded="false">
+          🔍 Buscar / Filtrar
+        </button>
+      `;
+
+      panel = document.createElement("div");
+      panel.className = "miniPanel";
+      panel.id = "commitToolsPanel";
+      panel.innerHTML = `
+        <div class="miniRow">
+          <div class="field">
+            <label class="label" for="commitFriendSel">Filtrar por amigo</label>
+            <select id="commitFriendSel"></select>
+          </div>
+          <div class="field">
+            <label class="label" for="commitSearchTxt">Buscar</label>
+            <input id="commitSearchTxt" type="text" placeholder="Ej: Ana / PDF / 20€" autocomplete="off"/>
+          </div>
+          <div class="field" style="flex:0 0 auto; min-width:auto;">
+            <label class="label" style="opacity:0;">.</label>
+            <button class="btn" id="commitClearBtn" type="button">🧹 Limpiar</button>
+          </div>
+        </div>
+        <div class="miniHint">Se aplica sobre la lista actual (<b>Pendientes</b>, <b>En espera</b> o <b>Cerrados</b>).</div>
+      `;
+
+      head.insertAdjacentElement("afterend", tools);
+      tools.insertAdjacentElement("afterend", panel);
+    }
+
+    fillCommitFriendSelect();
+
+    const btn = $("btnCommitTools");
+    if(btn) btn.setAttribute("aria-expanded", uiCommitFiltersOpen ? "true" : "false");
+    if(panel) panel.classList.toggle("show", uiCommitFiltersOpen);
+
+    bindIfNeeded();
+
+    // ✅ Activar autocompletado en el “Buscar” de compromisos (nombre + texto)
+    bindCommitSearchAutocomplete();
+  }
+
+  function fillCommitFriendSelect(){
+    const sel = $("commitFriendSel");
+    if(!sel) return;
+
+    sel.innerHTML = "";
+    const optAll = document.createElement("option");
+    optAll.value = "all";
+    optAll.textContent = "Todos";
+    sel.appendChild(optAll);
+
+    const optNone = document.createElement("option");
+    optNone.value = "__none__";
+    optNone.textContent = "Sin amigo (nombre escrito)";
+    sel.appendChild(optNone);
+
+    contacts
+      .slice()
+      .sort((a,b)=> (a.name||"").localeCompare(b.name||"", "es"))
+      .forEach(c=>{
+        const opt = document.createElement("option");
+        opt.value = c.id;
+        opt.textContent = c.name || "Sin nombre";
+        sel.appendChild(opt);
+      });
+
+    sel.value = commitFriendFilter || "all";
+  }
+
+  /* =========================
+     Render helpers
+  ========================= */
+  function normalizeName(s){
+    return String(s||"").trim().replace(/\s+/g," ");
+  }
+  function findContactByName(name){
+    const n = normalizeName(name).toLowerCase();
+    if(!n) return null;
+    return contacts.find(c => normalizeName(c.name).toLowerCase() === n) || null;
+  }
+  function getContactById(id){
+    return contacts.find(x=>x.id===id) || null;
+  }
+
+  function normalizedWho(item){
+    if(item.whoId){
+      const c = contacts.find(x=>x.id===item.whoId);
+      if(c && c.name) return c.name;
+    }
+    return item.whoName || "Sin nombre";
+  }
+
+  function statusLabel(s){
+    if(s==="waiting") return "⏳ En espera";
+    if(s==="closed") return "✅ Cerrado";
+    return "🟣 Pendiente";
+  }
+
+  function updateCounts(){
+    const pending = data.filter(x=>x.status==="pending");
+    const waiting = data.filter(x=>x.status==="waiting");
+    const closed = data.filter(x=>x.status==="closed");
+
+    if($("tilePendingCount")) $("tilePendingCount").textContent = String(pending.length);
+    if($("tileWaitingCount")) $("tileWaitingCount").textContent = String(waiting.length);
+    if($("tileDoneCount")) $("tileDoneCount").textContent = String(closed.length);
+
+    if($("tileContactsCount")) $("tileContactsCount").textContent = String(contacts.length);
+    if($("bContacts")) $("bContacts").textContent = String(contacts.length);
+
+    const overdue = pending.filter(x=>isOverdue(x.when)).length;
+    if($("bOverdue")) $("bOverdue").textContent = String(overdue);
+
+    const rec = Math.max(0, Number(received?.c || 0));
+    if($("bReceived")) $("bReceived").textContent = String(rec);
+
+    if($("bWaiting")) $("bWaiting").textContent = String(waiting.length);
+  }
+
+  function passesCommitFilters(it){
+    if(commitFriendFilter && commitFriendFilter !== "all"){
+      if(commitFriendFilter === "__none__"){
+        if(it.whoId) return false;
+      }else{
+        if(it.whoId !== commitFriendFilter) return false;
+      }
+    }
+
+    const q = (commitTextFilter || "").trim().toLowerCase();
+    if(q){
+      const who = normalizedWho(it).toLowerCase();
+      const what = String(it.what || "").toLowerCase();
+      if(!who.includes(q) && !what.includes(q)) return false;
+    }
+
+    return true;
+  }
+
+  /* =========================
+     ✅ Autocompletado del buscador de compromisos (panel Buscar/Filtrar)
+     - Sugiere: Nombres (amigos + whoName) + Textos (what)
+     - Al tocar: rellena el input y filtra automáticamente
+  ========================= */
+  function uniquePush(arr, set, value){
+    const v = AC.normalize(value);
+    if(!v) return;
+    const k = v.toLowerCase();
+    if(set.has(k)) return;
+    set.add(k);
+    arr.push(v);
+  }
+
+  function buildCommitSearchSuggestions(query){
+    const q = AC.normalize(query).toLowerCase();
+    if(!q) return [];
+
+    const names = [];
+    const texts = [];
+    const seenN = new Set();
+    const seenT = new Set();
+
+    // 1) amigos guardados
+    contacts.forEach(c=>{
+      const n = c?.name || "";
+      if(!n) return;
+      if(n.toLowerCase().includes(q)) uniquePush(names, seenN, n);
+    });
+
+    // 2) nombres escritos en compromisos (whoName) + quien normalizado
+    (data||[]).forEach(it=>{
+      const who = normalizedWho(it);
+      if(who && who.toLowerCase().includes(q)) uniquePush(names, seenN, who);
+    });
+
+    // 3) textos (what)
+    (data||[]).forEach(it=>{
+      const w = String(it?.what || "");
+      if(!w) return;
+      if(w.toLowerCase().includes(q)){
+        // sugerimos una versión “corta” si es muy largo
+        const s = AC.normalize(w);
+        const short = s.length > 44 ? (s.slice(0, 44).trim() + "…") : s;
+        uniquePush(texts, seenT, short);
+      }
+    });
+
+    const out = [];
+
+    // nombres primero
+    names.slice(0, 6).forEach(v=>{
+      out.push({ value:v, icon:"👤", kind:"name" });
+    });
+
+    // luego textos
+    texts.slice(0, 6).forEach(v=>{
+      out.push({ value:v, icon:"📝", kind:"text" });
+    });
+
+    return out;
+  }
+
+  function bindCommitSearchAutocomplete(){
+    const inp = $("commitSearchTxt");
+    if(!inp) return;
+    if(inp.dataset.ac2 === "1") return;
+    inp.dataset.ac2 = "1";
+
+    AC.attach(
+      inp,
+      (q)=> buildCommitSearchSuggestions(q),
+      (picked)=>{
+        // ✅ rellena y filtra automáticamente (el input ya tiene el valor)
+        commitTextFilter = (inp.value || "").trim();
+        renderCommitments();
+      }
+    );
+  }
+
+  /* =========================
+     Render (continúa en PARTE 2/3)
+  ========================= */
+
 function renderCommitments(){
     ensureCommitFiltersUi();
     updateCounts();
