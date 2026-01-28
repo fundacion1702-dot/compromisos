@@ -1,4 +1,4 @@
-/* compromisos.js (COMPLETO) */
+/* compromisos.js (COMPLETO) — PARTE 1/3 */
 (function(){
   "use strict";
 
@@ -75,7 +75,7 @@
       const st = document.createElement("style");
       st.textContent = `
         /* ✅ Topbar NO fija (que se mueva con scroll) */
-        .topbar{ position: static !important knowing;}
+        .topbar{ position: static !important; top:auto !important; }
         .topbarInner{ position: static !important; }
 
         /* ✅ Recolocar topActions: Texto grande arriba derecha, pills centradas al eje, ⚙️ debajo */
@@ -159,6 +159,37 @@
           line-height:1.35;
         }
         .chip.status{ font-weight:900; }
+
+        /* =========================
+           ✅ AUTOCOMPLETADO PROPIO (sin datalist nativo)
+           - Evita flechitas raras del navegador
+           - Aparece solo al escribir
+           - Pegado al input
+        ========================= */
+        .acPanel{
+          display:none;
+          margin-top:6px;
+          border:1px solid var(--border);
+          background:var(--surface);
+          border-radius:16px;
+          box-shadow:var(--shadow2);
+          overflow:hidden;
+          max-height:220px;
+          overflow:auto;
+        }
+        .acPanel.show{ display:block; }
+        .acItem{
+          padding:12px 12px;
+          font-weight:900;
+          font-size:16px; /* ✅ un poco más grande */
+          line-height:1.1;
+          cursor:pointer;
+          -webkit-tap-highlight-color:transparent;
+          border-top:1px solid rgba(229,231,235,.75);
+          background:var(--surface);
+        }
+        .acItem:first-child{ border-top:none; }
+        .acItem:active{ background:var(--surface2); }
       `;
       document.head.appendChild(st);
     }catch(e){}
@@ -879,8 +910,12 @@
         if(view==="waiting"){
           return new Date(b.updatedAt||b.createdAt||0).getTime() - new Date(a.updatedAt||a.createdAt||0).getTime();
         }
-        return new Date(b.closedAt||b.doneAt||0).getTime() - new Date(a.closedAt||a.doneAt||0).getTime();
+        return new Date(b.closedAt||b.doneAt||0).getTime() - new Date(aClosedAt(b)||0).getTime();
       });
+
+    function aClosedAt(x){
+      return x.closedAt || x.doneAt || 0;
+    }
 
     if(empty) empty.style.display = items.length ? "none" : "block";
 
@@ -1057,1025 +1092,949 @@
     });
   }
 
+/* ===== FIN PARTE 1/3 ===== */
+
+/* compromisos.js (COMPLETO) — PARTE 2/3 */
+
+/* =========================
+   Modales base (abrir/cerrar)
+========================= */
+  function showBackdrop(id){
+    const b = $(id);
+    if(!b) return;
+    b.classList.add("show");
+    b.setAttribute("aria-hidden","false");
+  }
+  function hideBackdrop(id){
+    const b = $(id);
+    if(!b) return;
+    b.classList.remove("show");
+    b.setAttribute("aria-hidden","true");
+  }
+
+  function closeAllModals(){
+    hideBackdrop("backdrop");
+    hideBackdrop("cBackdrop");
+    hideBackdrop("pinBackdrop");
+    hideBackdrop("shareBackdrop");
+    hideBackdrop("confirmBackdrop");
+  }
+
+  function bindModalClosers(){
+    const pairs = [
+      ["backdrop", "btnClose"],
+      ["backdrop", "btnCancel"],
+
+      ["cBackdrop", "cBtnClose"],
+      ["cBackdrop", "cBtnCancel"],
+
+      ["pinBackdrop", "pinClose"],
+      ["pinBackdrop", "pinCancel"],
+
+      ["shareBackdrop", "shareClose"],
+      ["shareBackdrop", "shareCancel"],
+
+      ["confirmBackdrop", "confirmClose"],
+      ["confirmBackdrop", "confirmNo"]
+    ];
+    pairs.forEach(([bid, cid])=>{
+      const c = $(cid);
+      if(c) c.addEventListener("click", ()=> hideBackdrop(bid));
+    });
+
+    // click fuera => cerrar (solo si tocas backdrop)
+    ["backdrop","cBackdrop","pinBackdrop","shareBackdrop","confirmBackdrop"].forEach(bid=>{
+      const b = $(bid);
+      if(!b) return;
+      b.addEventListener("click", (e)=>{
+        if(e.target === b) hideBackdrop(bid);
+      });
+    });
+  }
+
   /* =========================
      Confirm modal
   ========================= */
-  function openConfirm(title, msg, yesLabel, onYes, noLabel, onNo){
-    const b = $("confirmBackdrop");
-    if(!b) return;
+  let confirmResolve = null;
+  function askConfirm({ title="Confirmar", msg="¿Seguro?", yes="Sí, continuar", no="Cancelar" }){
+    return new Promise((resolve)=>{
+      confirmResolve = resolve;
+      if($("confirmTitle")) $("confirmTitle").textContent = title;
+      if($("confirmMsg")) $("confirmMsg").innerHTML = esc(msg);
+      if($("confirmYes")) $("confirmYes").textContent = yes;
+      if($("confirmNo")) $("confirmNo").textContent = no;
 
-    const t = $("confirmTitle");
-    const m = $("confirmMsg");
-    const yes = $("confirmYes");
-    const no = $("confirmNo");
-    const x = $("confirmClose");
+      showBackdrop("confirmBackdrop");
 
-    if(t) t.textContent = title || "Confirmar";
-    if(m) m.textContent = msg || "";
-    if(yes) yes.textContent = yesLabel || "Sí, continuar";
-    if(no) no.textContent = noLabel || "Cancelar";
+      const done = (v)=>{
+        hideBackdrop("confirmBackdrop");
+        const r = confirmResolve;
+        confirmResolve = null;
+        try{ r && r(v); }catch(_){}
+      };
 
-    b.classList.add("show");
-    b.setAttribute("aria-hidden","false");
+      const y = $("confirmYes");
+      const n = $("confirmNo");
 
-    const close = ()=>{
-      b.classList.remove("show");
-      b.setAttribute("aria-hidden","true");
-      if(yes) yes.onclick = null;
-      if(no) no.onclick = null;
-      if(x) x.onclick = null;
-    };
+      const onY = ()=>{ cleanup(); done(true); };
+      const onN = ()=>{ cleanup(); done(false); };
 
-    if(no) no.onclick = ()=>{ close(); try{ onNo && onNo(); }catch(e){} };
-    if(x) x.onclick  = ()=>{ close(); try{ onNo && onNo(); }catch(e){} };
-    if(yes) yes.onclick = ()=>{ close(); try{ onYes && onYes(); }catch(e){} };
+      function cleanup(){
+        y && y.removeEventListener("click", onY);
+        n && n.removeEventListener("click", onN);
+      }
+
+      y && y.addEventListener("click", onY);
+      n && n.addEventListener("click", onN);
+    });
   }
 
   /* =========================
-     Modales: Compromisos
+     Amigos: CRUD
+  ========================= */
+  function openContactModal(contactId){
+    const isEdit = !!contactId;
+    const mTitle = $("cModalTitle");
+    const fName = $("cName");
+    const fNote = $("cNote");
+
+    if(mTitle) mTitle.textContent = isEdit ? "Editar amigo" : "Nuevo amigo";
+
+    const c = isEdit ? contacts.find(x=>x.id===contactId) : null;
+    if(fName) fName.value = c?.name || "";
+    if(fNote) fNote.value = c?.note || "";
+
+    $("cBtnSave").onclick = ()=>{
+      const name = normalizeName(fName.value);
+      const note = normalizeName(fNote.value);
+
+      if(!name){
+        toast("Escribe un nombre.");
+        try{ fName.focus(); }catch(_){}
+        return;
+      }
+
+      // evitar duplicados exactos (solo para contactos)
+      const existing = findContactByName(name);
+      if(!isEdit && existing){
+        toast("Ese amigo ya existe.");
+        hideBackdrop("cBackdrop");
+        setPane("contacts");
+        return;
+      }
+
+      if(isEdit && c){
+        c.name = name;
+        c.note = note;
+      }else{
+        contacts.push({ id: uid(), name, note, createdAt:new Date().toISOString() });
+      }
+
+      save(CONTACTS_KEY, contacts);
+      fillCommitFriendSelect();
+      renderContacts();
+      renderCommitments();
+
+      hideBackdrop("cBackdrop");
+      toast(isEdit ? "Amigo actualizado ✅" : "Amigo creado ✅");
+    };
+
+    showBackdrop("cBackdrop");
+    setTimeout(()=>{ try{ fName.focus(); }catch(_){} }, 0);
+  }
+
+  async function deleteContact(contactId){
+    const c = contacts.find(x=>x.id===contactId);
+    if(!c) return;
+
+    const ok = await askConfirm({
+      title:"Eliminar amigo",
+      msg:`Vas a eliminar a <b>${esc(c.name||"Sin nombre")}</b>. Los compromisos quedarán con el nombre escrito, pero sin vínculo. ¿Continuar?`,
+      yes:"Sí, eliminar",
+      no:"Cancelar"
+    });
+    if(!ok) return;
+
+    // desvincular compromisos
+    data.forEach(it=>{
+      if(it.whoId === contactId){
+        it.whoId = null;
+        it.whoName = c.name || it.whoName || "";
+        it.updatedAt = new Date().toISOString();
+      }
+    });
+
+    contacts = contacts.filter(x=>x.id!==contactId);
+
+    save(CONTACTS_KEY, contacts);
+    save(KEY, data);
+
+    fillCommitFriendSelect();
+    renderAll();
+    toast("Amigo eliminado.");
+  }
+
+  /* =========================
+     Compromisos: CRUD + share
   ========================= */
   let editingCommitId = null;
-  let modalWhoId = null;
+  let preselectedFriendId = null;
 
-  function openModal(el){
-    if(!el) return;
-    el.classList.add("show");
-    el.setAttribute("aria-hidden","false");
-  }
-  function closeModal(el){
-    if(!el) return;
-    el.classList.remove("show");
-    el.setAttribute("aria-hidden","true");
-  }
+  // ✅ Autocompletado propio para el input "Nombre"
+  let acPanel = null;
 
-  function toLocalInputValue(iso){
-    try{
-      if(!iso) return "";
-      const d = new Date(iso);
-      if(isNaN(d.getTime())) return "";
-      const pad = (n)=> String(n).padStart(2,"0");
-      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    }catch(e){ return ""; }
-  }
-  function fromLocalInputValue(v){
-    try{
-      if(!v) return null;
-      const d = new Date(v);
-      if(isNaN(d.getTime())) return null;
-      return d.toISOString();
-    }catch(e){ return null; }
-  }
-
-  function fillFriendsDatalist(){
-    const dl = $("friendsDatalist") || $("friendsList");
-    if(!dl) return;
-    dl.innerHTML = "";
-
-    contacts
-      .slice()
-      .sort((a,b)=> (a.name||"").localeCompare(b.name||"", "es"))
-      .forEach(c=>{
-        const name = normalizeName(c.name || "");
-        if(!name) return;
-        const opt = document.createElement("option");
-        opt.value = name;
-        dl.appendChild(opt);
-      });
-
-    // Si el autocomplete está abierto, recalcula
-    const inp = $("fWho");
-    if(inp && typeof inp._whoSuggestBuild === "function"){
-      try{ inp._whoSuggestBuild(); }catch(_){}
-    }
-  }
-
-  /* =========================
-     ✅ Autocomplete “Nombre” (lista filtrada, NO siempre visible)
-     - Se inyecta sin tocar el HTML
-     - Desactiva el dropdown nativo del datalist para que no choque
-  ========================= */
-  function ensureWhoAutocompleteUI(){
-    const inp = $("fWho");
-    if(!inp) return;
-    if(inp.dataset.whoAuto === "1") return;
-    inp.dataset.whoAuto = "1";
-
-    const field = inp.closest(".field");
-    if(!field) return;
-
-    // Wrapper para posicionar la lista pegada al input (CSS: .whoAutoWrap / .whoSuggest)
-    const wrap = document.createElement("div");
-    wrap.className = "whoAutoWrap";
-
-    // Mover input dentro del wrap
-    field.insertBefore(wrap, inp);
-    wrap.appendChild(inp);
-
-    // Si hay datalist, lo dejamos (para compat), pero quitamos el atributo list para evitar dropdown nativo
-    const dl = field.querySelector("datalist#friendsDatalist, datalist#friendsList");
-    if(dl){
-      wrap.appendChild(dl);
-    }
-    if(inp.getAttribute("list")){
-      inp.dataset.nativeListId = inp.getAttribute("list");
-      inp.removeAttribute("list");
-    }
-
-    // Contenedor sugerencias
-    const sug = document.createElement("div");
-    sug.className = "whoSuggest";
-    sug.id = "whoSuggest";
-    wrap.appendChild(sug);
-
-    const close = ()=>{
-      sug.classList.remove("show");
-      sug.innerHTML = "";
-    };
-
-    const build = ()=>{
-      const q = normalizeName(inp.value || "").toLowerCase();
-      if(!q){
-        close();
-        // si está vacío, no forzamos modalWhoId
-        modalWhoId = null;
-        return;
-      }
-
-      // Filtrado “contiene” (no solo prefijo) para que sea más útil
-      const items = contacts
-        .slice()
-        .filter(c=>{
-          const n = normalizeName(c.name||"").toLowerCase();
-          return n.includes(q);
-        })
-        .sort((a,b)=> (a.name||"").localeCompare(b.name||"", "es"))
-        .slice(0, 8);
-
-      if(!items.length){
-        close();
-        return;
-      }
-
-      sug.innerHTML = items.map(c=>{
-        return `
-          <div class="row" data-id="${esc(c.id)}">
-            <p class="name">${esc(c.name || "Sin nombre")}</p>
-            <div class="meta" aria-hidden="true">↩</div>
-          </div>
-        `;
-      }).join("");
-
-      sug.classList.add("show");
-    };
-
-    // Exponer para refrescos externos (cuando cambian contactos)
-    inp._whoSuggestBuild = build;
-    inp._whoSuggestClose = close;
-
-    // Evitar que al tocar la lista se cierre por blur antes de seleccionar
-    sug.addEventListener("mousedown", (e)=>{ try{ e.preventDefault(); }catch(_){ } }, true);
-    sug.addEventListener("touchstart", (e)=>{ try{ e.preventDefault(); }catch(_){ } }, { capture:true, passive:false });
-
-    // Click selección
-    sug.addEventListener("click", (e)=>{
-      const row = e.target?.closest?.(".row");
-      if(!row) return;
-      const id = row.getAttribute("data-id");
-      const c = getContactById(id);
-      if(c){
-        inp.value = c.name || "";
-        modalWhoId = c.id;
-        toast(`👥 Marcado: ${c.name || "Amigo"}`);
-      }
-      close();
-      try{ inp.focus(); }catch(_){}
-    });
-
-    // Eventos input
-    inp.addEventListener("input", ()=>{
-      // Esto mantiene modalWhoId si hay match EXACTO (requisito original)
-      setModalWhoFromNameInput();
-      build();
-    });
-
-    inp.addEventListener("focus", ()=>{
-      build();
-    });
-
-    inp.addEventListener("keydown", (e)=>{
-      if(e.key === "Escape"){
-        close();
-      }
-    });
-
-    // Cerrar al perder foco (con pequeño delay por tap/click en sugerencia)
-    inp.addEventListener("blur", ()=>{
-      setTimeout(()=>{ close(); }, 160);
-    });
-
-    // Click fuera => cerrar
-    document.addEventListener("click", (e)=>{
-      if(!wrap.contains(e.target)) close();
-    }, true);
-  }
-
-  function fixWhoLabel(){
-    try{
-      const customField = $("customWhoField");
-      if(!customField) return;
-      const lab = customField.querySelector("label");
-      if(!lab) return;
-      if(/nombre/i.test((lab.textContent||"").trim())){
-        lab.textContent = "Nombre";
-      }
-    }catch(e){}
-  }
-
-  function rebuildContactSelect(selectedId, customName){
-    const sel = $("fContact");
-    const customField = $("customWhoField");
+  function ensureAutoCompletePanel(){
     const whoInput = $("fWho");
-    const hint = $("contactHint");
-    if(!sel) return;
+    if(!whoInput) return;
 
-    sel.innerHTML = "";
-
-    const opt0 = document.createElement("option");
-    opt0.value = "__custom__";
-    opt0.textContent = "— Sin amigo (escribir nombre) —";
-    sel.appendChild(opt0);
-
-    contacts
-      .slice()
-      .sort((a,b)=> (a.name||"").localeCompare(b.name||"", "es"))
-      .forEach(c=>{
-        const opt = document.createElement("option");
-        opt.value = c.id;
-        opt.textContent = c.name || "Sin nombre";
-        sel.appendChild(opt);
-      });
-
-    if(selectedId) sel.value = selectedId;
-    else sel.value = "__custom__";
-
-    const isCustom = (sel.value === "__custom__");
-    if(customField) customField.style.display = isCustom ? "" : "none";
-    if(hint) hint.textContent = isCustom
-      ? "Escribe un nombre o elígelo de la lista."
-      : "Elige un amigo guardado.";
-
-    fixWhoLabel();
-    fillFriendsDatalist();
-
-    if(isCustom && whoInput){
-      whoInput.value = customName || "";
-      setTimeout(()=>{ try{ whoInput.focus(); }catch(e){} }, 0);
+    // ⚠️ Quitamos el datalist nativo para evitar flechas raras
+    if(whoInput.hasAttribute("list")){
+      whoInput.removeAttribute("list");
     }
-  }
 
-  function tryAutoSelectFriendFromWhoInput_OLD(){
-    const sel = $("fContact");
-    const whoInput = $("fWho");
-    if(!sel || !whoInput) return;
-    if(sel.value !== "__custom__") return;
-
-    const raw = normalizeName(whoInput.value || "");
-    if(!raw) return;
-
-    const match = findContactByName(raw);
-    if(!match) return;
-
-    sel.value = match.id;
-    rebuildContactSelect(match.id, "");
-    toast(`👥 Marcado: ${match.name || "Amigo"}`);
-  }
-
-  function resolveWho_OLD(){
-    const sel = $("fContact");
-    const whoInput = $("fWho");
-    if(!sel) return { whoId:null, whoName:"" };
-
-    if(sel.value && sel.value !== "__custom__"){
-      const c = getContactById(sel.value);
-      return { whoId: c ? c.id : sel.value, whoName: "" };
+    // Crear panel si no existe
+    if(!$("whoAcPanel")){
+      const panel = document.createElement("div");
+      panel.className = "acPanel";
+      panel.id = "whoAcPanel";
+      // lo insertamos justo después del input
+      whoInput.insertAdjacentElement("afterend", panel);
     }
-    return { whoId:null, whoName: normalizeName(whoInput?.value || "") };
+    acPanel = $("whoAcPanel");
   }
 
-  function setModalWhoFromNameInput(){
-    const inp = $("fWho");
-    if(!inp) return;
+  function buildSuggestions(query){
+    const q = normalizeName(query).toLowerCase();
+    if(!q) return [];
 
-    const raw = normalizeName(inp.value || "");
-    if(!raw){ modalWhoId = null; return; }
-    const match = findContactByName(raw);
-    modalWhoId = match ? match.id : null;
+    // filtrar por "empieza por" o "incluye", priorizando empieza por
+    const all = contacts.slice().sort((a,b)=> (a.name||"").localeCompare(b.name||"", "es"));
+    const starts = [];
+    const contains = [];
+
+    for(const c of all){
+      const name = normalizeName(c.name).toLowerCase();
+      if(!name) continue;
+      if(name.startsWith(q)) starts.push(c);
+      else if(name.includes(q)) contains.push(c);
+    }
+    return starts.concat(contains).slice(0, 12);
   }
 
-  function setNameInputForWho(whoId, whoName){
-    const inp = $("fWho");
-    if(!inp) return;
+  function showSuggestionsFor(query){
+    ensureAutoCompletePanel();
+    if(!acPanel) return;
 
-    if(whoId){
-      const c = getContactById(whoId);
-      inp.value = c?.name || "";
-      modalWhoId = whoId;
+    const items = buildSuggestions(query);
+
+    // Solo mostrar si hay query y hay sugerencias
+    if(!normalizeName(query) || items.length===0){
+      acPanel.classList.remove("show");
+      acPanel.innerHTML = "";
       return;
     }
-    inp.value = whoName || "";
-    modalWhoId = null;
-    setModalWhoFromNameInput();
+
+    acPanel.innerHTML = items.map(c=>{
+      return `<div class="acItem" data-id="${esc(c.id)}">${esc(c.name)}</div>`;
+    }).join("");
+
+    acPanel.classList.add("show");
+
+    // click en item => set value y cerrar
+    acPanel.querySelectorAll(".acItem").forEach(el=>{
+      el.addEventListener("click", ()=>{
+        const id = el.getAttribute("data-id");
+        const c = contacts.find(x=>x.id===id);
+        if(!c) return;
+
+        const whoInput = $("fWho");
+        if(whoInput) whoInput.value = c.name || "";
+        preselectedFriendId = c.id;
+
+        acPanel.classList.remove("show");
+        acPanel.innerHTML = "";
+
+        // foco al siguiente campo
+        setTimeout(()=>{ try{ $("fWhat").focus(); }catch(_){} }, 0);
+      });
+    });
   }
 
-  function resolveWho_NEW(){
-    const inp = $("fWho");
-    const raw = normalizeName(inp?.value || "");
-    if(modalWhoId) return { whoId: modalWhoId, whoName: "" };
-    return { whoId:null, whoName: raw };
+  function hideSuggestions(){
+    if(!acPanel) return;
+    acPanel.classList.remove("show");
+    acPanel.innerHTML = "";
   }
 
-  function openCommitModal(id, presetContactId){
-    editingCommitId = id || null;
+  function bindWhoAutocomplete(){
+    const whoInput = $("fWho");
+    if(!whoInput) return;
 
-    const it = id ? data.find(x=>x.id===id) : null;
+    ensureAutoCompletePanel();
 
-    const whoId = it?.whoId || presetContactId || null;
-    const whoName = it?.whoName || "";
+    if(whoInput.dataset.acBound === "1") return;
+    whoInput.dataset.acBound = "1";
 
-    if($("fContact")){
-      rebuildContactSelect(whoId, whoName);
-    }else{
-      fillFriendsDatalist();
-      setNameInputForWho(whoId, whoName);
-    }
+    // cuando escribes => filtra
+    whoInput.addEventListener("input", ()=>{
+      const val = whoInput.value || "";
+      const match = findContactByName(val);
+      preselectedFriendId = match ? match.id : null;
 
+      showSuggestionsFor(val);
+    });
+
+    // al enfocar: si hay texto, muestra (si hay resultados)
+    whoInput.addEventListener("focus", ()=>{
+      const val = whoInput.value || "";
+      showSuggestionsFor(val);
+    });
+
+    // al salir: espera un pelín por si haces click en sugerencia
+    whoInput.addEventListener("blur", ()=>{
+      setTimeout(()=> hideSuggestions(), 140);
+    });
+
+    // tecla Enter: si hay panel abierto, coger el primero
+    whoInput.addEventListener("keydown", (e)=>{
+      if(e.key !== "Enter") return;
+      if(!acPanel || !acPanel.classList.contains("show")) return;
+
+      const first = acPanel.querySelector(".acItem");
+      if(first){
+        e.preventDefault();
+        first.click();
+      }
+    });
+  }
+
+  function openCommitModal(commitId, friendId){
+    editingCommitId = commitId || null;
+    preselectedFriendId = friendId || null;
+
+    const isEdit = !!editingCommitId;
+    const t = $("modalTitle");
+    if(t) t.textContent = isEdit ? "Editar compromiso" : "Nuevo compromiso";
+
+    const it = isEdit ? data.find(x=>x.id===editingCommitId) : null;
+
+    const fWho = $("fWho");
     const fWhat = $("fWhat");
     const fWhen = $("fWhen");
     const fRemind = $("fRemind");
     const fAfter = $("fAfter");
 
-    if(fWhat) fWhat.value = it?.what || "";
-    if(fWhen) fWhen.value = it?.when ? toLocalInputValue(it.when) : "";
-    if(fRemind) fRemind.value = String(it?.remindMin || 0);
-    if(fAfter) fAfter.value = String(it?.afterMin || 0);
-
-    const mt = $("modalTitle");
-    if(mt) mt.textContent = id ? "Editar compromiso" : "Nuevo compromiso";
-
-    openModal($("backdrop"));
-
-    // ✅ Inyectar y preparar autocomplete del campo Nombre
-    try{
-      ensureWhoAutocompleteUI();
-      // Solo muestra si hay texto (en editar puede venir relleno)
-      const inp = $("fWho");
-      if(inp && typeof inp._whoSuggestBuild === "function"){
-        inp._whoSuggestBuild();
-      }
-    }catch(e){}
-  }
-
-  function closeCommitModal(){
-    try{
-      const inp = $("fWho");
-      if(inp && typeof inp._whoSuggestClose === "function") inp._whoSuggestClose();
-    }catch(_){}
-    closeModal($("backdrop"));
-    editingCommitId = null;
-    modalWhoId = null;
-  }
-
-  function proceedMaybeSaveNewFriend(rawName, onLinked, onCustom){
-    if(!rawName){ onCustom(); return; }
-    const existing = findContactByName(rawName);
-    if(existing){ onLinked(existing); return; }
-
-    openConfirm(
-      "¿Guardar nuevo amigo?",
-      `Has escrito “${rawName}”. ¿Quieres guardarlo en tus Amigos para reutilizarlo?`,
-      "Sí, guardar",
-      ()=>{
-        const newC = { id: uid(), name: rawName, note: "" };
-        contacts = [newC, ...contacts];
-        save(CONTACTS_KEY, contacts);
-
-        fillCommitFriendSelect();
-        fillFriendsDatalist();
-
-        onLinked(newC);
-      },
-      "No, solo para este",
-      ()=> onCustom()
-    );
-  }
-
-  function saveCommitFromForm(){
-    const fWhat = $("fWhat");
-    const fWhen = $("fWhen");
-    const fRemind = $("fRemind");
-    const fAfter = $("fAfter");
-
-    const what = (fWhat?.value || "").trim();
-    if(!what){
-      toast("Escribe qué se acordó.");
-      try{ fWhat.focus(); }catch(e){}
-      return;
-    }
-
-    const whenIso = fromLocalInputValue(fWhen?.value || "");
-    const remindMin = Number(fRemind?.value || 0) || 0;
-    const afterMin = Number(fAfter?.value || 0) || 0;
-
-    const now = new Date().toISOString();
-
-    const proceedSave = (who)=>{
-      if(editingCommitId){
-        const idx = data.findIndex(x=>x.id===editingCommitId);
-        if(idx >= 0){
-          data[idx] = normalizeStatus({
-            ...data[idx],
-            whoId: who.whoId,
-            whoName: who.whoName,
-            what,
-            when: whenIso,
-            remindMin,
-            afterMin,
-            updatedAt: now
-          });
-        }
-        save(KEY, data);
-        toast("✍️ Compromiso editado");
-        closeCommitModal();
-        openShareModal(data[idx]);
+    // rellenar
+    if(fWho){
+      if(friendId){
+        const c = getContactById(friendId);
+        fWho.value = c?.name || "";
       }else{
-        const item = normalizeStatus({
+        fWho.value = isEdit ? (normalizedWho(it) || "") : "";
+      }
+    }
+    if(fWhat) fWhat.value = isEdit ? (it?.what || "") : "";
+    if(fWhen){
+      // input datetime-local requiere formato YYYY-MM-DDTHH:mm
+      if(isEdit && it?.when){
+        const d = new Date(it.when);
+        if(!isNaN(d.getTime())){
+          const pad=(n)=> String(n).padStart(2,"0");
+          const v = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+          fWhen.value = v;
+        }else fWhen.value = "";
+      }else fWhen.value = "";
+    }
+    if(fRemind) fRemind.value = isEdit ? String(it?.remindMin || 0) : "0";
+    if(fAfter) fAfter.value = isEdit ? String(it?.afterMin || 0) : "0";
+
+    // ✅ Autocomplete
+    bindWhoAutocomplete();
+    hideSuggestions();
+
+    // guardar
+    $("btnSave").onclick = async ()=>{
+      const whoRaw = normalizeName(fWho.value);
+      const what = normalizeName(fWhat.value);
+      const whenLocal = (fWhen.value || "").trim();
+      const remindMin = Number(fRemind.value || 0);
+      const afterMin = Number(fAfter.value || 0);
+
+      if(!whoRaw){
+        toast("Escribe un nombre.");
+        try{ fWho.focus(); }catch(_){}
+        return;
+      }
+      if(!what){
+        toast("Escribe qué se acordó.");
+        try{ fWhat.focus(); }catch(_){}
+        return;
+      }
+
+      // fecha ISO (si hay)
+      let whenIso = null;
+      if(whenLocal){
+        const d = new Date(whenLocal);
+        if(!isNaN(d.getTime())) whenIso = d.toISOString();
+      }
+
+      // ✅ vínculo automático si coincide exacto
+      let link = null;
+      const exact = findContactByName(whoRaw);
+      if(exact) link = exact;
+
+      // si se eligió desde sugerencias, también cuenta
+      if(!link && preselectedFriendId){
+        const c = getContactById(preselectedFriendId);
+        if(c && normalizeName(c.name).toLowerCase() === normalizeName(whoRaw).toLowerCase()){
+          link = c;
+        }
+      }
+
+      const now = new Date().toISOString();
+
+      if(isEdit && it){
+        it.whoId = link ? link.id : null;
+        it.whoName = link ? null : whoRaw;
+        it.what = what;
+        it.when = whenIso;
+        it.remindMin = remindMin;
+        it.afterMin = afterMin;
+        it.updatedAt = now;
+      }else{
+        data.push(normalizeStatus({
           id: uid(),
-          whoId: who.whoId,
-          whoName: who.whoName,
+          whoId: link ? link.id : null,
+          whoName: link ? null : whoRaw,
           what,
           when: whenIso,
           remindMin,
           afterMin,
-          status:"pending",
+          status: "pending",
           createdAt: now,
           updatedAt: null
-        });
-        data = [item, ...data];
-        save(KEY, data);
-        toast("✅ Compromiso creado");
-        closeCommitModal();
-        openShareModal(item);
+        }));
       }
 
+      save(KEY, data);
+
+      // ✅ Si NO existe amigo exacto, preguntar si guardar nuevo amigo (ya lo tenías funcionando)
+      if(!link){
+        const ok = await askConfirm({
+          title:"Guardar nuevo amigo",
+          msg:`¿Quieres guardar a <b>${esc(whoRaw)}</b> como nuevo amigo para futuras sugerencias?`,
+          yes:"Sí, guardar",
+          no:"No"
+        });
+        if(ok){
+          // evitar duplicado por si se creó mientras
+          const ex2 = findContactByName(whoRaw);
+          if(!ex2){
+            contacts.push({ id: uid(), name: whoRaw, note:"", createdAt: now });
+            save(CONTACTS_KEY, contacts);
+          }
+        }
+      }
+
+      // refrescar
+      fillCommitFriendSelect();
       renderAll();
+
+      hideBackdrop("backdrop");
+
+      // abrir modal compartir
+      openShareModalForLast(isEdit ? it : data[data.length-1]);
     };
 
-    if($("fContact")){
-      const sel = $("fContact");
-      const whoInput = $("fWho");
-      const rawCustomName = normalizeName(whoInput?.value || "");
-      const isCustom = sel && sel.value === "__custom__";
+    showBackdrop("backdrop");
+    setTimeout(()=>{ try{ fWho.focus(); }catch(_){} }, 0);
+  }
 
-      if(isCustom){
-        proceedMaybeSaveNewFriend(
-          rawCustomName,
-          (linked)=> proceedSave({ whoId: linked.id, whoName: "" }),
-          ()=> proceedSave({ whoId: null, whoName: rawCustomName })
-        );
+  function openShareModalForLast(it){
+    if(!it) return;
+
+    const who = normalizedWho(it);
+    const dueText = it.when ? fmtDate(it.when) : "Sin fecha";
+    const afterMin = Number(it.afterMin || 0);
+
+    const pkg = {
+      v:1,
+      id: it.id,
+      who,
+      what: it.what || "",
+      when: it.when || null,
+      remindMin: Number(it.remindMin || 0),
+      afterMin
+    };
+
+    const base = appBaseUrl();
+    const hash = "#pkg=" + encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(pkg)))));
+    const url = base + hash;
+
+    // UI
+    if($("shareTitle")){
+      $("shareTitle").innerHTML = `Compromiso con <b>${esc(who)}</b> · ⏰ ${esc(dueText)}`;
+    }
+
+    const shortTxt = `📌 Compromiso\n👤 ${who}\n📝 ${it.what || ""}\n⏰ ${dueText}\n🔗 ${url}`;
+    const longTxt = `📌 Compromiso (detalle)\n\n👤 Nombre: ${who}\n📝 Qué: ${it.what || ""}\n⏰ Para cuándo: ${dueText}\n🔔 Recordatorio: ${Number(it.remindMin||0)} min\n⏳ Avisar desde ahora: ${afterMin} min\n\n🔗 Enlace:\n${url}`;
+
+    let mode = "short";
+    const renderShare = ()=>{
+      const t = (mode==="short") ? shortTxt : longTxt;
+      if($("shareTextBox")) $("shareTextBox").textContent = t;
+      if($("shareUrlBox")) $("shareUrlBox").textContent = url;
+      if($("shareShort")) $("shareShort").classList.toggle("active", mode==="short");
+      if($("shareLong")) $("shareLong").classList.toggle("active", mode==="long");
+    };
+
+    $("shareShort").onclick = ()=>{ mode="short"; renderShare(); };
+    $("shareLong").onclick = ()=>{ mode="long"; renderShare(); };
+
+    $("shareCopyUrl").onclick = async ()=>{
+      try{
+        await navigator.clipboard.writeText(url);
+        toast("Enlace copiado ✅");
+      }catch(e){
+        toast("No se pudo copiar.");
+      }
+    };
+
+    $("shareCopyAll").onclick = async ()=>{
+      try{
+        await navigator.clipboard.writeText((mode==="short")?shortTxt:longTxt);
+        toast("Texto copiado ✅");
+      }catch(e){
+        toast("No se pudo copiar.");
+      }
+    };
+
+    $("shareSend").onclick = async ()=>{
+      const txt = (mode==="short")?shortTxt:longTxt;
+      if(navigator.share){
+        try{
+          await navigator.share({ text: txt });
+          toast("Compartido ✅");
+        }catch(e){}
+      }else{
+        try{
+          await navigator.clipboard.writeText(txt);
+          toast("Copiado ✅ (no hay compartir)");
+        }catch(e){
+          toast("No se pudo copiar.");
+        }
+      }
+    };
+
+    renderShare();
+    showBackdrop("shareBackdrop");
+  }
+
+  async function deleteCommit(id){
+    const it = data.find(x=>x.id===id);
+    if(!it) return;
+
+    const ok = await askConfirm({
+      title:"Eliminar compromiso",
+      msg:`Vas a eliminar este compromiso con <b>${esc(normalizedWho(it))}</b>. ¿Continuar?`,
+      yes:"Sí, eliminar",
+      no:"Cancelar"
+    });
+    if(!ok) return;
+
+    data = data.filter(x=>x.id!==id);
+    save(KEY, data);
+    renderAll();
+    toast("Compromiso eliminado.");
+  }
+
+  /* =========================
+     Import por enlace (#pkg=)
+  ========================= */
+  function tryImportFromHash(){
+    try{
+      const h = location.hash || "";
+      const m = h.match(/#pkg=([^&]+)/);
+      if(!m) return;
+
+      const raw = decodeURIComponent(m[1]);
+      const json = decodeURIComponent(escape(atob(raw)));
+      const pkg = safeJsonParse(json, null);
+      if(!pkg || !pkg.id) return;
+
+      // evitar duplicados
+      const exists = data.find(x=>x.id===pkg.id);
+      if(exists){
+        toast("Paquete ya importado.");
+        location.hash = "";
         return;
       }
 
-      proceedSave(resolveWho_OLD());
-      return;
-    }
+      // crear item
+      const now = new Date().toISOString();
+      data.push(normalizeStatus({
+        id: pkg.id,
+        whoId: null,
+        whoName: normalizeName(pkg.who || "Sin nombre"),
+        what: normalizeName(pkg.what || ""),
+        when: pkg.when || null,
+        remindMin: Number(pkg.remindMin || 0),
+        afterMin: Number(pkg.afterMin || 0),
+        status: "pending",
+        createdAt: now,
+        updatedAt: null
+      }));
 
-    setModalWhoFromNameInput();
-    const whoResolved = resolveWho_NEW();
+      // marcar recibidos
+      received = received || { c:0, lastAt:null };
+      received.c = Math.max(0, Number(received.c||0)) + 1;
+      received.lastAt = now;
+      save(RECEIVED_KEY, received);
 
-    if(!whoResolved.whoId){
-      const raw = whoResolved.whoName || "";
-      proceedMaybeSaveNewFriend(
-        raw,
-        (linked)=> proceedSave({ whoId: linked.id, whoName: "" }),
-        ()=> proceedSave({ whoId: null, whoName: raw })
-      );
-      return;
-    }
-
-    proceedSave(whoResolved);
-  }
-
-  function deleteCommit(id){
-    const it = data.find(x=>x.id===id);
-    openConfirm(
-      "Eliminar compromiso",
-      it ? `¿Seguro que quieres eliminar “${it.what || "compromiso"}”?` : "¿Seguro que quieres eliminar este compromiso?",
-      "Sí, eliminar",
-      ()=>{
-        data = data.filter(x=>x.id!==id);
-        save(KEY, data);
-        toast("🗑️ Eliminado");
-        renderAll();
-      }
-    );
-  }
-
-  function bindCommitModal(){
-    const b = $("backdrop");
-    if(b){
-      b.addEventListener("click", (e)=>{ if(e.target === b) closeCommitModal(); });
-    }
-    if($("btnClose")) $("btnClose").onclick = closeCommitModal;
-    if($("btnCancel")) $("btnCancel").onclick = closeCommitModal;
-    if($("btnSave")) $("btnSave").onclick = saveCommitFromForm;
-
-    const sel = $("fContact");
-    if(sel && sel.dataset.bound !== "1"){
-      sel.dataset.bound = "1";
-      sel.addEventListener("change", ()=>{
-        rebuildContactSelect(sel.value === "__custom__" ? null : sel.value, ($("fWho")?.value || ""));
-      });
-    }
-
-    const who = $("fWho");
-    if(who && who.dataset.bound !== "1"){
-      who.dataset.bound = "1";
-      who.addEventListener("input", ()=>{
-        if($("fContact")) tryAutoSelectFriendFromWhoInput_OLD();
-        else setModalWhoFromNameInput();
-      });
-      who.addEventListener("change", ()=>{
-        if($("fContact")) tryAutoSelectFriendFromWhoInput_OLD();
-        else{
-          setModalWhoFromNameInput();
-          if(modalWhoId){
-            const c = getContactById(modalWhoId);
-            if(c?.name) toast(`👥 Marcado: ${c.name}`);
-          }
-        }
-      });
-    }
-
-    // ✅ Preparar autocomplete (por si abres modal pronto)
-    try{ ensureWhoAutocompleteUI(); }catch(_){}
-  }
-
-  /* =========================
-     Modales: Amigos
-  ========================= */
-  let editingContactId = null;
-
-  function openContactModal(id){
-    editingContactId = id || null;
-    const c = id ? contacts.find(x=>x.id===id) : null;
-
-    if($("cName")) $("cName").value = c?.name || "";
-    if($("cNote")) $("cNote").value = c?.note || "";
-
-    const t = $("cModalTitle");
-    if(t) t.textContent = id ? "Editar amigo" : "Nuevo amigo";
-
-    openModal($("cBackdrop"));
-    setTimeout(()=>{ try{ $("cName").focus(); }catch(e){} }, 0);
-  }
-
-  function closeContactModal(){
-    closeModal($("cBackdrop"));
-    editingContactId = null;
-  }
-
-  function saveContactFromForm(){
-    const name = normalizeName($("cName")?.value || "");
-    const note = normalizeName($("cNote")?.value || "");
-
-    if(!name){
-      toast("Escribe un nombre.");
-      try{ $("cName").focus(); }catch(e){}
-      return;
-    }
-
-    if(editingContactId){
-      const idx = contacts.findIndex(x=>x.id===editingContactId);
-      if(idx>=0) contacts[idx] = { ...contacts[idx], name, note };
-      toast("✍️ Amigo editado");
-    }else{
-      contacts = [{ id: uid(), name, note }, ...contacts];
-      toast("✅ Amigo creado");
-    }
-
-    save(CONTACTS_KEY, contacts);
-
-    fillCommitFriendSelect();
-    fillFriendsDatalist();
-
-    closeContactModal();
-    renderAll();
-  }
-
-  function deleteContact(id){
-    const c = contacts.find(x=>x.id===id);
-    openConfirm(
-      "Eliminar amigo",
-      c ? `¿Seguro que quieres eliminar a “${c.name}”?` : "¿Seguro que quieres eliminar este amigo?",
-      "Sí, eliminar",
-      ()=>{
-        const name = c?.name || "";
-        contacts = contacts.filter(x=>x.id!==id);
-        save(CONTACTS_KEY, contacts);
-
-        data = data.map(it=>{
-          if(it.whoId === id){
-            return normalizeStatus({ ...it, whoId:null, whoName: it.whoName || name || "Sin nombre", updatedAt: new Date().toISOString() });
-          }
-          return it;
-        });
-        save(KEY, data);
-
-        fillCommitFriendSelect();
-        fillFriendsDatalist();
-
-        toast("🗑️ Amigo eliminado");
-        renderAll();
-      }
-    );
-  }
-
-  function bindContactModal(){
-    const b = $("cBackdrop");
-    if(b){
-      b.addEventListener("click", (e)=>{ if(e.target === b) closeContactModal(); });
-    }
-    if($("cBtnClose")) $("cBtnClose").onclick = closeContactModal;
-    if($("cBtnCancel")) $("cBtnCancel").onclick = closeContactModal;
-    if($("cBtnSave")) $("cBtnSave").onclick = saveContactFromForm;
-  }
-
-  /* =========================
-     Compartir (sin cambios)
-  ========================= */
-  let shareItem = null;
-  let shareMode = "short"; // short | long
-
-  function encodePackage(pkg){
-    const json = JSON.stringify(pkg);
-    const b64 = btoa(unescape(encodeURIComponent(json)))
-      .replaceAll("+","-").replaceAll("/","_").replaceAll("=","");
-    return b64;
-  }
-
-  function buildPackage(item){
-    return {
-      v: 1,
-      p: {
-        id: uid(),
-        whoId: item.whoId || null,
-        whoName: item.whoId ? "" : (item.whoName || ""),
-        what: item.what || "",
-        when: item.when || null,
-        remindMin: Number(item.remindMin||0) || 0,
-        afterMin: Number(item.afterMin||0) || 0,
-        createdAt: new Date().toISOString()
-      }
-    };
-  }
-
-  function buildImportUrl(pkg){
-    return appBaseUrl() + "#p=" + encodePackage(pkg);
-  }
-
-  function formatShareText(item, url, mode){
-    const who = item.whoId ? (getContactById(item.whoId)?.name || "Amigo") : (item.whoName || "Sin nombre");
-    const whenTxt = item.when ? fmtDate(item.when) : "Sin fecha";
-    const afterMin = Number(item.afterMin||0) || 0;
-
-    if(mode === "long"){
-      return [
-        "📌 Compromiso",
-        "",
-        `👤 Con: ${who}`,
-        `📝 Qué: ${item.what || "—"}`,
-        `⏰ Para: ${whenTxt}`,
-        afterMin ? `⏳ Aviso en: ${afterMin >= 60 ? (afterMin/60)+"h" : afterMin+"m"}` : "",
-        "",
-        "🔗 Abre el enlace para importar:",
-        url
-      ].filter(Boolean).join("\n");
-    }
-
-    return [
-      item.updatedAt ? "✍️ Compromiso editado" : "✅ Nuevo compromiso",
-      `👤 ${who}`,
-      `📝 ${item.what || "—"}`,
-      afterMin ? `⏳ Aviso en: ${afterMin >= 60 ? (afterMin/60)+"h" : afterMin+"m"}` : "",
-      `🔗 Abre el enlace para importar. ${url}`
-    ].filter(Boolean).join("\n");
-  }
-
-  async function copyText(text){
-    try{
-      await navigator.clipboard.writeText(text);
-      toast("📋 Copiado");
-      return true;
-    }catch(e){
-      try{
-        const ta = document.createElement("textarea");
-        ta.value = text;
-        ta.style.position="fixed";
-        ta.style.left="-9999px";
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand("copy");
-        document.body.removeChild(ta);
-        toast("📋 Copiado");
-        return true;
-      }catch(err){
-        toast("No se pudo copiar");
-        return false;
-      }
-    }
-  }
-
-  async function shareNative(text){
-    try{
-      if(navigator.share){
-        await navigator.share({ text });
-        return true;
-      }
-      return false;
-    }catch(e){
-      return false;
-    }
-  }
-
-  function openShareModal(item){
-    shareItem = item;
-    shareMode = "short";
-
-    const pkg = buildPackage(item);
-    const url = buildImportUrl(pkg);
-
-    if($("shareTitle")) $("shareTitle").textContent = "Se enviará un texto completo + enlace de importación.";
-    if($("shareShort")) $("shareShort").classList.add("active");
-    if($("shareLong")) $("shareLong").classList.remove("active");
-
-    if($("shareTextBox")) $("shareTextBox").textContent = formatShareText(item, url, shareMode);
-    if($("shareUrlBox")) $("shareUrlBox").textContent = url;
-
-    openModal($("shareBackdrop"));
-  }
-
-  function closeShareModal(){
-    closeModal($("shareBackdrop"));
-    shareItem = null;
-  }
-
-  function bindShare(){
-    if($("shareShort")) $("shareShort").onclick = ()=>{
-      shareMode = "short";
-      $("shareShort").classList.add("active");
-      $("shareLong").classList.remove("active");
-      if(!shareItem) return;
-      const url = $("shareUrlBox")?.textContent || "";
-      $("shareTextBox").textContent = formatShareText(shareItem, url, shareMode);
-    };
-
-    if($("shareLong")) $("shareLong").onclick = ()=>{
-      shareMode = "long";
-      $("shareLong").classList.add("active");
-      $("shareShort").classList.remove("active");
-      if(!shareItem) return;
-      const url = $("shareUrlBox")?.textContent || "";
-      $("shareTextBox").textContent = formatShareText(shareItem, url, shareMode);
-    };
-
-    if($("shareCopyUrl")) $("shareCopyUrl").onclick = ()=> copyText($("shareUrlBox")?.textContent || "");
-    if($("shareCopyAll")) $("shareCopyAll").onclick = ()=>{
-      const txt = ($("shareTextBox")?.textContent || "") + "\n";
-      return copyText(txt);
-    };
-
-    if($("shareSend")) $("shareSend").onclick = async ()=>{
-      const txt = ($("shareTextBox")?.textContent || "");
-      const ok = await shareNative(txt);
-      if(!ok) await copyText(txt);
-    };
-
-    if($("shareCancel")) $("shareCancel").onclick = closeShareModal;
-    if($("shareClose")) $("shareClose").onclick = closeShareModal;
-
-    const b = $("shareBackdrop");
-    if(b){
-      b.addEventListener("click", (e)=>{ if(e.target === b) closeShareModal(); });
-    }
-  }
-
-  /* =========================
-     Import desde #p=...
-  ========================= */
-  function decodePackage(b64url){
-    try{
-      const b64 = b64url.replaceAll("-","+").replaceAll("_","/");
-      const pad = "=".repeat((4 - (b64.length % 4)) % 4);
-      const bin = atob(b64 + pad);
-      const json = decodeURIComponent(escape(bin));
-      return JSON.parse(json);
-    }catch(e){
-      return null;
-    }
-  }
-
-  function importFromHash(){
-    const m = (location.hash || "").match(/(?:^|[#&])p=([^&]+)/);
-    if(!m) return false;
-
-    const pkg = decodePackage(m[1]);
-    if(!pkg || pkg.v !== 1 || !pkg.p) return false;
-
-    const incoming = pkg.p;
-    const now = new Date().toISOString();
-
-    const item = normalizeStatus({
-      id: uid(),
-      whoId: incoming.whoId || null,
-      whoName: incoming.whoId ? "" : (incoming.whoName || "Sin nombre"),
-      what: incoming.what || "",
-      when: incoming.when || null,
-      remindMin: Number(incoming.remindMin||0) || 0,
-      afterMin: Number(incoming.afterMin||0) || 0,
-      status:"pending",
-      createdAt: now,
-      updatedAt: null
-    });
-
-    const exists = data.some(x=>
-      (x.what||"") === item.what &&
-      (x.whoId||"") === (item.whoId||"") &&
-      (x.whoName||"") === (item.whoName||"") &&
-      (x.when||"") === (item.when||"")
-    );
-
-    if(!exists){
-      data = [item, ...data];
       save(KEY, data);
-      toast("📥 Compromiso importado");
-    }else{
-      toast("📥 Ya lo tenías importado");
-    }
+      renderAll();
+      toast("Compromiso importado ✅");
 
-    received = received || { c:0, lastAt:null };
-    received.c = Math.max(0, Number(received.c||0)) + 1;
-    received.lastAt = now;
-    save(RECEIVED_KEY, received);
-
-    try{ history.replaceState(null, "", appBaseUrl()); }catch(e){ location.hash = ""; }
-
-    setPane("commitments");
-    setView("pending");
-    renderAll();
-    return true;
+      // limpiar hash para no reimportar
+      location.hash = "";
+    }catch(e){}
   }
 
-  /* =========================
-     Settings (mínimo)
-  ========================= */
-  function setSwitch(el, on){
-    if(!el) return;
-    el.classList.toggle("on", !!on);
-    el.setAttribute("aria-checked", !!on ? "true" : "false");
-  }
+/* ===== FIN PARTE 2/3 ===== */
 
-  function updateNotifHint(){
-    const h = $("notifHint");
-    if(!h) return;
+/* compromisos.js (COMPLETO) — PARTE 3/3 */
 
-    if(!("Notification" in window)){
-      h.textContent = "ℹ️ Este navegador no soporta notificaciones.";
-      return;
-    }
-    const perm = Notification.permission;
-    if(perm === "granted") h.textContent = "✅ Permiso concedido. Recordatorios listos.";
-    else if(perm === "denied") h.textContent = "❌ Permiso denegado. Actívalo en ajustes del navegador.";
-    else h.textContent = "ℹ️ Pulsa “Permitir” para recibir recordatorios.";
-  }
+/* =========================
+   Render: compromisos
+========================= */
+  function renderCommitments(){
+    const paneEl = $("commitmentsPane");
+    if(!paneEl) return;
 
-  function bindSettings(){
-    const swPin = $("swPin");
-    if(swPin){
-      setSwitch(swPin, !!settings?.pinEnabled);
-      swPin.addEventListener("click", ()=>{
-        settings = { ...(settings||{}), pinEnabled: !settings?.pinEnabled };
-        save(SETTINGS_KEY, settings);
-        setSwitch(swPin, !!settings.pinEnabled);
-        toast(settings.pinEnabled ? "🔒 PIN activado" : "🔓 PIN desactivado");
-      });
-    }
+    ensureCommitFiltersUi();
+    updateCommitmentsHeading();
+    updateCounts();
 
-    const selAutoLock = $("selAutoLock");
-    if(selAutoLock){
-      selAutoLock.value = String(settings?.autoLockMin ?? 0);
-      selAutoLock.addEventListener("change", ()=>{
-        settings = { ...(settings||{}), autoLockMin: Number(selAutoLock.value||0) || 0 };
-        save(SETTINGS_KEY, settings);
-      });
-    }
+    const list = $("list");
+    const empty = $("empty");
+    if(!list) return;
 
-    const selRemember = $("selRemember");
-    if(selRemember){
-      selRemember.value = String(settings?.rememberMin ?? 0);
-      selRemember.addEventListener("change", ()=>{
-        settings = { ...(settings||{}), rememberMin: Number(selRemember.value||0) || 0 };
-        save(SETTINGS_KEY, settings);
-      });
-    }
+    list.innerHTML = "";
 
-    const swNotif = $("swNotif");
-    if(swNotif){
-      setSwitch(swNotif, !!settings?.notifEnabled);
-      swNotif.addEventListener("click", ()=>{
-        settings = { ...(settings||{}), notifEnabled: !settings?.notifEnabled };
-        save(SETTINGS_KEY, settings);
-        setSwitch(swNotif, !!settings.notifEnabled);
-        updateNotifHint();
-      });
-    }
-
-    const btnNotifPerm = $("btnNotifPerm");
-    if(btnNotifPerm){
-      btnNotifPerm.addEventListener("click", async ()=>{
-        try{
-          if(!("Notification" in window)){
-            toast("Este móvil no soporta notificaciones.");
-            return;
-          }
-          const res = await Notification.requestPermission();
-          toast(res === "granted" ? "✅ Permiso concedido" : "❌ Permiso no concedido");
-          updateNotifHint();
-        }catch(e){
-          toast("No se pudo pedir permiso");
+    const items = data
+      .filter(x => x.status === view)
+      .filter(passesCommitFilters)
+      .slice()
+      .sort((a,b)=>{
+        if(view==="pending"){
+          const ao = isOverdue(a.when)?1:0, bo=isOverdue(b.when)?1:0;
+          if(ao!==bo) return bo-ao;
+          const ta = a.when ? new Date(a.when).getTime() : Number.POSITIVE_INFINITY;
+          const tb = b.when ? new Date(b.when).getTime() : Number.POSITIVE_INFINITY;
+          if(ta!==tb) return ta-tb;
+          return new Date(b.updatedAt||b.createdAt||0).getTime() - new Date(a.updatedAt||a.createdAt||0).getTime();
         }
+        if(view==="waiting"){
+          return new Date(b.updatedAt||b.createdAt||0).getTime() - new Date(a.updatedAt||a.createdAt||0).getTime();
+        }
+        return new Date(b.closedAt||b.doneAt||0).getTime() - new Date(a.closedAt||a.doneAt||0).getTime();
       });
-    }
 
-    const btnResetAll = $("btnResetAll");
-    if(btnResetAll){
-      btnResetAll.addEventListener("click", ()=>{
-        openConfirm(
-          "Borrar todo",
-          "Esto borrará compromisos, amigos y ajustes del móvil.",
-          "Sí, borrar todo",
-          ()=>{
-            try{
-              localStorage.removeItem(KEY);
-              localStorage.removeItem(CONTACTS_KEY);
-              localStorage.removeItem(SETTINGS_KEY);
-              localStorage.removeItem(RECEIVED_KEY);
-              localStorage.removeItem(A11Y_KEY);
-            }catch(e){}
-            data = [];
-            contacts = [];
-            settings = {
-              pinEnabled:false,
-              autoLockMin:0,
-              rememberMin:0,
-              notifEnabled:false
-            };
-            received = { c:0, lastAt:null };
-            save(KEY, data);
-            save(CONTACTS_KEY, contacts);
-            save(SETTINGS_KEY, settings);
-            save(RECEIVED_KEY, received);
-            save(A11Y_KEY, { big:false });
-            applyTextScale(false);
-            commitFriendFilter = "all";
-            commitTextFilter = "";
-            contactsTextFilter = "";
-            toast("🧹 Borrado");
-            setPane("commitments");
-            setView("pending");
-            renderAll();
-          }
-        );
+    if(empty) empty.style.display = items.length ? "none" : "block";
+
+    items.forEach((it)=>{
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const who = normalizedWho(it);
+      const dueText = it.when ? fmtDate(it.when) : "Sin fecha";
+      const overdue = (it.status==="pending" && isOverdue(it.when));
+
+      const stChip =
+        it.status==="pending" ? "🟣 Pendiente" :
+        it.status==="waiting" ? "⏳ En espera" :
+        "✅ Cerrado";
+
+      const primaryLabel = it.status==="closed" ? "↩️ Reabrir" : "✅ Cerrar";
+      const secondaryLabel =
+        it.status==="pending" ? "⏳ En espera" :
+        it.status==="waiting" ? "🟣 Pendiente" :
+        "⏳ En espera";
+
+      card.innerHTML = `
+        <div class="cardTop" style="align-items:flex-start;">
+          <div class="who" style="min-width:0;">
+            <p class="name" title="${esc(who)}">${esc(who)}</p>
+            <p class="meta">
+              <span class="chip status">${esc(stChip)}</span>
+              <span class="chip">📝 ${esc(fmtDate(it.createdAt))}</span>
+              ${it.updatedAt ? `<span class="chip">✍️ ${esc(fmtDate(it.updatedAt))}</span>` : ``}
+              ${it.status==="closed" ? `<span class="chip">✅ ${esc(fmtDate(it.closedAt||it.doneAt))}</span>` : ``}
+            </p>
+          </div>
+          <div class="due ${overdue ? "bad" : ""}">
+            ⏰ ${esc(dueText)}${overdue ? " · Vencido" : ""}
+          </div>
+        </div>
+
+        <div class="desc">${esc(it.what || "—")}</div>
+
+        <div class="actions">
+          <button class="btn good" type="button" data-act="primary">${primaryLabel}</button>
+          <button class="btn" type="button" data-act="secondary">${secondaryLabel}</button>
+          <button class="btn" type="button" data-act="edit">✍️ Editar</button>
+          <button class="btn danger" type="button" data-act="del">🗑️ Eliminar</button>
+        </div>
+      `;
+
+      const now = ()=> new Date().toISOString();
+
+      card.querySelector('[data-act="primary"]').addEventListener("click", ()=>{
+        if(it.status==="closed"){
+          it.status = "pending";
+          it.closedAt = null;
+          it.done = false; it.doneAt = null;
+          it.updatedAt = now();
+        }else{
+          it.status = "closed";
+          it.closedAt = now();
+          it.done = true; it.doneAt = it.closedAt;
+          it.updatedAt = now();
+        }
+        save(KEY, data);
+        renderCommitments();
       });
-    }
 
-    updateNotifHint();
-  }
+      card.querySelector('[data-act="secondary"]').addEventListener("click", ()=>{
+        if(it.status==="pending"){
+          it.status = "waiting";
+          it.updatedAt = now();
+        }else if(it.status==="waiting"){
+          it.status = "pending";
+          it.updatedAt = now();
+        }else{
+          it.status = "waiting";
+          it.closedAt = null;
+          it.done = false; it.doneAt = null;
+          it.updatedAt = now();
+        }
+        save(KEY, data);
+        renderCommitments();
+      });
 
-  /* =========================
-     Service worker
-  ========================= */
-  let deferredPrompt = null;
-  function bindInstall(){
-    removeBottomInstallText();
+      card.querySelector('[data-act="edit"]').addEventListener("click", ()=> openCommitModal(it.id, null));
+      card.querySelector('[data-act="del"]').addEventListener("click", ()=> deleteCommit(it.id));
 
-    window.addEventListener("beforeinstallprompt", (e)=>{
-      e.preventDefault();
-      deferredPrompt = e;
+      list.appendChild(card);
     });
 
-    if("serviceWorker" in navigator){
-      navigator.serviceWorker.register("sw.js").catch(()=>{});
+    fixPillsOrder();
+    removeBottomInstallText();
+  }
+
+  /* =========================
+     Render: contactos
+  ========================= */
+  function renderContacts(){
+    ensureContactsSearchUi();
+    updateCounts();
+
+    const list = $("contactsList");
+    const empty = $("contactsEmpty");
+    if(!list) return;
+
+    list.innerHTML = "";
+
+    const q = (contactsTextFilter || "").trim().toLowerCase();
+    const items = contacts
+      .slice()
+      .sort((a,b)=> (a.name||"").localeCompare(b.name||"", "es"))
+      .filter(c=>{
+        if(!q) return true;
+        const n = String(c.name||"").toLowerCase();
+        const note = String(c.note||"").toLowerCase();
+        return n.includes(q) || note.includes(q);
+      });
+
+    if(empty) empty.style.display = items.length ? "none" : "block";
+
+    items.forEach((c)=>{
+      const card = document.createElement("div");
+      card.className = "card";
+
+      card.innerHTML = `
+        <div class="cardTop">
+          <div class="who" style="min-width:0;">
+            <p class="name">${esc(c.name || "Sin nombre")}</p>
+            <p class="meta">
+              ${c.note ? `<span class="chip">🛈 ${esc(c.note)}</span>` : ``}
+            </p>
+          </div>
+          <button class="btn primary" type="button" data-act="new" style="flex:0 0 auto;">➕ Compromiso</button>
+        </div>
+
+        <div class="actions">
+          <button class="btn" type="button" data-act="edit">✍️ Editar</button>
+          <button class="btn danger" type="button" data-act="del">🗑️ Eliminar</button>
+        </div>
+      `;
+
+      card.querySelector('[data-act="new"]').addEventListener("click", ()=> openCommitModal(null, c.id));
+      card.querySelector('[data-act="edit"]').addEventListener("click", ()=> openContactModal(c.id));
+      card.querySelector('[data-act="del"]').addEventListener("click", ()=> deleteContact(c.id));
+
+      list.appendChild(card);
+    });
+
+    fixPillsOrder();
+    removeBottomInstallText();
+  }
+
+  function renderAll(){
+    renderCommitments();
+    renderContacts();
+    updateCounts();
+    fixPillsOrder();
+    removeBottomInstallText();
+  }
+
+  /* =========================
+     Navegación panes
+  ========================= */
+  function safeShow(el, show){
+    if(!el) return;
+    el.style.display = show ? "" : "none";
+  }
+
+  function setPane(newPane){
+    pane = newPane;
+
+    const tC = $("tabCommitments");
+    const tA = $("tabContacts");
+    if(tC) tC.classList.toggle("active", pane==="commitments");
+    if(tA) tA.classList.toggle("active", pane==="contacts");
+
+    safeShow($("commitmentsPane"), pane==="commitments");
+    safeShow($("contactsPane"), pane==="contacts");
+    safeShow($("settingsPane"), pane==="settings");
+
+    const fab = $("fab");
+    if(fab){
+      if(pane === "settings") fab.style.display = "none";
+      else{
+        fab.style.display = "grid";
+        fab.setAttribute("aria-label", pane==="contacts" ? "Nuevo amigo" : "Nuevo compromiso");
+      }
     }
+
+    if(pane === "commitments"){
+      setView(lastCommitView || "pending");
+    }else{
+      renderAll();
+    }
+
+    try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(_){ window.scrollTo(0,0); }
+  }
+
+  function titleForView(v){
+    if(v==="waiting") return "En espera";
+    if(v==="closed") return "Cerrados";
+    return "Pendientes";
+  }
+
+  function updateCommitmentsHeading(){
+    try{
+      const paneEl = $("commitmentsPane");
+      if(!paneEl) return;
+      const h2 = paneEl.querySelector(".sectionHead h2");
+      if(h2) h2.textContent = titleForView(view);
+
+      const p = paneEl.querySelector(".sectionHead p");
+      if(p){
+        if(view==="pending") p.textContent = "Por hacer (lo tengo yo pendiente).";
+        else if(view==="waiting") p.textContent = "Yo ya respondí; queda pendiente la otra persona.";
+        else p.textContent = "Finalizados / ya no requieren nada.";
+      }
+    }catch(e){}
+  }
+
+  function setView(newView){
+    view = newView;
+    if(pane === "commitments") lastCommitView = newView;
+
+    const a = $("tabPending");
+    const w = $("tabWaiting");
+    const c = $("tabDone");
+
+    if(a) a.classList.toggle("active", view==="pending");
+    if(w) w.classList.toggle("active", view==="waiting");
+    if(c) c.classList.toggle("active", view==="closed");
+
+    updateCommitmentsHeading();
+    renderCommitments();
+  }
+
+  function bindSettingsGear(){
+    const gear = $("btnSettingsGear");
+    if(!gear) return;
+    if(gear.dataset.bound === "1") return;
+    gear.dataset.bound = "1";
+
+    gear.addEventListener("click", ()=>{
+      if(pane === "settings") setPane("commitments");
+      else setPane("settings");
+    });
+  }
+
+  function bindNav(){
+    if($("tabCommitments")) $("tabCommitments").onclick = ()=> setPane("commitments");
+    if($("tabContacts")) $("tabContacts").onclick = ()=> setPane("contacts");
+
+    if($("tabPending")) $("tabPending").onclick = ()=> setView("pending");
+    if($("tabWaiting")) $("tabWaiting").onclick = ()=> setView("waiting");
+    if($("tabDone")) $("tabDone").onclick = ()=> setView("closed");
+
+    const bindTile = (id, fn)=>{
+      const el = $(id);
+      if(!el) return;
+      el.addEventListener("click", fn);
+      el.addEventListener("keydown", (e)=>{
+        if(e.key==="Enter" || e.key===" "){ e.preventDefault(); fn(); }
+      });
+    };
+    bindTile("tilePending", ()=>{ setPane("commitments"); setView("pending"); });
+    bindTile("tileWaiting", ()=>{ setPane("commitments"); setView("waiting"); });
+    bindTile("tileDone", ()=>{ setPane("commitments"); setView("closed"); });
+    bindTile("tileContacts", ()=>{ setPane("contacts"); });
+
+    if($("btnOverdue")){
+      $("btnOverdue").addEventListener("click", ()=>{
+        setPane("commitments");
+        setView("pending");
+        const overdue = data.filter(x=> x.status==="pending" && isOverdue(x.when)).length;
+        toast(overdue ? `⏰ ${overdue} vencido(s)` : "Sin vencidos ✅");
+      });
+    }
+    if($("btnReceived")){
+      $("btnReceived").addEventListener("click", ()=>{
+        setPane("commitments");
+        setView("pending");
+        const c = Math.max(0, Number(received?.c || 0));
+        toast(c ? `📥 Recibidos: ${c}` : "Sin recibidos");
+      });
+    }
+  }
+
+  /* =========================
+     FAB
+  ========================= */
+  function bindFab(){
+    const fab = $("fab");
+    if(!fab) return;
+    fab.addEventListener("click", ()=>{
+      if(pane === "contacts") openContactModal(null);
+      else openCommitModal(null, null);
+    });
   }
 
   /* =========================
@@ -2097,30 +2056,28 @@
     migrateAllData();
 
     ensureWaitingPill();
+    fixPillsOrder();
+    removeBottomInstallText();
 
     bindA11yDelegation();
     bindBrandHome();
     bindNav();
     bindSettingsGear();
     bindFab();
+    bindModalClosers();
     bindCommitModal();
     bindContactModal();
     bindShare();
     bindSettings();
     bindInstall();
 
-    fixWhoLabel();
-    fillFriendsDatalist();
+    // ✅ Autocompletado (panel propio sin flechas)
+    bindWhoAutocomplete();
 
-    importFromHash();
+    tryImportFromHash();
 
     fillCommitFriendSelect();
-
-    fixPillsOrder();
-    removeBottomInstallText();
-
     updateCommitmentsHeading();
-
     renderAll();
   }
 
