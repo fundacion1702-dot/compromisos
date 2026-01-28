@@ -84,10 +84,7 @@
   let view = "pending";     // pending | waiting | closed
   let lastCommitView = "pending";
 
-  // ✅ filtros/búsquedas (desplegable)
-  let uiCommitFiltersOpen = false;
-  let uiContactsSearchOpen = false;
-
+  // ✅ filtros/búsquedas (NO desplegable: volvemos a como estaba, siempre visible)
   let commitFriendFilter = "all"; // all | __none__ | <contactId>
   let commitTextFilter = "";      // búsqueda en texto / quién
   let contactsTextFilter = "";    // búsqueda amigos
@@ -242,7 +239,6 @@
 
   /* =========================
      Pills (Recibidos, En espera, Vencidos)
-     ⚠️ IMPORTANTE: aquí NO tocamos layout con CSS inyectado.
   ========================= */
   function ensureWaitingPill(){
     try{
@@ -262,7 +258,6 @@
         <span class="pillCount" id="bWaiting">0</span>
       `;
 
-      // Por defecto la ponemos la primera (el CSS decide si queda en fila o abajo)
       pills.insertBefore(btn, pills.firstElementChild || null);
 
       btn.addEventListener("click", ()=>{
@@ -458,111 +453,35 @@
   }
 
   /* =========================
-     ✅ UI desplegable: Buscar / Filtrar
-     (solo DOM; el estilo lo controla compromisos.css)
+     ✅ Búsqueda/Filtros (VOLVER A “SIEMPRE VISIBLE”)
+     - Compromisos: Filtrar por amigo + Buscar + Limpiar
+     - Amigos: Buscar + Limpiar
+     (Usamos ids actuales para no romper lógica)
   ========================= */
-  function hideLegacyCommitFilters(paneEl){
-    try{
-      const fields = paneEl.querySelectorAll(".field");
-      fields.forEach((f)=>{
-        const lab = f.querySelector("label");
-        const sel = f.querySelector("select");
-        const inp = f.querySelector("input[type='text'], input[type='search']");
-        const labelTxt = (lab?.textContent || "").trim().toLowerCase();
-
-        if(labelTxt.includes("filtrar por amigo")){
-          if(sel && sel.id !== "commitFriendSel"){
-            f.style.display = "none";
-            const next = f.nextElementSibling;
-            if(next && next.classList.contains("hint")) next.style.display = "none";
-          }
-        }
-
-        if(labelTxt === "buscar" || labelTxt.includes("buscar")){
-          if(inp && inp.id !== "commitSearchTxt"){
-            f.style.display = "none";
-            const next = f.nextElementSibling;
-            if(next && next.classList.contains("hint")) next.style.display = "none";
-          }
-        }
-      });
-    }catch(e){}
-  }
-
   function ensureCommitFiltersUi(){
     const paneEl = $("commitmentsPane");
     if(!paneEl) return;
 
-    hideLegacyCommitFilters(paneEl);
+    // Si existían restos de UI “desplegable”, los quitamos
+    try{
+      const legacyBtn = $("btnCommitTools");
+      const legacyTools = $("miniCommitTools");
+      if(legacyBtn) legacyBtn.remove();
+      if(legacyTools) legacyTools.remove();
+    }catch(_){}
 
-    let tools = $("miniCommitTools");
+    let bar = $("commitFiltersBar");
     let panel = $("commitToolsPanel");
 
-    const bindIfNeeded = ()=>{
-      const btn = $("btnCommitTools");
-      if(!btn || !panel) return;
-      if(btn.dataset.bound === "1") return;
-      btn.dataset.bound = "1";
-
-      btn.addEventListener("click", (e)=>{
-        e.preventDefault();
-        uiCommitFiltersOpen = !uiCommitFiltersOpen;
-        btn.setAttribute("aria-expanded", uiCommitFiltersOpen ? "true" : "false");
-        panel.classList.toggle("show", uiCommitFiltersOpen);
-        if(uiCommitFiltersOpen){
-          setTimeout(()=>{ try{ $("commitSearchTxt").focus(); }catch(_){} }, 0);
-        }
-      });
-
-      const clearBtn = $("commitClearBtn");
-      if(clearBtn && clearBtn.dataset.bound !== "1"){
-        clearBtn.dataset.bound = "1";
-        clearBtn.addEventListener("click", ()=>{
-          commitFriendFilter = "all";
-          commitTextFilter = "";
-          fillCommitFriendSelect();
-          const inp = $("commitSearchTxt");
-          if(inp) inp.value = "";
-          renderCommitments();
-        });
-      }
-
-      const txt = $("commitSearchTxt");
-      if(txt && txt.dataset.bound !== "1"){
-        txt.dataset.bound = "1";
-        txt.addEventListener("input", ()=>{
-          commitTextFilter = (txt.value || "").trim();
-          renderCommitments();
-        });
-      }
-
-      const sel = $("commitFriendSel");
-      if(sel && sel.dataset.bound !== "1"){
-        sel.dataset.bound = "1";
-        sel.addEventListener("change", ()=>{
-          commitFriendFilter = sel.value || "all";
-          renderCommitments();
-        });
-      }
-    };
-
-    if(!tools){
+    if(!bar){
       const head = paneEl.querySelector(".sectionHead");
       if(!head) return;
 
-      tools = document.createElement("div");
-      tools.className = "miniTools";
-      tools.id = "miniCommitTools";
-      tools.innerHTML = `
-        <button class="miniBtn" id="btnCommitTools" type="button" aria-expanded="false">
-          🔍 Buscar / Filtrar
-        </button>
-      `;
-
-      panel = document.createElement("div");
-      panel.className = "miniPanel";
-      panel.id = "commitToolsPanel";
-      panel.innerHTML = `
+      bar = document.createElement("div");
+      bar.id = "commitFiltersBar";
+      // Reutilizamos clases ya existentes por si tu CSS las tiene (sin desplegable)
+      bar.className = "miniPanel show";
+      bar.innerHTML = `
         <div class="miniRow">
           <div class="field">
             <label class="label" for="commitFriendSel">Filtrar por amigo</label>
@@ -580,17 +499,53 @@
         <div class="miniHint">Se aplica sobre la lista actual (<b>Pendientes</b>, <b>En espera</b> o <b>Cerrados</b>).</div>
       `;
 
-      head.insertAdjacentElement("afterend", tools);
-      tools.insertAdjacentElement("afterend", panel);
+      head.insertAdjacentElement("afterend", bar);
+
+      // Para compatibilidad con código previo: creamos un alias #commitToolsPanel
+      // (por si algo lo busca por id)
+      panel = document.createElement("div");
+      panel.id = "commitToolsPanel";
+      panel.style.display = "none";
+      bar.insertAdjacentElement("afterend", panel);
+    }else{
+      // Si existe bar, garantizamos que está visible
+      try{
+        bar.classList.add("show");
+      }catch(_){}
     }
 
     fillCommitFriendSelect();
 
-    const btn = $("btnCommitTools");
-    if(btn) btn.setAttribute("aria-expanded", uiCommitFiltersOpen ? "true" : "false");
-    if(panel) panel.classList.toggle("show", uiCommitFiltersOpen);
+    const clearBtn = $("commitClearBtn");
+    if(clearBtn && clearBtn.dataset.bound !== "1"){
+      clearBtn.dataset.bound = "1";
+      clearBtn.addEventListener("click", ()=>{
+        commitFriendFilter = "all";
+        commitTextFilter = "";
+        fillCommitFriendSelect();
+        const inp = $("commitSearchTxt");
+        if(inp) inp.value = "";
+        renderCommitments();
+      });
+    }
 
-    bindIfNeeded();
+    const txt = $("commitSearchTxt");
+    if(txt && txt.dataset.bound !== "1"){
+      txt.dataset.bound = "1";
+      txt.addEventListener("input", ()=>{
+        commitTextFilter = (txt.value || "").trim();
+        renderCommitments();
+      });
+    }
+
+    const sel = $("commitFriendSel");
+    if(sel && sel.dataset.bound !== "1"){
+      sel.dataset.bound = "1";
+      sel.addEventListener("change", ()=>{
+        commitFriendFilter = sel.value || "all";
+        renderCommitments();
+      });
+    }
   }
 
   function fillCommitFriendSelect(){
@@ -625,23 +580,24 @@
     const paneEl = $("contactsPane");
     if(!paneEl) return;
 
-    if(!$("miniContactsTools")){
+    // Limpieza de UI desplegable si existía
+    try{
+      const legacyBtn = $("btnContactsTools");
+      const legacyTools = $("miniContactsTools");
+      const legacyPanel = $("contactsToolsPanel");
+      if(legacyBtn) legacyBtn.remove();
+      if(legacyTools) legacyTools.remove();
+      if(legacyPanel) legacyPanel.remove();
+    }catch(_){}
+
+    if(!$("contactsSearchBar")){
       const head = paneEl.querySelector(".sectionHead");
       if(!head) return;
 
-      const tools = document.createElement("div");
-      tools.className = "miniTools";
-      tools.id = "miniContactsTools";
-      tools.innerHTML = `
-        <button class="miniBtn" id="btnContactsTools" type="button" aria-expanded="false">
-          🔍 Buscar amigos
-        </button>
-      `;
-
-      const panel = document.createElement("div");
-      panel.className = "miniPanel";
-      panel.id = "contactsToolsPanel";
-      panel.innerHTML = `
+      const bar = document.createElement("div");
+      bar.id = "contactsSearchBar";
+      bar.className = "miniPanel show";
+      bar.innerHTML = `
         <div class="miniRow">
           <div class="field">
             <label class="label" for="contactsSearchTxt">Buscar</label>
@@ -655,38 +611,28 @@
         <div class="miniHint">Busca por nombre o nota del amigo.</div>
       `;
 
-      head.insertAdjacentElement("afterend", tools);
-      tools.insertAdjacentElement("afterend", panel);
+      head.insertAdjacentElement("afterend", bar);
     }
 
-    const btn = $("btnContactsTools");
-    const panel = $("contactsToolsPanel");
-    if(btn && panel && btn.dataset.bound !== "1"){
-      btn.dataset.bound = "1";
-      btn.addEventListener("click", ()=>{
-        uiContactsSearchOpen = !uiContactsSearchOpen;
-        btn.setAttribute("aria-expanded", uiContactsSearchOpen ? "true" : "false");
-        panel.classList.toggle("show", uiContactsSearchOpen);
-        if(uiContactsSearchOpen){
-          setTimeout(()=>{ try{ $("contactsSearchTxt").focus(); }catch(_){} }, 0);
-        }
-      });
-
-      $("contactsClearBtn").addEventListener("click", ()=>{
+    const clearBtn = $("contactsClearBtn");
+    if(clearBtn && clearBtn.dataset.bound !== "1"){
+      clearBtn.dataset.bound = "1";
+      clearBtn.addEventListener("click", ()=>{
         contactsTextFilter = "";
         const inp = $("contactsSearchTxt");
         if(inp) inp.value = "";
         renderContacts();
       });
+    }
 
-      $("contactsSearchTxt").addEventListener("input", ()=>{
-        contactsTextFilter = ($("contactsSearchTxt").value || "").trim();
+    const txt = $("contactsSearchTxt");
+    if(txt && txt.dataset.bound !== "1"){
+      txt.dataset.bound = "1";
+      txt.addEventListener("input", ()=>{
+        contactsTextFilter = (txt.value || "").trim();
         renderContacts();
       });
     }
-
-    if(btn) btn.setAttribute("aria-expanded", uiContactsSearchOpen ? "true" : "false");
-    if(panel) panel.classList.toggle("show", uiContactsSearchOpen);
   }
 
   /* =========================
@@ -999,6 +945,7 @@
 
   /* =========================
      Modales: Compromisos
+     ✅ Autocompletado visible (lista filtrada mientras escribes)
   ========================= */
   let editingCommitId = null;
   let modalWhoId = null;
@@ -1047,6 +994,196 @@
         opt.value = name;
         dl.appendChild(opt);
       });
+  }
+
+  /* ======= Autocomplete UI (lista visible) ======= */
+  let _whoSuggest = { box:null, list:null, items:[], active:-1, open:false };
+
+  function ensureWhoSuggestUi(){
+    const inp = $("fWho");
+    if(!inp) return;
+
+    if(_whoSuggest.box && document.body.contains(_whoSuggest.box)) return;
+
+    // Buscar el contenedor ".field" del input
+    const field = inp.closest(".field") || inp.parentElement;
+    if(!field) return;
+
+    // Crear caja
+    const box = document.createElement("div");
+    box.id = "whoSuggestBox";
+    box.setAttribute("role","listbox");
+    box.style.position = "relative";
+    box.style.marginTop = "8px";
+
+    const list = document.createElement("div");
+    list.id = "whoSuggestList";
+    list.style.border = "1px solid var(--border)";
+    list.style.background = "var(--surface2)";
+    list.style.borderRadius = "12px";
+    list.style.boxShadow = "var(--shadow2)";
+    list.style.overflow = "hidden";
+    list.style.display = "none";
+
+    box.appendChild(list);
+    field.appendChild(box);
+
+    _whoSuggest.box = box;
+    _whoSuggest.list = list;
+  }
+
+  function closeWhoSuggest(){
+    if(!_whoSuggest.list) return;
+    _whoSuggest.list.style.display = "none";
+    _whoSuggest.open = false;
+    _whoSuggest.active = -1;
+    _whoSuggest.items = [];
+  }
+
+  function renderWhoSuggest(query){
+    ensureWhoSuggestUi();
+    const inp = $("fWho");
+    if(!inp || !_whoSuggest.list) return;
+
+    const q = normalizeName(query || "").toLowerCase();
+    const items = contacts
+      .slice()
+      .sort((a,b)=> (a.name||"").localeCompare(b.name||"", "es"))
+      .map(c=> ({ id:c.id, name: normalizeName(c.name||"") }))
+      .filter(x=>!!x.name);
+
+    const filtered = q
+      ? items.filter(x=> x.name.toLowerCase().includes(q))
+      : items;
+
+    _whoSuggest.items = filtered.slice(0, 12);
+    _whoSuggest.active = -1;
+
+    const list = _whoSuggest.list;
+    list.innerHTML = "";
+
+    if(!_whoSuggest.items.length){
+      list.style.display = q ? "block" : "none";
+      _whoSuggest.open = q ? true : false;
+
+      if(q){
+        const row = document.createElement("div");
+        row.style.padding = "10px 12px";
+        row.style.fontSize = "14px";
+        row.style.opacity = "0.9";
+        row.textContent = "No hay coincidencias. Se guardará si quieres al pulsar Guardar.";
+        list.appendChild(row);
+      }
+      return;
+    }
+
+    _whoSuggest.items.forEach((it, idx)=>{
+      const row = document.createElement("button");
+      row.type = "button";
+      row.setAttribute("role","option");
+      row.dataset.idx = String(idx);
+      row.style.width = "100%";
+      row.style.display = "flex";
+      row.style.alignItems = "center";
+      row.style.justifyContent = "space-between";
+      row.style.gap = "10px";
+      row.style.padding = "10px 12px";
+      row.style.border = "0";
+      row.style.background = "transparent";
+      row.style.cursor = "pointer";
+      row.style.textAlign = "left";
+      row.style.color = "inherit";
+
+      const left = document.createElement("div");
+      left.style.minWidth = "0";
+
+      const name = document.createElement("div");
+      name.style.fontWeight = "700";
+      name.style.fontSize = "14px";
+      name.style.whiteSpace = "nowrap";
+      name.style.overflow = "hidden";
+      name.style.textOverflow = "ellipsis";
+      name.textContent = it.name;
+
+      const hint = document.createElement("div");
+      hint.style.fontSize = "12px";
+      hint.style.opacity = "0.75";
+      hint.textContent = "Toca para seleccionar";
+
+      left.appendChild(name);
+      left.appendChild(hint);
+
+      const tag = document.createElement("div");
+      tag.style.fontSize = "12px";
+      tag.style.opacity = "0.85";
+      tag.textContent = "👥";
+
+      row.appendChild(left);
+      row.appendChild(tag);
+
+      row.addEventListener("click", ()=>{
+        inp.value = it.name;
+        modalWhoId = it.id;
+        closeWhoSuggest();
+        try{ inp.focus(); }catch(_){}
+        toast(`👥 Marcado: ${it.name}`);
+      });
+
+      row.addEventListener("mouseenter", ()=>{
+        setActiveSuggest(idx);
+      });
+
+      list.appendChild(row);
+
+      if(idx < _whoSuggest.items.length - 1){
+        const sep = document.createElement("div");
+        sep.style.height = "1px";
+        sep.style.background = "var(--border)";
+        sep.style.opacity = "0.7";
+        list.appendChild(sep);
+      }
+    });
+
+    list.style.display = "block";
+    _whoSuggest.open = true;
+  }
+
+  function setActiveSuggest(idx){
+    if(!_whoSuggest.list) return;
+    _whoSuggest.active = idx;
+
+    // pintar “activo” sin CSS global
+    const children = Array.from(_whoSuggest.list.children);
+    let optIndex = -1;
+    children.forEach((el)=>{
+      if(el.tagName === "BUTTON"){
+        optIndex++;
+        const active = (optIndex === idx);
+        el.style.background = active ? "rgba(107,91,255,0.12)" : "transparent";
+      }
+    });
+  }
+
+  function moveActiveSuggest(delta){
+    if(!_whoSuggest.open || !_whoSuggest.items.length) return;
+    let next = _whoSuggest.active + delta;
+    if(next < 0) next = _whoSuggest.items.length - 1;
+    if(next >= _whoSuggest.items.length) next = 0;
+    setActiveSuggest(next);
+  }
+
+  function pickActiveSuggest(){
+    if(!_whoSuggest.open || !_whoSuggest.items.length) return false;
+    const idx = _whoSuggest.active;
+    if(idx < 0 || idx >= _whoSuggest.items.length) return false;
+    const it = _whoSuggest.items[idx];
+    const inp = $("fWho");
+    if(!inp) return false;
+    inp.value = it.name;
+    modalWhoId = it.id;
+    closeWhoSuggest();
+    toast(`👥 Marcado: ${it.name}`);
+    return true;
   }
 
   function setModalWhoFromNameInput(){
@@ -1106,9 +1243,18 @@
     if(mt) mt.textContent = id ? "Editar compromiso" : "Nuevo compromiso";
 
     openModal($("backdrop"));
+
+    // abrir sugerencias iniciales si está vacío (lista completa)
+    setTimeout(()=>{
+      try{
+        ensureWhoSuggestUi();
+        renderWhoSuggest($("fWho")?.value || "");
+      }catch(_){}
+    }, 0);
   }
 
   function closeCommitModal(){
+    closeWhoSuggest();
     closeModal($("backdrop"));
     editingCommitId = null;
     modalWhoId = null;
@@ -1242,16 +1388,59 @@
     const who = $("fWho");
     if(who && who.dataset.bound !== "1"){
       who.dataset.bound = "1";
+
+      who.addEventListener("focus", ()=>{
+        renderWhoSuggest(who.value || "");
+      });
+
       who.addEventListener("input", ()=>{
         setModalWhoFromNameInput();
+        renderWhoSuggest(who.value || "");
       });
+
       who.addEventListener("change", ()=>{
         setModalWhoFromNameInput();
+        // si coincide exacto, cerramos lista
         if(modalWhoId){
           const c = getContactById(modalWhoId);
           if(c?.name) toast(`👥 Marcado: ${c.name}`);
+          closeWhoSuggest();
+        }else{
+          renderWhoSuggest(who.value || "");
         }
       });
+
+      who.addEventListener("keydown", (e)=>{
+        if(e.key === "ArrowDown"){
+          e.preventDefault();
+          if(!_whoSuggest.open) renderWhoSuggest(who.value || "");
+          moveActiveSuggest(+1);
+        }else if(e.key === "ArrowUp"){
+          e.preventDefault();
+          if(!_whoSuggest.open) renderWhoSuggest(who.value || "");
+          moveActiveSuggest(-1);
+        }else if(e.key === "Enter"){
+          // si hay activo, selecciona; si no, deja que guarde normal
+          if(_whoSuggest.open){
+            const ok = pickActiveSuggest();
+            if(ok) e.preventDefault();
+          }
+        }else if(e.key === "Escape"){
+          closeWhoSuggest();
+        }
+      });
+
+      // cerrar al tocar fuera (dentro del modal)
+      document.addEventListener("click", (e)=>{
+        const bb = $("backdrop");
+        if(!bb || !bb.classList.contains("show")) return;
+        const box = _whoSuggest.box;
+        if(!box) return;
+        if(e.target === who || box.contains(e.target)) return;
+        if((e.target.closest && e.target.closest("#backdrop .modal"))){
+          closeWhoSuggest();
+        }
+      }, true);
     }
   }
 
