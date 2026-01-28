@@ -1735,4 +1735,201 @@
   /* =========================
      Init (continúa en PARTE 3/3)
   ========================= */
+function bindTop(){
+    // Texto grande
+    const a11yTop = $("btnA11yTop");
+    const a11yIn = $("btnA11y");
+    const toggle = ()=>{
+      a11y = !a11y;
+      try{
+        document.body.classList.toggle("bigText", a11y);
+        document.documentElement.classList.toggle("bigText", a11y);
+      }catch(e){}
+      save(A11Y_KEY, { bigText: a11y });
+      toast(a11y ? "Texto grande: ON" : "Texto grande: OFF");
+    };
+    if(a11yTop) a11yTop.addEventListener("click", toggle);
+    if(a11yIn) a11yIn.addEventListener("click", toggle);
+
+    // Gear -> Ajustes
+    const gear = $("btnSettingsGear");
+    if(gear){
+      gear.addEventListener("click", ()=>{
+        setPane("settings");
+      });
+    }
+
+    // Pills
+    const btnOver = $("btnOverdue");
+    if(btnOver){
+      btnOver.addEventListener("click", ()=>{
+        setPane("commitments");
+        setView("pending");
+        uiCommitFiltersOpen = true;
+        const p = $("commitSearchPanel");
+        if(p) p.classList.add("show");
+        setTimeout(()=> $("commitSearchTxt")?.focus(), 40);
+        toast("Mostrando pendientes (puedes filtrar)");
+      });
+    }
+
+    const btnRecv = $("btnReceived");
+    if(btnRecv){
+      btnRecv.addEventListener("click", ()=>{
+        received.c = Math.max(0, Number(received.c||0));
+        received.c = 0;
+        received.lastAt = new Date().toISOString();
+        save(RECEIVED_KEY, received);
+        toast("Recibidos: limpio ✅");
+        updateCounts();
+      });
+    }
+
+    const btnWait = $("btnWaitingPill");
+    if(btnWait){
+      btnWait.addEventListener("click", ()=>{
+        setPane("commitments");
+        setView("waiting");
+      });
+    }
+  }
+
+  function bindTiles(){
+    const tPend = $("tilePending");
+    const tWait = $("tileWaiting");
+    const tDone = $("tileDone");
+    const tCont = $("tileContacts");
+
+    if(tPend) tPend.onclick = ()=>{ setPane("commitments"); setView("pending"); };
+    if(tWait) tWait.onclick = ()=>{ setPane("commitments"); setView("waiting"); };
+    if(tDone) tDone.onclick = ()=>{ setPane("commitments"); setView("closed"); };
+    if(tCont) tCont.onclick = ()=>{ setPane("contacts"); };
+  }
+
+  function bindSegTabs(){
+    const p = $("tabPending");
+    const w = $("tabWaiting");
+    const d = $("tabDone");
+
+    if(p) p.onclick = ()=> setView("pending");
+    if(w) w.onclick = ()=> setView("waiting");
+    if(d) d.onclick = ()=> setView("closed");
+  }
+
+  function bindBottomNav(){
+    const tabC = $("tabCommitments");
+    const tabA = $("tabContacts");
+
+    if(tabC) tabC.onclick = ()=> setPane("commitments");
+    if(tabA) tabA.onclick = ()=> setPane("contacts");
+  }
+
+  function bindLockBasics(){
+    // este bloque es “mínimo”: no cambia tu lógica actual si ya la tenías
+    const lockClose = $("lockClose");
+    if(lockClose){
+      lockClose.addEventListener("click", ()=>{
+        showBackdrop("lockOverlay", false);
+      });
+    }
+    const btnLockReset = $("btnLockReset");
+    if(btnLockReset){
+      btnLockReset.addEventListener("click", ()=>{
+        showConfirm(
+          "Borrar todo",
+          "Esto borrará compromisos, amigos y ajustes del móvil.",
+          "Sí, borrar todo",
+          "Cancelar",
+          true,
+          ()=>{
+            localStorage.removeItem(KEY);
+            localStorage.removeItem(CONTACTS_KEY);
+            localStorage.removeItem(SETTINGS_KEY);
+            localStorage.removeItem(RECEIVED_KEY);
+            localStorage.removeItem(A11Y_KEY);
+            data = [];
+            contacts = [];
+            settings = { pinEnabled:false, autoLockMin:0, rememberMin:0, notifEnabled:false };
+            received = { c:0, lastAt:null };
+            toast("Todo borrado");
+            renderAll();
+          }
+        );
+      });
+    }
+  }
+
+  function init(){
+    // carga inicial
+    data = load(KEY, []);
+    contacts = load(CONTACTS_KEY, []);
+    settings = load(SETTINGS_KEY, { pinEnabled:false, autoLockMin:0, rememberMin:0, notifEnabled:false });
+    received = load(RECEIVED_KEY, { c:0, lastAt:null });
+
+    const a = load(A11Y_KEY, { bigText:false });
+    a11y = !!(a && a.bigText);
+
+    // robust bigText
+    try{
+      document.body.classList.toggle("bigText", a11y);
+      document.documentElement.classList.toggle("bigText", a11y);
+    }catch(e){}
+
+    // normalizaciones/migraciones
+    normalizeContacts();
+    normalizeData();
+
+    // construir UI extra
+    ensureWaitingPill();
+    fixPillsOrder();
+    removeBottomInstallText();
+
+    ensureFriendsDatalist();
+    ensureCommitSearchPanel();
+    ensureContactsQuickSearch();
+
+    // binds
+    bindTop();
+    bindTiles();
+    bindSegTabs();
+    bindBottomNav();
+    bindModals();
+    bindFab();
+    bindSettings();
+    bindCommitActions();
+    bindLockBasics();
+
+    // cerrar modales por ESC (desktop)
+    document.addEventListener("keydown", (e)=>{
+      if(e.key === "Escape"){
+        // cerrar el primero abierto
+        const order = ["shareBackdrop","pinBackdrop","cBackdrop","backdrop","confirmBackdrop","lockOverlay"];
+        for(const id of order){
+          const bd = $(id);
+          if(bd && bd.classList.contains("show")){
+            showBackdrop(id, false);
+            break;
+          }
+        }
+      }
+    });
+
+    // ✅ evitar que el topbar se quede “fijo raro” en algunos android:
+    // si el navegador se lía con sticky+backdrop-filter, forzamos repaint al hacer scroll.
+    let raf = 0;
+    window.addEventListener("scroll", ()=>{
+      if(raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(()=>{
+        const tb = document.querySelector(".topbar");
+        if(tb) tb.style.transform = "translateZ(0)";
+      });
+    }, { passive:true });
+
+    renderAll();
+  }
+
+  // Start
+  document.addEventListener("DOMContentLoaded", init);
+
+})();
 
