@@ -1,4 +1,3 @@
-<!-- compromisos.html (ACTUALIZADO) -->
 <!doctype html>
 <html lang="es">
 <head>
@@ -56,73 +55,6 @@
       line-height:1;
     }
     .gearBtn:active{ transform:translateY(1px); }
-
-    /* =========================================================
-       ✅ BLOQUE MARCADO EN ROJO (exacto como la foto “buena”)
-       - Título/explicación a la izquierda SIN amontonarse
-       - Píldoras (tabs) a la derecha SIN cortar “Cerrados”
-       - Botón “Buscar / Filtrar” a la derecha debajo
-    ========================================================= */
-
-    /* Cabecera de sección: dos columnas (izq texto / der tabs) */
-    #commitmentsPane .sectionHead{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;            /* si no cabe, baja a otra fila sin romper */
-      padding-bottom:4px;
-    }
-    #commitmentsPane .sectionHead > div:first-child{
-      flex:1 1 190px;
-      min-width:160px;
-      max-width:100%;
-    }
-    #commitmentsPane .sectionHead h2{ margin:0; }
-    #commitmentsPane .sectionHead p{
-      margin:4px 0 0 0;
-      line-height:1.25;
-      white-space:normal;
-    }
-
-    /* Tabs: una sola fila y ajustables para que no se corte “Cerrados” */
-    #commitmentsPane .segTabs{
-      margin-left:auto;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex:0 0 auto;
-      flex-wrap:nowrap;
-      white-space:nowrap;
-      overflow:visible;
-    }
-    #commitmentsPane .segTabs .segBtn{
-      white-space:nowrap;
-      padding:10px 14px;
-      border-radius:999px;
-      min-width:0;
-      font-weight:900;
-      font-size:clamp(13px, 3.4vw, 15px);
-    }
-
-    /* Fila del botón Buscar/Filtrar: a la derecha y con el mismo “aire” */
-    #commitToolsToggleRow{
-      display:flex !important;
-      justify-content:flex-end !important;
-      align-items:center !important;
-      padding:10px 12px 0 !important;
-    }
-    #commitToolsToggle{
-      height:36px !important;
-      padding:0 14px !important;
-      border-radius:999px !important;
-      white-space:nowrap !important;
-    }
-
-    /* Panel desplegable: bajo el botón, mismo ancho visual */
-    #commitToolsPanel{
-      margin:10px 12px 12px !important;
-    }
   </style>
 </head>
 
@@ -394,21 +326,15 @@
       </div>
 
       <div class="modalBody">
-        <!-- ✅ Campo único Nombre + datalist + (host para lista propia si el móvil no soporta datalist bien) -->
+        <!-- ✅ NUEVO: campo único Nombre + datalist -->
         <div class="field">
           <label class="label" for="fWho">Nombre</label>
           <input id="fWho"
                  type="text"
                  list="friendsDatalist"
                  placeholder="Ej: Laura / Mamá / Juan (del trabajo)"
-                 autocomplete="off"
-                 autocapitalize="words"
-                 spellcheck="false"/>
+                 autocomplete="off"/>
           <datalist id="friendsDatalist"></datalist>
-
-          <!-- ✅ (NO MOLESTA si no se usa) Host para sugerencias custom (lo activaremos en el JS) -->
-          <div id="whoSuggest" class="whoSuggest" role="listbox" aria-label="Sugerencias de amigos" style="display:none;"></div>
-
           <div class="hint" id="contactHint">Si coincide exacto con un amigo, se vincula automáticamente. Si no, te preguntará si quieres guardarlo.</div>
         </div>
 
@@ -511,7 +437,7 @@
           <input id="pinNew2" inputmode="numeric" autocomplete="off" pattern="[0-9]*" maxlength="4" placeholder="••••"/>
         </div>
 
-        <div class="hint" id="pinHelp">Sugerencia: usa un PIN que solo tú sepas.</div>
+        <div class="hint" id="pinHelp">Consejo: usa un PIN que solo tú sepas.</div>
       </div>
 
       <div class="modalFoot">
