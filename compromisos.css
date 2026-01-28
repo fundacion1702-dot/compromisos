@@ -46,7 +46,6 @@ a{ color:inherit; }
 
 /* =========================
    ✅ BIG TEXT (robusto)
-   Soporta class en <body> o en <html> (por si el JS cambia uno u otro)
    ========================= */
 body.bigText,
 html.bigText body{
@@ -99,12 +98,11 @@ html.bigText body .badge{ font-size:13px; height:24px; }
 .wrap{
   width:min(var(--max), calc(100% - 24px));
   margin:0 auto;
-  /* ✅ menos espacio arriba (reduce hueco “X”) */
   padding:10px 0 calc(var(--bottomH) + 22px + env(safe-area-inset-bottom));
 }
 
 /* =========================
-   ✅ TOP BAR (FIX)
+   ✅ TOP BAR
    ========================= */
 .topbar{
   position:sticky;
@@ -118,9 +116,8 @@ html.bigText body .badge{ font-size:13px; height:24px; }
 .topbarInner{
   width:min(var(--max), calc(100% - 24px));
   margin:0 auto;
-  /* ✅ compacta un poco el bloque superior (sube píldoras) */
   padding:10px 0 10px;
-  position:relative; /* ✅ ancla de botones absolutos */
+  position:relative;
 }
 
 /* Brand */
@@ -129,7 +126,7 @@ html.bigText body .badge{ font-size:13px; height:24px; }
   align-items:center;
   gap:10px;
   min-width:0;
-  padding-right:220px; /* ✅ reserva para botones derecha */
+  padding-right:220px;
 }
 .logo{
   width:42px;height:42px;
@@ -162,15 +159,12 @@ html.bigText body .badge{ font-size:13px; height:24px; }
   text-overflow:ellipsis;
 }
 
-/* TOP actions */
 .topActions{
   position:static;
   width:100%;
-  /* ✅ menos separación bajo título (sube píldoras) */
   margin-top:6px;
 }
 
-/* Botón A11Y: arriba derecha */
 #btnA11yTop{
   position:absolute !important;
   top:10px !important;
@@ -179,7 +173,6 @@ html.bigText body .badge{ font-size:13px; height:24px; }
   pointer-events:auto !important;
 }
 
-/* ✅ Engranaje: absoluto a la derecha, debajo de “Texto grande” */
 #btnSettingsGear{
   position:absolute !important;
   right:0 !important;
@@ -187,7 +180,6 @@ html.bigText body .badge{ font-size:13px; height:24px; }
   z-index:75 !important;
 }
 
-/* Botón estilo */
 .a11yBtn{
   height:34px;
   padding:0 12px;
@@ -209,7 +201,6 @@ html.bigText body .badge{ font-size:13px; height:24px; }
 }
 .a11yBtn:active{ transform:translateY(1px); }
 
-/* Pills: centradas y más arriba */
 .pills{
   display:flex;
   gap:10px;
@@ -391,13 +382,50 @@ html.bigText body .badge{ font-size:13px; height:24px; }
 }
 
 /* =========================
-   ✅ EXACTO como tu FOTO (zona roja)
-   - Botón “Buscar / Filtrar” alineado a la derecha, debajo del separador
-   - Misma forma de píldora, tamaño y separación
-   - Al pulsar, JS despliega el panel (commitToolsPanel)
+   ✅ ZONA ROJA (como tu 2ª foto)
+   - El texto explicativo NO se amontona
+   - Las 3 píldoras SIEMPRE caben (Cerrados completo)
+   ========================= */
+@media (max-width:620px){
+  .sectionHead{
+    flex-direction:column;        /* apila: título/subtítulo arriba, tabs abajo */
+    align-items:flex-start;
+    gap:10px;
+  }
+  .sectionHead > div:first-child{
+    width:100%;
+    min-width:0;
+  }
+  .sectionHead p{
+    max-width:100%;
+    white-space:normal;
+    overflow:visible;
+    text-overflow:clip;
+    line-height:1.25;            /* evita “amontonado” */
+  }
+
+  /* Tabs en 3 columnas iguales: nunca corta “Cerrados” */
+  .segTabs[role="tablist"],
+  .segTabs{
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:10px;
+    align-items:stretch;
+  }
+  .segBtn{
+    width:100%;
+    padding:0 10px;
+    min-width:0;
+    text-align:center;
+  }
+}
+
+/* =========================
+   ✅ Botón Buscar / Filtrar
+   - SIEMPRE a la derecha (como la 2ª foto)
    ========================= */
 #commitToolsToggle{
-  /* anulamos cualquier estilo inline del JS para que quede igual siempre */
   all:unset;
   display:inline-flex !important;
   align-items:center !important;
@@ -420,21 +448,18 @@ html.bigText body .badge{ font-size:13px; height:24px; }
   -webkit-tap-highlight-color:transparent !important;
   user-select:none !important;
 
-  /* 📌 ubicación EXACTA: debajo del header, pegado a la derecha */
-  margin:12px 12px 0 auto !important; /* auto => derecha */
-  float:right !important; /* asegura derecha aunque haya espacios */
+  /* derecha y sin liarla con floats */
+  margin:12px 12px 0 auto !important;
 }
 #commitToolsToggle:active{ transform:translateY(1px); }
 
 #commitToolsPanel{
-  /* panel desplegable: mismo bloque limpio y sin empujar cosas raro */
   margin:12px 12px 12px !important;
   padding:12px 12px !important;
   border-radius:18px !important;
   border:1px solid var(--border) !important;
   background:var(--surface) !important;
   box-shadow:var(--shadow2) !important;
-  clear:both; /* para que el panel baje debajo del botón flotado */
 }
 
 /* List / cards */
@@ -755,9 +780,7 @@ input:focus,select:focus,textarea:focus{
   color:#111827;
 }
 
-/* =========================
-   ✅ INSTALL BANNER (para que NO salga texto suelto “Instálala / Consejo”)
-   ========================= */
+/* INSTALL BANNER */
 .installBanner{
   position:fixed;
   left:12px; right:12px;
@@ -799,14 +822,4 @@ input:focus,select:focus,textarea:focus{
     -webkit-line-clamp:2;
   }
   .pills{ flex-wrap:wrap; justify-content:center; }
-
-  /* para que el botón “Buscar / Filtrar” quede EXACTO y no se vaya raro */
-  #commitToolsToggle{
-    max-width:calc(100% - 24px);
-  }
 }
-
-/* SIGUIENTE PASO:
-   Pega el archivo `compromisos.html` (COMPLETO) para que deje la zona roja EXACTA:
-   - que el botón “Buscar / Filtrar” esté en el sitio exacto incluso cuando haya lista (no solo vacío)
-   - y que el panel desplegable quede con el mismo ancho/altura y espaciados que tu captura. */
