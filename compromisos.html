@@ -56,6 +56,73 @@
       line-height:1;
     }
     .gearBtn:active{ transform:translateY(1px); }
+
+    /* =========================================================
+       ✅ BLOQUE MARCADO EN ROJO (exacto como la foto “buena”)
+       - Título/explicación a la izquierda SIN amontonarse
+       - Píldoras (tabs) a la derecha SIN cortar “Cerrados”
+       - Botón “Buscar / Filtrar” a la derecha debajo
+    ========================================================= */
+
+    /* Cabecera de sección: dos columnas (izq texto / der tabs) */
+    #commitmentsPane .sectionHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;            /* si no cabe, baja a otra fila sin romper */
+      padding-bottom:4px;
+    }
+    #commitmentsPane .sectionHead > div:first-child{
+      flex:1 1 190px;
+      min-width:160px;
+      max-width:100%;
+    }
+    #commitmentsPane .sectionHead h2{ margin:0; }
+    #commitmentsPane .sectionHead p{
+      margin:4px 0 0 0;
+      line-height:1.25;
+      white-space:normal;
+    }
+
+    /* Tabs: una sola fila y ajustables para que no se corte “Cerrados” */
+    #commitmentsPane .segTabs{
+      margin-left:auto;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex:0 0 auto;
+      flex-wrap:nowrap;
+      white-space:nowrap;
+      overflow:visible;
+    }
+    #commitmentsPane .segTabs .segBtn{
+      white-space:nowrap;
+      padding:10px 14px;
+      border-radius:999px;
+      min-width:0;
+      font-weight:900;
+      font-size:clamp(13px, 3.4vw, 15px);
+    }
+
+    /* Fila del botón Buscar/Filtrar: a la derecha y con el mismo “aire” */
+    #commitToolsToggleRow{
+      display:flex !important;
+      justify-content:flex-end !important;
+      align-items:center !important;
+      padding:10px 12px 0 !important;
+    }
+    #commitToolsToggle{
+      height:36px !important;
+      padding:0 14px !important;
+      border-radius:999px !important;
+      white-space:nowrap !important;
+    }
+
+    /* Panel desplegable: bajo el botón, mismo ancho visual */
+    #commitToolsPanel{
+      margin:10px 12px 12px !important;
+    }
   </style>
 </head>
 
