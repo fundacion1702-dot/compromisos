@@ -105,7 +105,7 @@ html.bigText body .badge{ font-size:13px; height:24px; }
    ✅ TOP BAR (NO FIJA)
    ========================= */
 .topbar{
-  position:static !important; /* 🔥 clave: ya NO es sticky */
+  position:static !important;
   top:auto !important;
   z-index:10;
   background:rgba(242,243,245,.85);
@@ -180,6 +180,8 @@ html.bigText body .badge{ font-size:13px; height:24px; }
   z-index:75 !important;
 }
 
+/* (gearBtn viene del <style> inline del HTML, no lo piso aquí) */
+
 .a11yBtn{
   height:34px;
   padding:0 12px;
@@ -201,13 +203,13 @@ html.bigText body .badge{ font-size:13px; height:24px; }
 }
 .a11yBtn:active{ transform:translateY(1px); }
 
-/* ✅ Pills: permitir wrap para que NO desaparezca “En espera” */
+/* ✅ Pills: wrap para que no desaparezca “En espera” */
 .pills{
   display:flex;
   gap:10px;
   align-items:center;
   justify-content:center;
-  flex-wrap:wrap;            /* 🔥 antes nowrap */
+  flex-wrap:wrap;
   overflow:visible;
   max-width:100%;
   position:relative;
@@ -215,7 +217,7 @@ html.bigText body .badge{ font-size:13px; height:24px; }
   margin-top:6px;
 }
 
-#btnWaitingTop{ order:1; }   /* En espera (creado por JS) */
+#btnWaitingTop{ order:1; }
 #btnReceived{ order:2; }
 #btnOverdue{ order:3; }
 
@@ -344,23 +346,35 @@ html.bigText body .badge{ font-size:13px; height:24px; }
   overflow:hidden;
 }
 
-/* 🔥 Importante: el pane de compromisos será el “contenedor” del botón buscar */
-#commitmentsPane{
-  position:relative; /* para colocar #commitToolsToggle a la derecha del título */
-}
+/* ✅ contenedor para anclar “Buscar / Filtrar” */
+#commitmentsPane{ position:relative; }
 
+/* =========================
+   ✅ CABECERA: mover TABS ARRIBA (solución)
+   ========================= */
 .sectionHead{
   padding:14px 14px 12px;
-  display:flex;
-  align-items:flex-end;
-  justify-content:space-between;
-  gap:10px;
   border-bottom:1px solid rgba(229,231,235,.8);
   background:linear-gradient(180deg,#fff,#fbfbfc);
 
-  /* ✅ Reservar espacio arriba a la derecha para “Buscar / Filtrar” */
-  padding-right:190px;
+  /* 🔥 GRID: 2 filas */
+  display:grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  column-gap:10px;
+  row-gap:10px;
+  align-items:end;
+
+  /* reserva para botón buscar a la derecha */
+  padding-right:14px;
 }
+
+.sectionHead > div:first-child{
+  grid-column:1/2;
+  grid-row:1/2;
+  min-width:0;
+}
+
 .sectionHead h2{
   margin:0;
   font-size:16px;
@@ -373,7 +387,14 @@ html.bigText body .badge{ font-size:13px; height:24px; }
   color:var(--muted);
 }
 
-.segTabs{ display:flex; align-items:center; gap:8px; }
+/* ✅ Tabs ahora SIEMPRE arriba, justo debajo del título */
+.segTabs{
+  grid-column:1 / 3;
+  grid-row:2 / 3;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
 .segBtn{
   height:34px;
   padding:0 12px;
@@ -386,6 +407,8 @@ html.bigText body .badge{ font-size:13px; height:24px; }
   color:var(--text);
   -webkit-tap-highlight-color:transparent;
   white-space:nowrap;
+  flex:1 1 auto;
+  text-align:center;
 }
 .segBtn.active{
   background:var(--primarySoft);
@@ -394,15 +417,16 @@ html.bigText body .badge{ font-size:13px; height:24px; }
 }
 
 /* =========================
-   ✅ “Buscar / Filtrar”
-   - VISIBLE y a la derecha del título (como pediste)
+   ✅ “Buscar / Filtrar” SIEMPRE visible y a la derecha del título
+   (aunque el JS meta estilos inline)
    ========================= */
 #commitToolsToggle{
-  all:unset;
-  position:absolute;
-  right:14px;
-  top:16px;
-  z-index:6;
+  all:unset !important;
+
+  position:absolute !important;
+  right:14px !important;
+  top:18px !important;
+  z-index:9 !important;
 
   display:inline-flex !important;
   align-items:center !important;
@@ -425,10 +449,11 @@ html.bigText body .badge{ font-size:13px; height:24px; }
   -webkit-tap-highlight-color:transparent !important;
   user-select:none !important;
   white-space:nowrap !important;
+
+  margin:0 !important; /* 🔥 mata el margin inline del JS */
 }
 #commitToolsToggle:active{ transform:translateY(1px); }
 
-/* Panel desplegable */
 #commitToolsPanel{
   margin:12px 12px 12px !important;
   padding:12px 12px !important;
@@ -439,42 +464,9 @@ html.bigText body .badge{ font-size:13px; height:24px; }
 }
 
 /* =========================
-   ✅ ZONA ROJA (móvil)
-   - Tabs arriba (sin huecos raros)
-   - Texto explicativo NO amontonado
-   - “Cerrados” completo
+   ✅ MÓVIL: Tabs en 3 columnas iguales
    ========================= */
 @media (max-width:620px){
-  .sectionHead{
-    flex-direction:column;
-    align-items:flex-start;
-    gap:10px;
-
-    /* en móvil reservamos menos para el botón, porque el botón baja un poco si hace falta */
-    padding-right:14px;
-  }
-
-  /* El botón sigue a la derecha pero baja un pelín para no tapar nada */
-  #commitToolsToggle{
-    top:12px;
-    right:12px;
-  }
-
-  .sectionHead > div:first-child{
-    width:100%;
-    min-width:0;
-    padding-right:0;
-  }
-
-  .sectionHead p{
-    max-width:100%;
-    white-space:normal;
-    overflow:visible;
-    text-overflow:clip;
-    line-height:1.25;
-  }
-
-  .segTabs[role="tablist"],
   .segTabs{
     width:100%;
     display:grid;
@@ -482,12 +474,16 @@ html.bigText body .badge{ font-size:13px; height:24px; }
     gap:10px;
     align-items:stretch;
   }
-
   .segBtn{
     width:100%;
     padding:0 10px;
     min-width:0;
-    text-align:center;
+  }
+
+  /* botón buscar no tapa el título */
+  #commitToolsToggle{
+    top:14px !important;
+    right:12px !important;
   }
 }
 
