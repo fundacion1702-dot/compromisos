@@ -104,11 +104,11 @@ html.bigText body .badge{ font-size:13px; height:24px; }
 }
 
 /* =========================
-   ✅ TOP BAR (NO STICKY / NO FIXED)
+   ✅ TOP BAR (FIX)
    ========================= */
 .topbar{
-  /* ✅ Antes: position:sticky; top:0;  -> ahora hace scroll con el resto */
-  position:relative;
+  position:sticky;
+  top:0;
   z-index:10;
   background:rgba(242,243,245,.85);
   backdrop-filter:blur(10px);
@@ -179,12 +179,11 @@ html.bigText body .badge{ font-size:13px; height:24px; }
   pointer-events:auto !important;
 }
 
-/* ✅ Engranaje: absoluto a la derecha, debajo de “Texto grande”
-   (así NO ocupa línea y NO empuja las píldoras hacia abajo) */
+/* ✅ Engranaje: absoluto a la derecha, debajo de “Texto grande” */
 #btnSettingsGear{
   position:absolute !important;
   right:0 !important;
-  top:54px !important;  /* ajustado para caer “en el círculo rojo” */
+  top:54px !important;
   z-index:75 !important;
 }
 
@@ -221,13 +220,9 @@ html.bigText body .badge{ font-size:13px; height:24px; }
   max-width:100%;
   position:relative;
   z-index:10;
-
-  /* ✅ las acercamos más al título (sin cambiar tamaño) */
   margin-top:6px;
 }
 
-/* ✅ ORDEN:
-   Recibidos a la izquierda, Vencidos a la derecha */
 #btnReceived{ order:1; }
 #btnOverdue{ order:2; }
 
@@ -280,7 +275,6 @@ html.bigText body .badge{ font-size:13px; height:24px; }
 
 /* Menú grid */
 .menuGrid{
-  /* ✅ menos separación con las píldoras (reduce hueco “X”) */
   margin-top:10px;
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -394,6 +388,53 @@ html.bigText body .badge{ font-size:13px; height:24px; }
   background:var(--primarySoft);
   border-color:rgba(37,99,235,.22);
   color:#1E40AF;
+}
+
+/* =========================
+   ✅ EXACTO como tu FOTO (zona roja)
+   - Botón “Buscar / Filtrar” alineado a la derecha, debajo del separador
+   - Misma forma de píldora, tamaño y separación
+   - Al pulsar, JS despliega el panel (commitToolsPanel)
+   ========================= */
+#commitToolsToggle{
+  /* anulamos cualquier estilo inline del JS para que quede igual siempre */
+  all:unset;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:10px !important;
+
+  height:40px !important;
+  padding:0 16px !important;
+  border-radius:999px !important;
+
+  background:var(--surface) !important;
+  border:1px solid var(--border) !important;
+  box-shadow:var(--shadow2) !important;
+
+  font-weight:950 !important;
+  font-size:14px !important;
+  color:var(--text) !important;
+
+  cursor:pointer !important;
+  -webkit-tap-highlight-color:transparent !important;
+  user-select:none !important;
+
+  /* 📌 ubicación EXACTA: debajo del header, pegado a la derecha */
+  margin:12px 12px 0 auto !important; /* auto => derecha */
+  float:right !important; /* asegura derecha aunque haya espacios */
+}
+#commitToolsToggle:active{ transform:translateY(1px); }
+
+#commitToolsPanel{
+  /* panel desplegable: mismo bloque limpio y sin empujar cosas raro */
+  margin:12px 12px 12px !important;
+  padding:12px 12px !important;
+  border-radius:18px !important;
+  border:1px solid var(--border) !important;
+  background:var(--surface) !important;
+  box-shadow:var(--shadow2) !important;
+  clear:both; /* para que el panel baje debajo del botón flotado */
 }
 
 /* List / cards */
@@ -758,4 +799,14 @@ input:focus,select:focus,textarea:focus{
     -webkit-line-clamp:2;
   }
   .pills{ flex-wrap:wrap; justify-content:center; }
+
+  /* para que el botón “Buscar / Filtrar” quede EXACTO y no se vaya raro */
+  #commitToolsToggle{
+    max-width:calc(100% - 24px);
+  }
 }
+
+/* SIGUIENTE PASO:
+   Pega el archivo `compromisos.html` (COMPLETO) para que deje la zona roja EXACTA:
+   - que el botón “Buscar / Filtrar” esté en el sitio exacto incluso cuando haya lista (no solo vacío)
+   - y que el panel desplegable quede con el mismo ancho/altura y espaciados que tu captura. */
