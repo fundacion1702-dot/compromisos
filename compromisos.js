@@ -1,4 +1,4 @@
-/* compromisos.js (COMPLETO) — PARTE 1/3 */
+/* compromisos.js (COMPLETO) */
 (function(){
   "use strict";
 
@@ -68,7 +68,7 @@
   }
 
   /* =========================
-     ✅ CSS de soporte (layout + lupa + fixes)
+     ✅ CSS de soporte (layout + lupa + fixes + autocompletado)
   ========================= */
   (function injectMiniToolsCss(){
     try{
@@ -161,35 +161,57 @@
         .chip.status{ font-weight:900; }
 
         /* =========================
-           ✅ AUTOCOMPLETADO PROPIO (sin datalist nativo)
-           - Evita flechitas raras del navegador
-           - Aparece solo al escribir
-           - Pegado al input
+           ✅ Autocompletado (mismo estilo en “Nombre” y en “Buscar”)
+           - Lista flotante justo debajo del input
+           - Solo visible cuando escribes
+           - Sin flechitas raras del datalist nativo
         ========================= */
         .acPanel{
-          display:none;
-          margin-top:6px;
-          border:1px solid var(--border);
+          position:fixed;
+          z-index:9999;
+          min-width:220px;
+          max-width:calc(100vw - 24px);
           background:var(--surface);
+          border:1px solid var(--border);
+          box-shadow:0 22px 60px rgba(17,24,39,.18);
           border-radius:16px;
-          box-shadow:var(--shadow2);
           overflow:hidden;
-          max-height:220px;
-          overflow:auto;
+          display:none;
         }
         .acPanel.show{ display:block; }
+        .acList{ display:flex; flex-direction:column; }
         .acItem{
-          padding:12px 12px;
-          font-weight:900;
-          font-size:16px; /* ✅ un poco más grande */
-          line-height:1.1;
+          padding:10px 12px;
+          display:flex;
+          align-items:center;
+          gap:10px;
           cursor:pointer;
           -webkit-tap-highlight-color:transparent;
-          border-top:1px solid rgba(229,231,235,.75);
-          background:var(--surface);
+          border-top:1px solid rgba(229,231,235,.85);
+          font-weight:900;
+          font-size:16px; /* ✅ un poquito más grande */
+          line-height:1.15;
         }
         .acItem:first-child{ border-top:none; }
-        .acItem:active{ background:var(--surface2); }
+        .acItem:active{ background:rgba(37,99,235,.08); }
+        .acIcon{
+          width:28px; height:28px;
+          border-radius:12px;
+          display:grid;
+          place-items:center;
+          background:var(--surface2);
+          border:1px solid rgba(229,231,235,.9);
+          flex:0 0 auto;
+          font-size:14px;
+        }
+        .acText{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .acHint{
+          padding:8px 12px;
+          font-size:12.5px;
+          color:var(--muted);
+          background:linear-gradient(180deg,#fff,#fbfbfc);
+          border-top:1px solid rgba(229,231,235,.9);
+        }
       `;
       document.head.appendChild(st);
     }catch(e){}
@@ -219,6 +241,167 @@
   let commitFriendFilter = "all"; // all | __none__ | <contactId>
   let commitTextFilter = "";      // búsqueda en texto / quién
   let contactsTextFilter = "";    // búsqueda amigos
+
+  /* =========================
+     ✅ Autocompletado flotante (reutilizable)
+     - Lo usamos en:
+       1) Modal “Nombre” (fWho)
+       2) Buscar compromisos (commitSearchTxt)
+  ========================= */
+  const AC = (function(){
+    let panel = null;
+    let list = null;
+    let hint = null;
+    let activeInput = null;
+    let activeOnPick = null;
+    let activeGetItems = null;
+    let lastQuery = "";
+    let bound = false;
+
+    function ensure(){
+      if(panel) return;
+      panel = document.createElement("div");
+      panel.className = "acPanel";
+      panel.id = "acPanel";
+
+      list = document.createElement("div");
+      list.className = "acList";
+
+      hint = document.createElement("div");
+      hint.className = "acHint";
+      hint.textContent = "Escribe para ver sugerencias.";
+
+      panel.appendChild(list);
+      panel.appendChild(hint);
+      document.body.appendChild(panel);
+
+      if(bound) return;
+      bound = true;
+
+      // cerrar al tocar fuera
+      document.addEventListener("pointerdown", (e)=>{
+        if(!panel.classList.contains("show")) return;
+        const t = e.target;
+        if(t === activeInput) return;
+        if(panel.contains(t)) return;
+        hide();
+      }, true);
+
+      window.addEventListener("scroll", ()=>{
+        if(panel.classList.contains("show")) position();
+      }, true);
+
+      window.addEventListener("resize", ()=>{
+        if(panel.classList.contains("show")) position();
+      }, true);
+    }
+
+    function position(){
+      if(!activeInput || !panel) return;
+      const r = activeInput.getBoundingClientRect();
+      const gap = 6;
+      const top = Math.min(window.innerHeight - 12, r.bottom + gap);
+      const left = Math.max(12, r.left);
+      const width = Math.max(220, Math.min(r.width, window.innerWidth - 24));
+      panel.style.top = top + "px";
+      panel.style.left = left + "px";
+      panel.style.width = width + "px";
+      panel.style.maxHeight = Math.min(260, window.innerHeight - top - 12) + "px";
+      panel.style.overflow = "auto";
+    }
+
+    function hide(){
+      if(!panel) return;
+      panel.classList.remove("show");
+      activeInput = null;
+      activeOnPick = null;
+      activeGetItems = null;
+      lastQuery = "";
+      try{ list.innerHTML = ""; }catch(_){}
+    }
+
+    function render(items, q){
+      if(!panel) return;
+      list.innerHTML = "";
+
+      if(!q){
+        hint.textContent = "Escribe para ver sugerencias.";
+      }else{
+        hint.textContent = items.length ? "Toca para seleccionar." : "Sin coincidencias.";
+      }
+
+      items.forEach((it)=>{
+        const row = document.createElement("div");
+        row.className = "acItem";
+        row.innerHTML = `
+          <span class="acIcon" aria-hidden="true">${esc(it.icon || "👤")}</span>
+          <span class="acText">${esc(it.value)}</span>
+        `;
+        row.addEventListener("click", ()=>{
+          try{
+            if(activeInput) activeInput.value = it.value;
+            if(activeOnPick) activeOnPick(it);
+          }catch(e){}
+          hide();
+        });
+        list.appendChild(row);
+      });
+
+      position();
+      panel.classList.toggle("show", true);
+    }
+
+    function normalize(s){
+      return String(s||"").trim().replace(/\s+/g," ");
+    }
+
+    function setUpFor(input, getItems, onPick){
+      ensure();
+      activeInput = input;
+      activeGetItems = getItems;
+      activeOnPick = onPick;
+
+      const q = normalize(input.value);
+      lastQuery = q;
+
+      if(!q){
+        hide();
+        return;
+      }
+
+      const items = (getItems(q) || []).slice(0, 8);
+      render(items, q);
+    }
+
+    function attach(input, getItems, onPick){
+      if(!input) return;
+      if(input.dataset.acBound === "1") return;
+      input.dataset.acBound = "1";
+
+      const onInput = ()=>{
+        setUpFor(input, getItems, onPick);
+      };
+
+      input.addEventListener("input", onInput);
+      input.addEventListener("focus", onInput);
+
+      input.addEventListener("blur", ()=>{
+        // pequeño delay para permitir click en la lista
+        setTimeout(()=>{
+          if(document.activeElement === input) return;
+          hide();
+        }, 140);
+      });
+
+      input.addEventListener("keydown", (e)=>{
+        if(e.key === "Escape"){
+          hide();
+        }
+      });
+    }
+
+    return { attach, hide, normalize };
+  })();
 
   /* =========================
      ✅ Migración: done -> status
@@ -636,6 +819,8 @@
         panel.classList.toggle("show", uiCommitFiltersOpen);
         if(uiCommitFiltersOpen){
           setTimeout(()=>{ try{ $("commitSearchTxt").focus(); }catch(_){} }, 0);
+        }else{
+          try{ AC.hide(); }catch(_){}
         }
       });
 
@@ -648,6 +833,7 @@
           fillCommitFriendSelect();
           const inp = $("commitSearchTxt");
           if(inp) inp.value = "";
+          try{ AC.hide(); }catch(_){}
           renderCommitments();
         });
       }
@@ -716,6 +902,9 @@
     if(panel) panel.classList.toggle("show", uiCommitFiltersOpen);
 
     bindIfNeeded();
+
+    // ✅ Activar autocompletado en el “Buscar” de compromisos (nombre + texto)
+    bindCommitSearchAutocomplete();
   }
 
   function fillCommitFriendSelect(){
@@ -744,74 +933,6 @@
       });
 
     sel.value = commitFriendFilter || "all";
-  }
-
-  function ensureContactsSearchUi(){
-    const paneEl = $("contactsPane");
-    if(!paneEl) return;
-
-    if(!$("miniContactsTools")){
-      const head = paneEl.querySelector(".sectionHead");
-      if(!head) return;
-
-      const tools = document.createElement("div");
-      tools.className = "miniTools";
-      tools.id = "miniContactsTools";
-      tools.innerHTML = `
-        <button class="miniBtn" id="btnContactsTools" type="button" aria-expanded="false">
-          🔍 Buscar amigos
-        </button>
-      `;
-
-      const panel = document.createElement("div");
-      panel.className = "miniPanel";
-      panel.id = "contactsToolsPanel";
-      panel.innerHTML = `
-        <div class="miniRow">
-          <div class="field">
-            <label class="label" for="contactsSearchTxt">Buscar</label>
-            <input id="contactsSearchTxt" type="text" placeholder="Ej: Ana / Trabajo" autocomplete="off"/>
-          </div>
-          <div class="field" style="flex:0 0 auto; min-width:auto;">
-            <label class="label" style="opacity:0;">.</label>
-            <button class="btn" id="contactsClearBtn" type="button">🧹 Limpiar</button>
-          </div>
-        </div>
-        <div class="miniHint">Busca por nombre o nota del amigo.</div>
-      `;
-
-      head.insertAdjacentElement("afterend", tools);
-      tools.insertAdjacentElement("afterend", panel);
-    }
-
-    const btn = $("btnContactsTools");
-    const panel = $("contactsToolsPanel");
-    if(btn && panel && btn.dataset.bound !== "1"){
-      btn.dataset.bound = "1";
-      btn.addEventListener("click", ()=>{
-        uiContactsSearchOpen = !uiContactsSearchOpen;
-        btn.setAttribute("aria-expanded", uiContactsSearchOpen ? "true" : "false");
-        panel.classList.toggle("show", uiContactsSearchOpen);
-        if(uiContactsSearchOpen){
-          setTimeout(()=>{ try{ $("contactsSearchTxt").focus(); }catch(_){} }, 0);
-        }
-      });
-
-      $("contactsClearBtn").addEventListener("click", ()=>{
-        contactsTextFilter = "";
-        const inp = $("contactsSearchTxt");
-        if(inp) inp.value = "";
-        renderContacts();
-      });
-
-      $("contactsSearchTxt").addEventListener("input", ()=>{
-        contactsTextFilter = ($("contactsSearchTxt").value || "").trim();
-        renderContacts();
-      });
-    }
-
-    if(btn) btn.setAttribute("aria-expanded", uiContactsSearchOpen ? "true" : "false");
-    if(panel) panel.classList.toggle("show", uiContactsSearchOpen);
   }
 
   /* =========================
@@ -883,1206 +1004,86 @@
     return true;
   }
 
-  function renderCommitments(){
-    ensureCommitFiltersUi();
-    updateCommitmentsHeading();
-    updateCounts();
-
-    const list = $("list");
-    const empty = $("empty");
-    if(!list) return;
-
-    list.innerHTML = "";
-
-    const items = data
-      .filter(x=> x.status === view)
-      .filter(passesCommitFilters)
-      .slice()
-      .sort((a,b)=>{
-        if(view==="pending"){
-          const ao = isOverdue(a.when)?1:0, bo = isOverdue(b.when)?1:0;
-          if(ao!==bo) return bo-ao;
-          const ta = a.when ? new Date(a.when).getTime() : Number.POSITIVE_INFINITY;
-          const tb = b.when ? new Date(b.when).getTime() : Number.POSITIVE_INFINITY;
-          if(ta!==tb) return ta-tb;
-          return new Date(b.updatedAt||b.createdAt||0).getTime() - new Date(a.updatedAt||a.createdAt||0).getTime();
-        }
-        if(view==="waiting"){
-          return new Date(b.updatedAt||b.createdAt||0).getTime() - new Date(a.updatedAt||a.createdAt||0).getTime();
-        }
-        return new Date(b.closedAt||b.doneAt||0).getTime() - new Date(aClosedAt(b)||0).getTime();
-      });
-
-    function aClosedAt(x){
-      return x.closedAt || x.doneAt || 0;
-    }
-
-    if(empty) empty.style.display = items.length ? "none" : "block";
-
-    items.forEach((it)=>{
-      const card = document.createElement("div");
-      card.className = "card";
-
-      const who = normalizedWho(it);
-      const dueText = it.when ? fmtDate(it.when) : "Sin fecha";
-      const overdue = (it.status==="pending" && isOverdue(it.when));
-
-      const stChip = `<span class="chip status">${esc(statusLabel(it.status))}</span>`;
-
-      const btnPrimary = it.status==="closed" ? "↩️ Reabrir" : "✅ Cerrar";
-      const btnSecondary =
-        it.status==="pending" ? "⏳ En espera" :
-        it.status==="waiting" ? "🟣 Pendiente" :
-        "⏳ En espera";
-
-      card.innerHTML = `
-        <div class="cardTop" style="align-items:flex-start;">
-          <div class="who" style="min-width:0;">
-            <p class="name" title="${esc(who)}">${esc(who)}</p>
-            <p class="meta">
-              ${stChip}
-              <span class="chip">📝 ${esc(fmtDate(it.createdAt))}</span>
-              ${it.updatedAt ? `<span class="chip">✍️ ${esc(fmtDate(it.updatedAt))}</span>` : ``}
-              ${it.status==="closed" ? `<span class="chip">✅ ${esc(fmtDate(it.closedAt||it.doneAt))}</span>` : ``}
-            </p>
-          </div>
-          <div class="due ${overdue ? "bad" : ""}">
-            ⏰ ${esc(dueText)}${overdue ? " · Vencido" : ""}
-          </div>
-        </div>
-
-        <div class="desc">${esc(it.what || "—")}</div>
-
-        <div class="actions">
-          <button class="btn good" type="button" data-act="primary">${btnPrimary}</button>
-          <button class="btn" type="button" data-act="secondary">${btnSecondary}</button>
-          <button class="btn" type="button" data-act="edit">✍️ Editar</button>
-          <button class="btn danger" type="button" data-act="del">🗑️ Eliminar</button>
-        </div>
-      `;
-
-      const now = ()=> new Date().toISOString();
-
-      card.querySelector('[data-act="primary"]').addEventListener("click", ()=>{
-        if(it.status==="closed"){
-          it.status = "pending";
-          it.closedAt = null;
-          it.done = false; it.doneAt = null;
-          it.updatedAt = now();
-          save(KEY, data);
-          renderCommitments();
-          return;
-        }
-        it.status = "closed";
-        it.closedAt = now();
-        it.done = true; it.doneAt = it.closedAt;
-        it.updatedAt = now();
-        save(KEY, data);
-        renderCommitments();
-      });
-
-      card.querySelector('[data-act="secondary"]').addEventListener("click", ()=>{
-        if(it.status==="pending"){
-          it.status = "waiting";
-          it.updatedAt = now();
-          save(KEY, data);
-          renderCommitments();
-          return;
-        }
-        if(it.status==="waiting"){
-          it.status = "pending";
-          it.updatedAt = now();
-          save(KEY, data);
-          renderCommitments();
-          return;
-        }
-        it.status = "waiting";
-        it.closedAt = null;
-        it.done = false; it.doneAt = null;
-        it.updatedAt = now();
-        save(KEY, data);
-        renderCommitments();
-      });
-
-      card.querySelector('[data-act="edit"]').addEventListener("click", ()=> openCommitModal(it.id));
-      card.querySelector('[data-act="del"]').addEventListener("click", ()=> deleteCommit(it.id));
-
-      list.appendChild(card);
-    });
-
-    fixPillsOrder();
-    removeBottomInstallText();
-  }
-
-  function renderContacts(){
-    ensureContactsSearchUi();
-    updateCounts();
-
-    const list = $("contactsList");
-    const empty = $("contactsEmpty");
-    if(!list) return;
-
-    list.innerHTML = "";
-
-    const q = (contactsTextFilter || "").trim().toLowerCase();
-    const items = contacts
-      .slice()
-      .sort((a,b)=> (a.name||"").localeCompare(b.name||"", "es"))
-      .filter(c=>{
-        if(!q) return true;
-        const n = String(c.name||"").toLowerCase();
-        const note = String(c.note||"").toLowerCase();
-        return n.includes(q) || note.includes(q);
-      });
-
-    if(empty) empty.style.display = items.length ? "none" : "block";
-
-    items.forEach((c)=>{
-      const card = document.createElement("div");
-      card.className = "card";
-
-      const desc = (c.note || "").trim();
-
-      card.innerHTML = `
-        <div class="cardTop">
-          <div class="who" style="min-width:0;">
-            <p class="name">${esc(c.name || "Sin nombre")}</p>
-            <p class="meta">
-              <span class="chip">👥 Amigo</span>
-              ${c.note ? `<span class="chip">🛈 ${esc(c.note)}</span>` : ``}
-            </p>
-          </div>
-          <button class="btn primary" type="button" data-act="new" style="flex:0 0 auto;">➕ Compromiso</button>
-        </div>
-        ${desc ? `<div class="desc">${esc(desc)}</div>` : ``}
-        <div class="actions">
-          <button class="btn" type="button" data-act="edit">✍️ Editar</button>
-          <button class="btn danger" type="button" data-act="del">🗑️ Eliminar</button>
-        </div>
-      `;
-
-      card.querySelector('[data-act="new"]').addEventListener("click", ()=> openCommitModal(null, c.id));
-      card.querySelector('[data-act="edit"]').addEventListener("click", ()=> openContactModal(c.id));
-      card.querySelector('[data-act="del"]').addEventListener("click", ()=> deleteContact(c.id));
-
-      list.appendChild(card);
-    });
-
-    fixPillsOrder();
-    removeBottomInstallText();
-  }
-
-  function renderAll(){
-    renderCommitments();
-    renderContacts();
-    updateCounts();
-    fixPillsOrder();
-    removeBottomInstallText();
-  }
-
   /* =========================
-     FAB
+     ✅ Autocompletado del buscador de compromisos (panel Buscar/Filtrar)
+     - Sugiere: Nombres (amigos + whoName) + Textos (what)
+     - Al tocar: rellena el input y filtra automáticamente
   ========================= */
-  function bindFab(){
-    const fab = $("fab");
-    if(!fab) return;
-    fab.addEventListener("click", ()=>{
-      if(pane === "contacts") openContactModal(null);
-      else openCommitModal(null, null);
-    });
+  function uniquePush(arr, set, value){
+    const v = AC.normalize(value);
+    if(!v) return;
+    const k = v.toLowerCase();
+    if(set.has(k)) return;
+    set.add(k);
+    arr.push(v);
   }
 
-/* ===== FIN PARTE 1/3 ===== */
-/* compromisos.js (COMPLETO) — PARTE 2/3 */
-
-/* =========================
-   Modales base (abrir/cerrar)
-========================= */
-  function showBackdrop(id){
-    const b = $(id);
-    if(!b) return;
-    b.classList.add("show");
-    b.setAttribute("aria-hidden","false");
-  }
-  function hideBackdrop(id){
-    const b = $(id);
-    if(!b) return;
-    b.classList.remove("show");
-    b.setAttribute("aria-hidden","true");
-  }
-
-  function closeAllModals(){
-    hideBackdrop("backdrop");
-    hideBackdrop("cBackdrop");
-    hideBackdrop("pinBackdrop");
-    hideBackdrop("shareBackdrop");
-    hideBackdrop("confirmBackdrop");
-  }
-
-  function bindModalClosers(){
-    const pairs = [
-      ["backdrop", "btnClose"],
-      ["backdrop", "btnCancel"],
-
-      ["cBackdrop", "cBtnClose"],
-      ["cBackdrop", "cBtnCancel"],
-
-      ["pinBackdrop", "pinClose"],
-      ["pinBackdrop", "pinCancel"],
-
-      ["shareBackdrop", "shareClose"],
-      ["shareBackdrop", "shareCancel"],
-
-      ["confirmBackdrop", "confirmClose"],
-      ["confirmBackdrop", "confirmNo"]
-    ];
-    pairs.forEach(([bid, cid])=>{
-      const c = $(cid);
-      if(c) c.addEventListener("click", ()=> hideBackdrop(bid));
-    });
-
-    // click fuera => cerrar (solo si tocas backdrop)
-    ["backdrop","cBackdrop","pinBackdrop","shareBackdrop","confirmBackdrop"].forEach(bid=>{
-      const b = $(bid);
-      if(!b) return;
-      b.addEventListener("click", (e)=>{
-        if(e.target === b) hideBackdrop(bid);
-      });
-    });
-  }
-
-  /* =========================
-     Confirm modal
-  ========================= */
-  let confirmResolve = null;
-  function askConfirm({ title="Confirmar", msg="¿Seguro?", yes="Sí, continuar", no="Cancelar" }){
-    return new Promise((resolve)=>{
-      confirmResolve = resolve;
-      if($("confirmTitle")) $("confirmTitle").textContent = title;
-      if($("confirmMsg")) $("confirmMsg").innerHTML = esc(msg);
-      if($("confirmYes")) $("confirmYes").textContent = yes;
-      if($("confirmNo")) $("confirmNo").textContent = no;
-
-      showBackdrop("confirmBackdrop");
-
-      const done = (v)=>{
-        hideBackdrop("confirmBackdrop");
-        const r = confirmResolve;
-        confirmResolve = null;
-        try{ r && r(v); }catch(_){}
-      };
-
-      const y = $("confirmYes");
-      const n = $("confirmNo");
-
-      const onY = ()=>{ cleanup(); done(true); };
-      const onN = ()=>{ cleanup(); done(false); };
-
-      function cleanup(){
-        y && y.removeEventListener("click", onY);
-        n && n.removeEventListener("click", onN);
-      }
-
-      y && y.addEventListener("click", onY);
-      n && n.addEventListener("click", onN);
-    });
-  }
-
-  /* =========================
-     Amigos: CRUD
-  ========================= */
-  function openContactModal(contactId){
-    const isEdit = !!contactId;
-    const mTitle = $("cModalTitle");
-    const fName = $("cName");
-    const fNote = $("cNote");
-
-    if(mTitle) mTitle.textContent = isEdit ? "Editar amigo" : "Nuevo amigo";
-
-    const c = isEdit ? contacts.find(x=>x.id===contactId) : null;
-    if(fName) fName.value = c?.name || "";
-    if(fNote) fNote.value = c?.note || "";
-
-    $("cBtnSave").onclick = ()=>{
-      const name = normalizeName(fName.value);
-      const note = normalizeName(fNote.value);
-
-      if(!name){
-        toast("Escribe un nombre.");
-        try{ fName.focus(); }catch(_){}
-        return;
-      }
-
-      // evitar duplicados exactos (solo para contactos)
-      const existing = findContactByName(name);
-      if(!isEdit && existing){
-        toast("Ese amigo ya existe.");
-        hideBackdrop("cBackdrop");
-        setPane("contacts");
-        return;
-      }
-
-      if(isEdit && c){
-        c.name = name;
-        c.note = note;
-      }else{
-        contacts.push({ id: uid(), name, note, createdAt:new Date().toISOString() });
-      }
-
-      save(CONTACTS_KEY, contacts);
-      fillCommitFriendSelect();
-      renderContacts();
-      renderCommitments();
-
-      hideBackdrop("cBackdrop");
-      toast(isEdit ? "Amigo actualizado ✅" : "Amigo creado ✅");
-    };
-
-    showBackdrop("cBackdrop");
-    setTimeout(()=>{ try{ fName.focus(); }catch(_){} }, 0);
-  }
-
-  async function deleteContact(contactId){
-    const c = contacts.find(x=>x.id===contactId);
-    if(!c) return;
-
-    const ok = await askConfirm({
-      title:"Eliminar amigo",
-      msg:`Vas a eliminar a <b>${esc(c.name||"Sin nombre")}</b>. Los compromisos quedarán con el nombre escrito, pero sin vínculo. ¿Continuar?`,
-      yes:"Sí, eliminar",
-      no:"Cancelar"
-    });
-    if(!ok) return;
-
-    // desvincular compromisos
-    data.forEach(it=>{
-      if(it.whoId === contactId){
-        it.whoId = null;
-        it.whoName = c.name || it.whoName || "";
-        it.updatedAt = new Date().toISOString();
-      }
-    });
-
-    contacts = contacts.filter(x=>x.id!==contactId);
-
-    save(CONTACTS_KEY, contacts);
-    save(KEY, data);
-
-    fillCommitFriendSelect();
-    renderAll();
-    toast("Amigo eliminado.");
-  }
-
-  /* =========================
-     Compromisos: CRUD + share
-  ========================= */
-  let editingCommitId = null;
-  let preselectedFriendId = null;
-
-  // ✅ Autocompletado propio para el input "Nombre"
-  let acPanel = null;
-
-  function ensureAutoCompletePanel(){
-    const whoInput = $("fWho");
-    if(!whoInput) return;
-
-    // ⚠️ Quitamos el datalist nativo para evitar flechas raras
-    if(whoInput.hasAttribute("list")){
-      whoInput.removeAttribute("list");
-    }
-
-    // Crear panel si no existe
-    if(!$("whoAcPanel")){
-      const panel = document.createElement("div");
-      panel.className = "acPanel";
-      panel.id = "whoAcPanel";
-      // lo insertamos justo después del input
-      whoInput.insertAdjacentElement("afterend", panel);
-    }
-    acPanel = $("whoAcPanel");
-  }
-
-  function buildSuggestions(query){
-    const q = normalizeName(query).toLowerCase();
+  function buildCommitSearchSuggestions(query){
+    const q = AC.normalize(query).toLowerCase();
     if(!q) return [];
 
-    // filtrar por "empieza por" o "incluye", priorizando empieza por
-    const all = contacts.slice().sort((a,b)=> (a.name||"").localeCompare(b.name||"", "es"));
-    const starts = [];
-    const contains = [];
+    const names = [];
+    const texts = [];
+    const seenN = new Set();
+    const seenT = new Set();
 
-    for(const c of all){
-      const name = normalizeName(c.name).toLowerCase();
-      if(!name) continue;
-      if(name.startsWith(q)) starts.push(c);
-      else if(name.includes(q)) contains.push(c);
-    }
-    return starts.concat(contains).slice(0, 12);
-  }
-
-  function showSuggestionsFor(query){
-    ensureAutoCompletePanel();
-    if(!acPanel) return;
-
-    const items = buildSuggestions(query);
-
-    // Solo mostrar si hay query y hay sugerencias
-    if(!normalizeName(query) || items.length===0){
-      acPanel.classList.remove("show");
-      acPanel.innerHTML = "";
-      return;
-    }
-
-    acPanel.innerHTML = items.map(c=>{
-      return `<div class="acItem" data-id="${esc(c.id)}">${esc(c.name)}</div>`;
-    }).join("");
-
-    acPanel.classList.add("show");
-
-    // click en item => set value y cerrar
-    acPanel.querySelectorAll(".acItem").forEach(el=>{
-      el.addEventListener("click", ()=>{
-        const id = el.getAttribute("data-id");
-        const c = contacts.find(x=>x.id===id);
-        if(!c) return;
-
-        const whoInput = $("fWho");
-        if(whoInput) whoInput.value = c.name || "";
-        preselectedFriendId = c.id;
-
-        acPanel.classList.remove("show");
-        acPanel.innerHTML = "";
-
-        // foco al siguiente campo
-        setTimeout(()=>{ try{ $("fWhat").focus(); }catch(_){} }, 0);
-      });
-    });
-  }
-
-  function hideSuggestions(){
-    if(!acPanel) return;
-    acPanel.classList.remove("show");
-    acPanel.innerHTML = "";
-  }
-
-  function bindWhoAutocomplete(){
-    const whoInput = $("fWho");
-    if(!whoInput) return;
-
-    ensureAutoCompletePanel();
-
-    if(whoInput.dataset.acBound === "1") return;
-    whoInput.dataset.acBound = "1";
-
-    // cuando escribes => filtra
-    whoInput.addEventListener("input", ()=>{
-      const val = whoInput.value || "";
-      const match = findContactByName(val);
-      preselectedFriendId = match ? match.id : null;
-
-      showSuggestionsFor(val);
+    // 1) amigos guardados
+    contacts.forEach(c=>{
+      const n = c?.name || "";
+      if(!n) return;
+      if(n.toLowerCase().includes(q)) uniquePush(names, seenN, n);
     });
 
-    // al enfocar: si hay texto, muestra (si hay resultados)
-    whoInput.addEventListener("focus", ()=>{
-      const val = whoInput.value || "";
-      showSuggestionsFor(val);
-    });
-
-    // al salir: espera un pelín por si haces click en sugerencia
-    whoInput.addEventListener("blur", ()=>{
-      setTimeout(()=> hideSuggestions(), 140);
-    });
-
-    // tecla Enter: si hay panel abierto, coger el primero
-    whoInput.addEventListener("keydown", (e)=>{
-      if(e.key !== "Enter") return;
-      if(!acPanel || !acPanel.classList.contains("show")) return;
-
-      const first = acPanel.querySelector(".acItem");
-      if(first){
-        e.preventDefault();
-        first.click();
-      }
-    });
-  }
-
-  function openCommitModal(commitId, friendId){
-    editingCommitId = commitId || null;
-    preselectedFriendId = friendId || null;
-
-    const isEdit = !!editingCommitId;
-    const t = $("modalTitle");
-    if(t) t.textContent = isEdit ? "Editar compromiso" : "Nuevo compromiso";
-
-    const it = isEdit ? data.find(x=>x.id===editingCommitId) : null;
-
-    const fWho = $("fWho");
-    const fWhat = $("fWhat");
-    const fWhen = $("fWhen");
-    const fRemind = $("fRemind");
-    const fAfter = $("fAfter");
-
-    // rellenar
-    if(fWho){
-      if(friendId){
-        const c = getContactById(friendId);
-        fWho.value = c?.name || "";
-      }else{
-        fWho.value = isEdit ? (normalizedWho(it) || "") : "";
-      }
-    }
-    if(fWhat) fWhat.value = isEdit ? (it?.what || "") : "";
-    if(fWhen){
-      // input datetime-local requiere formato YYYY-MM-DDTHH:mm
-      if(isEdit && it?.when){
-        const d = new Date(it.when);
-        if(!isNaN(d.getTime())){
-          const pad=(n)=> String(n).padStart(2,"0");
-          const v = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-          fWhen.value = v;
-        }else fWhen.value = "";
-      }else fWhen.value = "";
-    }
-    if(fRemind) fRemind.value = isEdit ? String(it?.remindMin || 0) : "0";
-    if(fAfter) fAfter.value = isEdit ? String(it?.afterMin || 0) : "0";
-
-    // ✅ Autocomplete
-    bindWhoAutocomplete();
-    hideSuggestions();
-
-    // guardar
-    $("btnSave").onclick = async ()=>{
-      const whoRaw = normalizeName(fWho.value);
-      const what = normalizeName(fWhat.value);
-      const whenLocal = (fWhen.value || "").trim();
-      const remindMin = Number(fRemind.value || 0);
-      const afterMin = Number(fAfter.value || 0);
-
-      if(!whoRaw){
-        toast("Escribe un nombre.");
-        try{ fWho.focus(); }catch(_){}
-        return;
-      }
-      if(!what){
-        toast("Escribe qué se acordó.");
-        try{ fWhat.focus(); }catch(_){}
-        return;
-      }
-
-      // fecha ISO (si hay)
-      let whenIso = null;
-      if(whenLocal){
-        const d = new Date(whenLocal);
-        if(!isNaN(d.getTime())) whenIso = d.toISOString();
-      }
-
-      // ✅ vínculo automático si coincide exacto
-      let link = null;
-      const exact = findContactByName(whoRaw);
-      if(exact) link = exact;
-
-      // si se eligió desde sugerencias, también cuenta
-      if(!link && preselectedFriendId){
-        const c = getContactById(preselectedFriendId);
-        if(c && normalizeName(c.name).toLowerCase() === normalizeName(whoRaw).toLowerCase()){
-          link = c;
-        }
-      }
-
-      const now = new Date().toISOString();
-
-      if(isEdit && it){
-        it.whoId = link ? link.id : null;
-        it.whoName = link ? null : whoRaw;
-        it.what = what;
-        it.when = whenIso;
-        it.remindMin = remindMin;
-        it.afterMin = afterMin;
-        it.updatedAt = now;
-      }else{
-        data.push(normalizeStatus({
-          id: uid(),
-          whoId: link ? link.id : null,
-          whoName: link ? null : whoRaw,
-          what,
-          when: whenIso,
-          remindMin,
-          afterMin,
-          status: "pending",
-          createdAt: now,
-          updatedAt: null
-        }));
-      }
-
-      save(KEY, data);
-
-      // ✅ Si NO existe amigo exacto, preguntar si guardar nuevo amigo (ya lo tenías funcionando)
-      if(!link){
-        const ok = await askConfirm({
-          title:"Guardar nuevo amigo",
-          msg:`¿Quieres guardar a <b>${esc(whoRaw)}</b> como nuevo amigo para futuras sugerencias?`,
-          yes:"Sí, guardar",
-          no:"No"
-        });
-        if(ok){
-          // evitar duplicado por si se creó mientras
-          const ex2 = findContactByName(whoRaw);
-          if(!ex2){
-            contacts.push({ id: uid(), name: whoRaw, note:"", createdAt: now });
-            save(CONTACTS_KEY, contacts);
-          }
-        }
-      }
-
-      // refrescar
-      fillCommitFriendSelect();
-      renderAll();
-
-      hideBackdrop("backdrop");
-
-      // abrir modal compartir
-      openShareModalForLast(isEdit ? it : data[data.length-1]);
-    };
-
-    showBackdrop("backdrop");
-    setTimeout(()=>{ try{ fWho.focus(); }catch(_){} }, 0);
-  }
-
-  function openShareModalForLast(it){
-    if(!it) return;
-
-    const who = normalizedWho(it);
-    const dueText = it.when ? fmtDate(it.when) : "Sin fecha";
-    const afterMin = Number(it.afterMin || 0);
-
-    const pkg = {
-      v:1,
-      id: it.id,
-      who,
-      what: it.what || "",
-      when: it.when || null,
-      remindMin: Number(it.remindMin || 0),
-      afterMin
-    };
-
-    const base = appBaseUrl();
-    const hash = "#pkg=" + encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(pkg)))));
-    const url = base + hash;
-
-    // UI
-    if($("shareTitle")){
-      $("shareTitle").innerHTML = `Compromiso con <b>${esc(who)}</b> · ⏰ ${esc(dueText)}`;
-    }
-
-    const shortTxt = `📌 Compromiso\n👤 ${who}\n📝 ${it.what || ""}\n⏰ ${dueText}\n🔗 ${url}`;
-    const longTxt = `📌 Compromiso (detalle)\n\n👤 Nombre: ${who}\n📝 Qué: ${it.what || ""}\n⏰ Para cuándo: ${dueText}\n🔔 Recordatorio: ${Number(it.remindMin||0)} min\n⏳ Avisar desde ahora: ${afterMin} min\n\n🔗 Enlace:\n${url}`;
-
-    let mode = "short";
-    const renderShare = ()=>{
-      const t = (mode==="short") ? shortTxt : longTxt;
-      if($("shareTextBox")) $("shareTextBox").textContent = t;
-      if($("shareUrlBox")) $("shareUrlBox").textContent = url;
-      if($("shareShort")) $("shareShort").classList.toggle("active", mode==="short");
-      if($("shareLong")) $("shareLong").classList.toggle("active", mode==="long");
-    };
-
-    $("shareShort").onclick = ()=>{ mode="short"; renderShare(); };
-    $("shareLong").onclick = ()=>{ mode="long"; renderShare(); };
-
-    $("shareCopyUrl").onclick = async ()=>{
-      try{
-        await navigator.clipboard.writeText(url);
-        toast("Enlace copiado ✅");
-      }catch(e){
-        toast("No se pudo copiar.");
-      }
-    };
-
-    $("shareCopyAll").onclick = async ()=>{
-      try{
-        await navigator.clipboard.writeText((mode==="short")?shortTxt:longTxt);
-        toast("Texto copiado ✅");
-      }catch(e){
-        toast("No se pudo copiar.");
-      }
-    };
-
-    $("shareSend").onclick = async ()=>{
-      const txt = (mode==="short")?shortTxt:longTxt;
-      if(navigator.share){
-        try{
-          await navigator.share({ text: txt });
-          toast("Compartido ✅");
-        }catch(e){}
-      }else{
-        try{
-          await navigator.clipboard.writeText(txt);
-          toast("Copiado ✅ (no hay compartir)");
-        }catch(e){
-          toast("No se pudo copiar.");
-        }
-      }
-    };
-
-    renderShare();
-    showBackdrop("shareBackdrop");
-  }
-
-  async function deleteCommit(id){
-    const it = data.find(x=>x.id===id);
-    if(!it) return;
-
-    const ok = await askConfirm({
-      title:"Eliminar compromiso",
-      msg:`Vas a eliminar este compromiso con <b>${esc(normalizedWho(it))}</b>. ¿Continuar?`,
-      yes:"Sí, eliminar",
-      no:"Cancelar"
-    });
-    if(!ok) return;
-
-    data = data.filter(x=>x.id!==id);
-    save(KEY, data);
-    renderAll();
-    toast("Compromiso eliminado.");
-  }
-
-  /* =========================
-     Import por enlace (#pkg=)
-  ========================= */
-  function tryImportFromHash(){
-    try{
-      const h = location.hash || "";
-      const m = h.match(/#pkg=([^&]+)/);
-      if(!m) return;
-
-      const raw = decodeURIComponent(m[1]);
-      const json = decodeURIComponent(escape(atob(raw)));
-      const pkg = safeJsonParse(json, null);
-      if(!pkg || !pkg.id) return;
-
-      // evitar duplicados
-      const exists = data.find(x=>x.id===pkg.id);
-      if(exists){
-        toast("Paquete ya importado.");
-        location.hash = "";
-        return;
-      }
-
-      // crear item
-      const now = new Date().toISOString();
-      data.push(normalizeStatus({
-        id: pkg.id,
-        whoId: null,
-        whoName: normalizeName(pkg.who || "Sin nombre"),
-        what: normalizeName(pkg.what || ""),
-        when: pkg.when || null,
-        remindMin: Number(pkg.remindMin || 0),
-        afterMin: Number(pkg.afterMin || 0),
-        status: "pending",
-        createdAt: now,
-        updatedAt: null
-      }));
-
-      // marcar recibidos
-      received = received || { c:0, lastAt:null };
-      received.c = Math.max(0, Number(received.c||0)) + 1;
-      received.lastAt = now;
-      save(RECEIVED_KEY, received);
-
-      save(KEY, data);
-      renderAll();
-      toast("Compromiso importado ✅");
-
-      // limpiar hash para no reimportar
-      location.hash = "";
-    }catch(e){}
-  }
-
-/* ===== FIN PARTE 2/3 ===== */
-/* compromisos.js (COMPLETO) — PARTE 3/3 */
-
-/* =========================
-   Render: compromisos
-========================= */
-  function renderCommitments(){
-    const paneEl = $("commitmentsPane");
-    if(!paneEl) return;
-
-    ensureCommitFiltersUi();
-    updateCommitmentsHeading();
-    updateCounts();
-
-    const list = $("list");
-    const empty = $("empty");
-    if(!list) return;
-
-    list.innerHTML = "";
-
-    const items = data
-      .filter(x => x.status === view)
-      .filter(passesCommitFilters)
-      .slice()
-      .sort((a,b)=>{
-        if(view==="pending"){
-          const ao = isOverdue(a.when)?1:0, bo=isOverdue(b.when)?1:0;
-          if(ao!==bo) return bo-ao;
-          const ta = a.when ? new Date(a.when).getTime() : Number.POSITIVE_INFINITY;
-          const tb = b.when ? new Date(b.when).getTime() : Number.POSITIVE_INFINITY;
-          if(ta!==tb) return ta-tb;
-          return new Date(b.updatedAt||b.createdAt||0).getTime() - new Date(a.updatedAt||a.createdAt||0).getTime();
-        }
-        if(view==="waiting"){
-          return new Date(b.updatedAt||b.createdAt||0).getTime() - new Date(a.updatedAt||a.createdAt||0).getTime();
-        }
-        return new Date(b.closedAt||b.doneAt||0).getTime() - new Date(a.closedAt||a.doneAt||0).getTime();
-      });
-
-    if(empty) empty.style.display = items.length ? "none" : "block";
-
-    items.forEach((it)=>{
-      const card = document.createElement("div");
-      card.className = "card";
-
+    // 2) nombres escritos en compromisos (whoName) + quien normalizado
+    (data||[]).forEach(it=>{
       const who = normalizedWho(it);
-      const dueText = it.when ? fmtDate(it.when) : "Sin fecha";
-      const overdue = (it.status==="pending" && isOverdue(it.when));
-
-      const stChip =
-        it.status==="pending" ? "🟣 Pendiente" :
-        it.status==="waiting" ? "⏳ En espera" :
-        "✅ Cerrado";
-
-      const primaryLabel = it.status==="closed" ? "↩️ Reabrir" : "✅ Cerrar";
-      const secondaryLabel =
-        it.status==="pending" ? "⏳ En espera" :
-        it.status==="waiting" ? "🟣 Pendiente" :
-        "⏳ En espera";
-
-      card.innerHTML = `
-        <div class="cardTop" style="align-items:flex-start;">
-          <div class="who" style="min-width:0;">
-            <p class="name" title="${esc(who)}">${esc(who)}</p>
-            <p class="meta">
-              <span class="chip status">${esc(stChip)}</span>
-              <span class="chip">📝 ${esc(fmtDate(it.createdAt))}</span>
-              ${it.updatedAt ? `<span class="chip">✍️ ${esc(fmtDate(it.updatedAt))}</span>` : ``}
-              ${it.status==="closed" ? `<span class="chip">✅ ${esc(fmtDate(it.closedAt||it.doneAt))}</span>` : ``}
-            </p>
-          </div>
-          <div class="due ${overdue ? "bad" : ""}">
-            ⏰ ${esc(dueText)}${overdue ? " · Vencido" : ""}
-          </div>
-        </div>
-
-        <div class="desc">${esc(it.what || "—")}</div>
-
-        <div class="actions">
-          <button class="btn good" type="button" data-act="primary">${primaryLabel}</button>
-          <button class="btn" type="button" data-act="secondary">${secondaryLabel}</button>
-          <button class="btn" type="button" data-act="edit">✍️ Editar</button>
-          <button class="btn danger" type="button" data-act="del">🗑️ Eliminar</button>
-        </div>
-      `;
-
-      const now = ()=> new Date().toISOString();
-
-      card.querySelector('[data-act="primary"]').addEventListener("click", ()=>{
-        if(it.status==="closed"){
-          it.status = "pending";
-          it.closedAt = null;
-          it.done = false; it.doneAt = null;
-          it.updatedAt = now();
-        }else{
-          it.status = "closed";
-          it.closedAt = now();
-          it.done = true; it.doneAt = it.closedAt;
-          it.updatedAt = now();
-        }
-        save(KEY, data);
-        renderCommitments();
-      });
-
-      card.querySelector('[data-act="secondary"]').addEventListener("click", ()=>{
-        if(it.status==="pending"){
-          it.status = "waiting";
-          it.updatedAt = now();
-        }else if(it.status==="waiting"){
-          it.status = "pending";
-          it.updatedAt = now();
-        }else{
-          it.status = "waiting";
-          it.closedAt = null;
-          it.done = false; it.doneAt = null;
-          it.updatedAt = now();
-        }
-        save(KEY, data);
-        renderCommitments();
-      });
-
-      card.querySelector('[data-act="edit"]').addEventListener("click", ()=> openCommitModal(it.id, null));
-      card.querySelector('[data-act="del"]').addEventListener("click", ()=> deleteCommit(it.id));
-
-      list.appendChild(card);
+      if(who && who.toLowerCase().includes(q)) uniquePush(names, seenN, who);
     });
 
-    fixPillsOrder();
-    removeBottomInstallText();
-  }
-
-  /* =========================
-     Render: contactos
-  ========================= */
-  function renderContacts(){
-    ensureContactsSearchUi();
-    updateCounts();
-
-    const list = $("contactsList");
-    const empty = $("contactsEmpty");
-    if(!list) return;
-
-    list.innerHTML = "";
-
-    const q = (contactsTextFilter || "").trim().toLowerCase();
-    const items = contacts
-      .slice()
-      .sort((a,b)=> (a.name||"").localeCompare(b.name||"", "es"))
-      .filter(c=>{
-        if(!q) return true;
-        const n = String(c.name||"").toLowerCase();
-        const note = String(c.note||"").toLowerCase();
-        return n.includes(q) || note.includes(q);
-      });
-
-    if(empty) empty.style.display = items.length ? "none" : "block";
-
-    items.forEach((c)=>{
-      const card = document.createElement("div");
-      card.className = "card";
-
-      card.innerHTML = `
-        <div class="cardTop">
-          <div class="who" style="min-width:0;">
-            <p class="name">${esc(c.name || "Sin nombre")}</p>
-            <p class="meta">
-              ${c.note ? `<span class="chip">🛈 ${esc(c.note)}</span>` : ``}
-            </p>
-          </div>
-          <button class="btn primary" type="button" data-act="new" style="flex:0 0 auto;">➕ Compromiso</button>
-        </div>
-
-        <div class="actions">
-          <button class="btn" type="button" data-act="edit">✍️ Editar</button>
-          <button class="btn danger" type="button" data-act="del">🗑️ Eliminar</button>
-        </div>
-      `;
-
-      card.querySelector('[data-act="new"]').addEventListener("click", ()=> openCommitModal(null, c.id));
-      card.querySelector('[data-act="edit"]').addEventListener("click", ()=> openContactModal(c.id));
-      card.querySelector('[data-act="del"]').addEventListener("click", ()=> deleteContact(c.id));
-
-      list.appendChild(card);
-    });
-
-    fixPillsOrder();
-    removeBottomInstallText();
-  }
-
-  function renderAll(){
-    renderCommitments();
-    renderContacts();
-    updateCounts();
-    fixPillsOrder();
-    removeBottomInstallText();
-  }
-
-  /* =========================
-     Navegación panes
-  ========================= */
-  function safeShow(el, show){
-    if(!el) return;
-    el.style.display = show ? "" : "none";
-  }
-
-  function setPane(newPane){
-    pane = newPane;
-
-    const tC = $("tabCommitments");
-    const tA = $("tabContacts");
-    if(tC) tC.classList.toggle("active", pane==="commitments");
-    if(tA) tA.classList.toggle("active", pane==="contacts");
-
-    safeShow($("commitmentsPane"), pane==="commitments");
-    safeShow($("contactsPane"), pane==="contacts");
-    safeShow($("settingsPane"), pane==="settings");
-
-    const fab = $("fab");
-    if(fab){
-      if(pane === "settings") fab.style.display = "none";
-      else{
-        fab.style.display = "grid";
-        fab.setAttribute("aria-label", pane==="contacts" ? "Nuevo amigo" : "Nuevo compromiso");
+    // 3) textos (what)
+    (data||[]).forEach(it=>{
+      const w = String(it?.what || "");
+      if(!w) return;
+      if(w.toLowerCase().includes(q)){
+        // sugerimos una versión “corta” si es muy largo
+        const s = AC.normalize(w);
+        const short = s.length > 44 ? (s.slice(0, 44).trim() + "…") : s;
+        uniquePush(texts, seenT, short);
       }
-    }
+    });
 
-    if(pane === "commitments"){
-      setView(lastCommitView || "pending");
-    }else{
-      renderAll();
-    }
+    const out = [];
 
-    try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(_){ window.scrollTo(0,0); }
+    // nombres primero
+    names.slice(0, 6).forEach(v=>{
+      out.push({ value:v, icon:"👤", kind:"name" });
+    });
+
+    // luego textos
+    texts.slice(0, 6).forEach(v=>{
+      out.push({ value:v, icon:"📝", kind:"text" });
+    });
+
+    return out;
   }
 
-  function titleForView(v){
-    if(v==="waiting") return "En espera";
-    if(v==="closed") return "Cerrados";
-    return "Pendientes";
-  }
+  function bindCommitSearchAutocomplete(){
+    const inp = $("commitSearchTxt");
+    if(!inp) return;
+    if(inp.dataset.ac2 === "1") return;
+    inp.dataset.ac2 = "1";
 
-  function updateCommitmentsHeading(){
-    try{
-      const paneEl = $("commitmentsPane");
-      if(!paneEl) return;
-      const h2 = paneEl.querySelector(".sectionHead h2");
-      if(h2) h2.textContent = titleForView(view);
-
-      const p = paneEl.querySelector(".sectionHead p");
-      if(p){
-        if(view==="pending") p.textContent = "Por hacer (lo tengo yo pendiente).";
-        else if(view==="waiting") p.textContent = "Yo ya respondí; queda pendiente la otra persona.";
-        else p.textContent = "Finalizados / ya no requieren nada.";
+    AC.attach(
+      inp,
+      (q)=> buildCommitSearchSuggestions(q),
+      (picked)=>{
+        // ✅ rellena y filtra automáticamente (el input ya tiene el valor)
+        commitTextFilter = (inp.value || "").trim();
+        renderCommitments();
       }
-    }catch(e){}
-  }
-
-  function setView(newView){
-    view = newView;
-    if(pane === "commitments") lastCommitView = newView;
-
-    const a = $("tabPending");
-    const w = $("tabWaiting");
-    const c = $("tabDone");
-
-    if(a) a.classList.toggle("active", view==="pending");
-    if(w) w.classList.toggle("active", view==="waiting");
-    if(c) c.classList.toggle("active", view==="closed");
-
-    updateCommitmentsHeading();
-    renderCommitments();
-  }
-
-  function bindSettingsGear(){
-    const gear = $("btnSettingsGear");
-    if(!gear) return;
-    if(gear.dataset.bound === "1") return;
-    gear.dataset.bound = "1";
-
-    gear.addEventListener("click", ()=>{
-      if(pane === "settings") setPane("commitments");
-      else setPane("settings");
-    });
-  }
-
-  function bindNav(){
-    if($("tabCommitments")) $("tabCommitments").onclick = ()=> setPane("commitments");
-    if($("tabContacts")) $("tabContacts").onclick = ()=> setPane("contacts");
-
-    if($("tabPending")) $("tabPending").onclick = ()=> setView("pending");
-    if($("tabWaiting")) $("tabWaiting").onclick = ()=> setView("waiting");
-    if($("tabDone")) $("tabDone").onclick = ()=> setView("closed");
-
-    const bindTile = (id, fn)=>{
-      const el = $(id);
-      if(!el) return;
-      el.addEventListener("click", fn);
-      el.addEventListener("keydown", (e)=>{
-        if(e.key==="Enter" || e.key===" "){ e.preventDefault(); fn(); }
-      });
-    };
-    bindTile("tilePending", ()=>{ setPane("commitments"); setView("pending"); });
-    bindTile("tileWaiting", ()=>{ setPane("commitments"); setView("waiting"); });
-    bindTile("tileDone", ()=>{ setPane("commitments"); setView("closed"); });
-    bindTile("tileContacts", ()=>{ setPane("contacts"); });
-
-    if($("btnOverdue")){
-      $("btnOverdue").addEventListener("click", ()=>{
-        setPane("commitments");
-        setView("pending");
-        const overdue = data.filter(x=> x.status==="pending" && isOverdue(x.when)).length;
-        toast(overdue ? `⏰ ${overdue} vencido(s)` : "Sin vencidos ✅");
-      });
-    }
-    if($("btnReceived")){
-      $("btnReceived").addEventListener("click", ()=>{
-        setPane("commitments");
-        setView("pending");
-        const c = Math.max(0, Number(received?.c || 0));
-        toast(c ? `📥 Recibidos: ${c}` : "Sin recibidos");
-      });
-    }
+    );
   }
 
   /* =========================
-     FAB
+     Render (continúa en PARTE 2/3)
   ========================= */
-  function bindFab(){
-    const fab = $("fab");
-    if(!fab) return;
-    fab.addEventListener("click", ()=>{
-      if(pane === "contacts") openContactModal(null);
-      else openCommitModal(null, null);
-    });
-  }
-
-  /* =========================
-     Boot
-  ========================= */
-  (function normalizeContacts(){
-    let changed = false;
-    contacts = (contacts||[]).map(c=>{
-      if(!c.id){ changed = true; return { ...c, id: uid() }; }
-      return c;
-    });
-    if(changed) save(CONTACTS_KEY, contacts);
-  })();
-
-  function start(){
-    const a11y = load(A11Y_KEY, { big:false });
-    applyTextScale(!!a11y.big);
-
-    migrateAllData();
-
-    ensureWaitingPill();
-    fixPillsOrder();
-    removeBottomInstallText();
-
-    bindA11yDelegation();
-    bindBrandHome();
-    bindNav();
-    bindSettingsGear();
-    bindFab();
-    bindModalClosers();
-    bindCommitModal();
-    bindContactModal();
-    bindShare();
-    bindSettings();
-    bindInstall();
-
-    // ✅ Autocompletado (panel propio sin flechas)
-    bindWhoAutocomplete();
-
-    tryImportFromHash();
-
-    fillCommitFriendSelect();
-    updateCommitmentsHeading();
-    renderAll();
-  }
-
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", start, { once:true });
-  }else{
-    start();
-  }
-
-})();
