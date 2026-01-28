@@ -104,11 +104,11 @@ html.bigText body .badge{ font-size:13px; height:24px; }
 }
 
 /* =========================
-   ✅ TOP BAR (FIX)
+   ✅ TOP BAR (NO STICKY / NO FIXED)
    ========================= */
 .topbar{
-  position:sticky;
-  top:0;
+  /* ✅ Antes: position:sticky; top:0;  -> ahora hace scroll con el resto */
+  position:relative;
   z-index:10;
   background:rgba(242,243,245,.85);
   backdrop-filter:blur(10px);
