@@ -128,6 +128,70 @@
   }
 
   /* =========================
+     ✅ FIX UI: Header NO fijo + layout de tabs y botón Buscar/Filtrar
+     - Topbar debe desplazarse con la página
+     - Tabs (Pendientes/En espera/Cerrados) arriba, sin huecos raros
+     - Botón Buscar/Filtrar a la derecha del título (Pendientes)
+  ========================= */
+  function ensureUiOverrides(){
+    if(document.getElementById("uiOverridesCompromisos")) return;
+
+    const st = document.createElement("style");
+    st.id = "uiOverridesCompromisos";
+    st.textContent = `
+      /* 1) Topbar no fijo / no sticky */
+      .topbar{ position: static !important; top:auto !important; }
+
+      /* Por si el CSS antiguo reservaba espacio arriba */
+      .wrap{ padding-top: 0 !important; }
+
+      /* 2) Section head: sin alturas raras */
+      #commitmentsPane .sectionHead{
+        min-height: 0 !important;
+        height: auto !important;
+      }
+
+      /* 3) Fila del botón Buscar/Filtrar y estilo consistente */
+      #commitmentsPane .commitToolsToggleBtn{
+        margin: 0 !important;
+        height: 34px;
+        padding: 0 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        box-shadow: var(--shadow2);
+        font-weight: 900;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        -webkit-tap-highlight-color: transparent;
+        white-space: nowrap;
+      }
+
+      /* 4) Panel desplegable justo debajo del header */
+      #commitmentsPane #commitToolsPanel{
+        margin: 10px 12px 12px !important;
+      }
+
+      /* 5) Tabs: que nunca se corten en móvil (píldora "Cerrados") */
+      #commitmentsPane .segTabs{
+        flex-wrap: nowrap !important;
+        overflow: hidden;
+      }
+      #commitmentsPane .segBtn{
+        white-space: nowrap;
+      }
+
+      /* Si no caben, que hagan “shrink” sin cortar texto feo */
+      #commitmentsPane .segBtn{
+        min-width: 0;
+      }
+    `;
+    document.head.appendChild(st);
+  }
+
+  /* =========================
      ✅ Texto grande
   ========================= */
   function applyTextScale(big){
@@ -189,83 +253,6 @@
       if(!el) return;
       guardedToggle(e);
     }, true);
-  }
-
-  /* =========================
-     ✅ Layout fix (según tu foto)
-     1) Topbar NO fija (se desplaza con la página)
-     2) Tabs arriba (sin hueco)
-     3) Botón Buscar/Filtrar a la derecha del título
-  ========================= */
-  function injectLayoutFixCss(){
-    if(document.getElementById("cs_layout_fix")) return;
-    const st = document.createElement("style");
-    st.id = "cs_layout_fix";
-    st.textContent = `
-      /* 1) Topbar NO fija */
-      .topbar{
-        position: static !important;
-        top: auto !important;
-      }
-      /* si tu CSS metía padding-top por header fijo */
-      body{ padding-top: 0 !important; }
-      .wrap{ padding-top: 0 !important; }
-
-      /* 2) Cabecera de compromisos: columna (título+botón) + texto + tabs */
-      #commitmentsPane .sectionHead{
-        display:flex !important;
-        flex-direction: column !important;
-        align-items: stretch !important;
-        gap: 8px !important;
-      }
-      #commitmentsPane .sectionHead h2{
-        margin: 0 !important;
-      }
-      #commitmentsPane .sectionHead p{
-        margin: 0 !important;
-        line-height: 1.25 !important;
-      }
-
-      /* fila del título + botón buscar */
-      #commitmentsPane #commitTitleRow{
-        display:flex !important;
-        align-items:center !important;
-        justify-content: space-between !important;
-        gap: 10px !important;
-      }
-
-      /* 2) Tabs justo debajo, sin hueco y ocupando ancho */
-      #commitmentsPane .segTabs{
-        margin: 2px 0 0 0 !important;
-        width: 100% !important;
-        display:flex !important;
-        gap: 10px !important;
-        justify-content: space-between !important;
-        flex-wrap: nowrap !important;
-      }
-      #commitmentsPane .segTabs .segBtn{
-        flex: 1 1 0 !important;
-        min-width: 0 !important;
-        white-space: nowrap !important;
-        padding: 10px 12px !important;
-        border-radius: 999px !important;
-      }
-
-      /* 3) Botón Buscar/Filtrar al lado del título */
-      #commitToolsToggle{
-        height: 36px !important;
-        padding: 0 14px !important;
-        border-radius: 999px !important;
-        white-space: nowrap !important;
-        margin: 0 !important;
-      }
-
-      /* Panel desplegable queda debajo de la cabecera, alineado */
-      #commitToolsPanel{
-        margin: 10px 0 12px 0 !important;
-      }
-    `;
-    document.head.appendChild(st);
   }
 
   /* =========================
@@ -368,7 +355,6 @@
 
   /* =========================
      Quitar “Instálala / Consejo”
-     (sin romper HTML: limpiamos y ocultamos banner)
   ========================= */
   function removeBottomInstallText(){
     try{
@@ -532,10 +518,10 @@
   }
 
   /* =========================
-     ✅ Búsqueda/Filtros
-     - Botón “🔍 Buscar / Filtrar” A LA DERECHA del título
-     - Tabs suben (sin hueco)
-     - Panel desplegable debajo
+     ✅ Búsqueda/Filtros (DESPLEGABLE)
+     - Botón “🔍 Buscar / Filtrar” A LA DERECHA DEL TÍTULO
+     - Tabs arriba, justo debajo del título (sin huecos raros)
+     - Panel debajo del header
   ========================= */
   function ensureCommitFiltersUi(){
     const paneEl = $("commitmentsPane");
@@ -545,54 +531,75 @@
     try{
       const legacyBtn = $("btnCommitTools");
       const legacyTools = $("miniCommitTools");
+      const legacyToggle = $("commitToolsToggle"); // si existiera de antes
       if(legacyBtn) legacyBtn.remove();
       if(legacyTools) legacyTools.remove();
+      if(legacyToggle) legacyToggle.remove();
     }catch(_){}
 
     const head = paneEl.querySelector(".sectionHead");
     if(!head) return;
 
-    // Asegurar fila del título (h2 + botón)
-    const h2 = head.querySelector("h2");
-    if(h2 && !$("commitTitleRow")){
-      const row = document.createElement("div");
-      row.id = "commitTitleRow";
-      head.insertBefore(row, h2);
-      row.appendChild(h2);
+    // Asegurar override de layout (evitar “espacio vacío”)
+    try{
+      head.style.minHeight = "0";
+      head.style.height = "auto";
+      head.style.display = "flex";
+      head.style.flexWrap = "wrap";
+      head.style.alignItems = "flex-start";
+      head.style.justifyContent = "space-between";
+      head.style.gap = "10px 12px";
+      head.style.paddingBottom = "10px";
+    }catch(_){}
+
+    // Localiza el bloque izquierdo (título + texto)
+    const leftBlock = head.firstElementChild || null;
+
+    // Localiza las tabs
+    const tabs = head.querySelector(".segTabs");
+    if(tabs){
+      try{
+        // Las tabs deben ir “arriba”, sin quedarse abajo en un hueco
+        tabs.style.order = "3";
+        tabs.style.flex = "1 1 100%";
+        tabs.style.marginTop = "2px";
+      }catch(_){}
     }
 
-    // Botón toggle (buscar/filtrar) => dentro de la fila del título, a la derecha
-    const titleRow = $("commitTitleRow") || head;
+    // Botón toggle (a la derecha del título)
     let toggle = $("commitToolsToggle");
     if(!toggle){
       toggle = document.createElement("button");
       toggle.id = "commitToolsToggle";
       toggle.type = "button";
+      toggle.className = "commitToolsToggleBtn";
       toggle.setAttribute("aria-expanded","false");
       toggle.innerHTML = "🔍&nbsp; Buscar / Filtrar";
 
-      // Estilo base (el resto lo fuerza el CSS inyectado)
-      toggle.style.border = "1px solid var(--border)";
-      toggle.style.background = "var(--surface)";
-      toggle.style.boxShadow = "var(--shadow2)";
-      toggle.style.fontWeight = "900";
-      toggle.style.cursor = "pointer";
-      toggle.style.display = "inline-flex";
-      toggle.style.alignItems = "center";
-      toggle.style.gap = "8px";
-      toggle.style.webkitTapHighlightColor = "transparent";
-
-      titleRow.appendChild(toggle);
+      // Insertar dentro del header, al final (derecha)
+      head.appendChild(toggle);
     }else{
-      // si existía y estaba fuera, lo reubicamos
-      if(toggle.parentElement !== titleRow) titleRow.appendChild(toggle);
+      // Asegurar clase/estilo si ya existe
+      toggle.classList.add("commitToolsToggleBtn");
     }
 
-    // Panel (debajo de la cabecera)
+    // El botón debe quedar a la derecha del título: orden 2
+    try{
+      toggle.style.order = "2";
+      toggle.style.alignSelf = "flex-start";
+    }catch(_){}
+
+    // Si por algún motivo el HTML tiene el orden raro, forzamos que el bloque izquierdo sea order 1
+    if(leftBlock){
+      try{ leftBlock.style.order = "1"; leftBlock.style.minWidth = "0"; }catch(_){}
+    }
+
+    // Panel (debajo del header)
     let panel = $("commitToolsPanel");
     if(!panel){
       panel = document.createElement("div");
       panel.id = "commitToolsPanel";
+      panel.style.margin = "10px 12px 12px";
       panel.style.padding = "12px";
       panel.style.borderRadius = "16px";
       panel.style.border = "1px solid var(--border)";
@@ -614,12 +621,12 @@
         </div>
       `;
 
-      // debajo del sectionHead (justo donde lo quieres visualmente)
+      // Insertar justo después del header
       head.insertAdjacentElement("afterend", panel);
     }else{
-      // asegurar posición justo debajo del head
+      // Asegurar que está justo debajo del header
       if(panel.previousElementSibling !== head){
-        head.insertAdjacentElement("afterend", panel);
+        try{ head.insertAdjacentElement("afterend", panel); }catch(_){}
       }
     }
 
@@ -637,7 +644,7 @@
       });
     }
 
-    // Mantener el panel como estaba (abierto si hay filtro/busqueda)
+    // Abre si hay filtro/busqueda activa
     const shouldOpen = !!(commitTextFilter || (commitFriendFilter && commitFriendFilter !== "all"));
     if(shouldOpen) setOpen(true);
 
@@ -715,6 +722,7 @@
       const legacyBtn = $("btnContactsTools");
       const legacyTools = $("miniContactsTools");
       const legacyPanel = $("contactsToolsPanel");
+      if while (false) {}
       if(legacyBtn) legacyBtn.remove();
       if(legacyTools) legacyTools.remove();
       if(legacyPanel) legacyPanel.remove();
@@ -726,7 +734,7 @@
 
       const bar = document.createElement("div");
       bar.id = "contactsSearchBar";
-      bar.style.margin = "10px 0 12px";
+      bar.style.margin = "10px 12px 12px";
       bar.style.padding = "12px";
       bar.style.borderRadius = "16px";
       bar.style.border = "1px solid var(--border)";
@@ -840,6 +848,7 @@
   }
 
   function renderCommitments(){
+    ensureUiOverrides();
     ensureCommitFiltersUi();
     updateCommitmentsHeading();
     updateCounts();
@@ -1810,7 +1819,7 @@
   })();
 
   function start(){
-    injectLayoutFixCss();
+    ensureUiOverrides();
 
     const a11y = load(A11Y_KEY, { big:false });
     applyTextScale(!!a11y.big);
