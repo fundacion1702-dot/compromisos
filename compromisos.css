@@ -106,12 +106,13 @@ html.bigText body .badge{ font-size:13px; height:24px; }
 }
 
 /* =========================
-   ✅ TOP BAR
-   - IMPORTANTÍSIMO: NO sticky (evita el “aleatorio” que se quede fija)
+   TOP BAR
    ========================= */
 .topbar{
-  position:static !important;   /* ✅ FIX definitivo */
-  top:auto !important;
+  /* ⚠️ Importante: en tu proyecto ya lo tienes “no fijo” desde JS,
+     pero aquí lo dejamos normal. El JS lo puede forzar a static. */
+  position:sticky;
+  top:0;
   z-index:10;
   background:rgba(242,243,245,.85);
   backdrop-filter:blur(10px);
@@ -121,7 +122,7 @@ html.bigText body .badge{ font-size:13px; height:24px; }
   width:min(var(--max), calc(100% - 24px));
   margin:0 auto;
   padding:12px 0;
-  position:relative; /* ✅ ancla del botón absoluto */
+  position:relative;
 }
 
 /* Brand */
@@ -130,7 +131,7 @@ html.bigText body .badge{ font-size:13px; height:24px; }
   align-items:center;
   gap:10px;
   min-width:0;
-  padding-right:220px; /* ✅ reserva para el botón arriba derecha */
+  padding-right:220px;
 }
 .logo{
   width:42px;height:42px;
@@ -170,7 +171,7 @@ html.bigText body .badge{ font-size:13px; height:24px; }
   margin-top:10px;
 }
 
-/* Botón A11Y: arriba derecha */
+/* Botón A11Y arriba derecha */
 #btnA11yTop{
   position:absolute !important;
   top:12px !important;
@@ -178,8 +179,6 @@ html.bigText body .badge{ font-size:13px; height:24px; }
   z-index:80 !important;
   pointer-events:auto !important;
 }
-
-/* Botón estilo */
 .a11yBtn{
   height:34px;
   padding:0 12px;
@@ -201,7 +200,7 @@ html.bigText body .badge{ font-size:13px; height:24px; }
 }
 .a11yBtn:active{ transform:translateY(1px); }
 
-/* Pills: centradas */
+/* Pills */
 .pills{
   display:flex;
   gap:10px;
@@ -213,11 +212,6 @@ html.bigText body .badge{ font-size:13px; height:24px; }
   position:relative;
   z-index:10;
 }
-
-/* ✅ ORDEN COMO PIDES:
-   - Recibidos a la izquierda
-   - Vencidos a la derecha
-   - Ambos centrados */
 #btnReceived{ order:1; }
 #btnOverdue{ order:2; }
 
@@ -385,6 +379,56 @@ html.bigText body .badge{ font-size:13px; height:24px; }
   background:var(--primarySoft);
   border-color:rgba(37,99,235,.22);
   color:#1E40AF;
+}
+
+/* =========================
+   ✅ Autocomplete (Nombre) — panel propio
+   - SIN flechas
+   - Pegado al input
+   - Letra un poco más grande
+   ========================= */
+.acWrap{ position:relative; }
+.acPanel{
+  position:absolute;
+  left:0; right:0;
+  top:calc(100% + 6px);
+  background:var(--surface);
+  border:1px solid rgba(229,231,235,.95);
+  border-radius:18px;
+  box-shadow:0 18px 50px rgba(17,24,39,.14);
+  max-height:240px;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  z-index:200;
+  padding:6px;
+}
+.acPanel[hidden]{ display:none !important; }
+
+.acItem{
+  width:100%;
+  display:block;
+  text-align:left;
+  border:1px solid transparent;
+  background:transparent;
+  border-radius:14px;
+  padding:12px 12px;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  font-weight:950;
+  font-size:15px;             /* ✅ más grande */
+  line-height:1.15;
+  color:var(--text);
+}
+.acItem:hover,
+.acItem:focus{ outline:none; }
+.acItem.active{
+  background:var(--primarySoft);
+  border-color:rgba(37,99,235,.18);
+}
+.acEmpty{
+  padding:10px 12px;
+  color:var(--muted);
+  font-size:13px;
 }
 
 /* List / cards */
@@ -555,7 +599,7 @@ html.bigText body .badge{ font-size:13px; height:24px; }
 .fab:active{ transform:translateY(1px); }
 
 /* =========================
-   ✅ SWITCH (Ajustes)
+   SWITCH (Ajustes)
    ========================= */
 .switch{
   width:54px;
@@ -740,57 +784,7 @@ input:focus,select:focus,textarea:focus{
 }
 
 /* =========================
-   ✅ AUTOCOMPLETADO PROPIO (Nombre)
-   - Esto es para reemplazar el datalist nativo (Android lo muestra raro)
-   - Pegado al input, tipografía acorde, SIN “Amigo”
-   ========================= */
-.acWrap{ position:relative; }
-.acList{
-  position:absolute;
-  left:0; right:0;
-  top:calc(100% + 6px);           /* ✅ más pegado al campo */
-  background:var(--surface);
-  border:1px solid rgba(229,231,235,.95);
-  border-radius:18px;
-  box-shadow:0 18px 50px rgba(17,24,39,.14);
-  overflow:hidden;
-  max-height:240px;
-  overflow:auto;
-  -webkit-overflow-scrolling:touch;
-  z-index:999;                    /* ✅ por encima del modal */
-  display:none;
-}
-.acList.show{ display:block; }
-
-.acItem{
-  width:100%;
-  text-align:left;
-  padding:12px 12px;
-  border:0;
-  border-bottom:1px solid rgba(229,231,235,.8);
-  background:transparent;
-  cursor:pointer;
-  font-weight:950;
-  font-size:15.5px;              /* ✅ un pelín más grande */
-  color:var(--text);
-  -webkit-tap-highlight-color:transparent;
-}
-.acItem:last-child{ border-bottom:0; }
-.acItem:active{ background:var(--surface2); }
-
-.acEmpty{
-  padding:12px 12px;
-  font-size:13px;
-  color:var(--muted);
-}
-
-body.bigText .acItem,
-html.bigText body .acItem{ font-size:16.5px; }
-body.bigText .acEmpty,
-html.bigText body .acEmpty{ font-size:13.5px; }
-
-/* =========================
-   ✅ LOCK OVERLAY (PIN)
+   LOCK OVERLAY (PIN)
    ========================= */
 .pinDots{
   display:flex;
@@ -829,7 +823,7 @@ html.bigText body .acEmpty{ font-size:13.5px; }
 .key.danger{ background:var(--dangerSoft); border-color:rgba(220,38,38,.22); color:#991B1B; }
 
 /* =========================
-   ✅ INSTALL BANNER
+   INSTALL BANNER
    Evita que aparezca texto suelto “Instálala / Consejo”
    ========================= */
 .installBanner{
@@ -837,7 +831,7 @@ html.bigText body .acEmpty{ font-size:13.5px; }
   left:12px; right:12px;
   bottom:calc(var(--bottomH) + 70px + env(safe-area-inset-bottom));
   z-index:30;
-  display:none !important; /* ✅ por defecto oculto */
+  display:none !important;
 }
 .installBanner.show{ display:block !important; }
 .installCard{
