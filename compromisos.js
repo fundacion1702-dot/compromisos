@@ -84,10 +84,11 @@
   let view = "pending";     // pending | waiting | closed
   let lastCommitView = "pending";
 
-  // ✅ filtros/búsquedas (NO desplegable: volvemos a como estaba, siempre visible)
+  // ✅ filtros/búsquedas (desplegable como antes: botón + panel)
   let commitFriendFilter = "all"; // all | __none__ | <contactId>
   let commitTextFilter = "";      // búsqueda en texto / quién
   let contactsTextFilter = "";    // búsqueda amigos
+  let commitToolsOpen = false;
 
   /* =========================
      ✅ Migración: done -> status
@@ -290,26 +291,27 @@
 
   /* =========================
      Quitar “Instálala / Consejo”
+     (sin romper HTML: limpiamos y ocultamos banner)
   ========================= */
   function removeBottomInstallText(){
     try{
-      const ban = document.querySelector("#installBanner, .installBanner");
-      if(ban) ban.remove();
+      const ban = $("installBanner");
+      if(ban){
+        ban.classList.remove("show");
+        ban.style.display = "none";
+        ban.setAttribute("aria-hidden","true");
+      }
+      const t = $("installTitle");
+      const p = $("installText");
+      if(t) t.textContent = "";
+      if(p) p.textContent = "";
 
       const candidates = document.querySelectorAll("a,button,div,span,p,li");
       candidates.forEach(el=>{
         if(!el || el.children.length) return;
-        const t = (el.textContent || "").trim();
-        if(t === "Instálala" || t === "Consejo"){
-          el.style.display = "none";
-        }
-      });
-
-      const blocks = document.querySelectorAll("div,section,footer,aside");
-      blocks.forEach(el=>{
-        const t = (el.textContent || "").trim().replace(/\s+/g," ");
-        if(!t) return;
-        if((t === "Instálala Consejo") || (t === "Instálala\nConsejo") || (t === "Consejo Instálala")){
+        const txt = (el.textContent || "").trim();
+        if(txt === "Instálala" || txt === "Consejo"){
+          el.textContent = "";
           el.style.display = "none";
         }
       });
@@ -453,16 +455,16 @@
   }
 
   /* =========================
-     ✅ Búsqueda/Filtros (VOLVER A “SIEMPRE VISIBLE”)
-     - Compromisos: Filtrar por amigo + Buscar + Limpiar
-     - Amigos: Buscar + Limpiar
-     (Usamos ids actuales para no romper lógica)
+     ✅ Búsqueda/Filtros (DESPLEGABLE como la foto)
+     - Botón “🔍 Buscar / Filtrar”
+     - Panel con: Filtrar por amigo + Buscar + Limpiar
+     - Filtra en tiempo real
   ========================= */
   function ensureCommitFiltersUi(){
     const paneEl = $("commitmentsPane");
     if(!paneEl) return;
 
-    // Si existían restos de UI “desplegable”, los quitamos
+    // limpiar restos de versiones anteriores
     try{
       const legacyBtn = $("btnCommitTools");
       const legacyTools = $("miniCommitTools");
@@ -470,49 +472,81 @@
       if(legacyTools) legacyTools.remove();
     }catch(_){}
 
-    let bar = $("commitFiltersBar");
+    const head = paneEl.querySelector(".sectionHead");
+    if(!head) return;
+
+    // Botón toggle
+    let toggle = $("commitToolsToggle");
+    if(!toggle){
+      toggle = document.createElement("button");
+      toggle.id = "commitToolsToggle";
+      toggle.type = "button";
+      toggle.setAttribute("aria-expanded","false");
+      toggle.innerHTML = "🔍&nbsp; Buscar / Filtrar";
+      toggle.style.margin = "10px 12px 0";
+      toggle.style.height = "34px";
+      toggle.style.padding = "0 12px";
+      toggle.style.borderRadius = "12px";
+      toggle.style.border = "1px solid var(--border)";
+      toggle.style.background = "var(--surface)";
+      toggle.style.boxShadow = "var(--shadow2)";
+      toggle.style.fontWeight = "900";
+      toggle.style.cursor = "pointer";
+      toggle.style.display = "inline-flex";
+      toggle.style.alignItems = "center";
+      toggle.style.gap = "8px";
+      toggle.style.webkitTapHighlightColor = "transparent";
+
+      head.insertAdjacentElement("afterend", toggle);
+    }
+
+    // Panel
     let panel = $("commitToolsPanel");
-
-    if(!bar){
-      const head = paneEl.querySelector(".sectionHead");
-      if(!head) return;
-
-      bar = document.createElement("div");
-      bar.id = "commitFiltersBar";
-      // Reutilizamos clases ya existentes por si tu CSS las tiene (sin desplegable)
-      bar.className = "miniPanel show";
-      bar.innerHTML = `
-        <div class="miniRow">
-          <div class="field">
-            <label class="label" for="commitFriendSel">Filtrar por amigo</label>
-            <select id="commitFriendSel"></select>
-          </div>
-          <div class="field">
-            <label class="label" for="commitSearchTxt">Buscar</label>
-            <input id="commitSearchTxt" type="text" placeholder="Ej: Ana / PDF / 20€" autocomplete="off"/>
-          </div>
-          <div class="field" style="flex:0 0 auto; min-width:auto;">
-            <label class="label" style="opacity:0;">.</label>
-            <button class="btn" id="commitClearBtn" type="button">🧹 Limpiar</button>
-          </div>
-        </div>
-        <div class="miniHint">Se aplica sobre la lista actual (<b>Pendientes</b>, <b>En espera</b> o <b>Cerrados</b>).</div>
-      `;
-
-      head.insertAdjacentElement("afterend", bar);
-
-      // Para compatibilidad con código previo: creamos un alias #commitToolsPanel
-      // (por si algo lo busca por id)
+    if(!panel){
       panel = document.createElement("div");
       panel.id = "commitToolsPanel";
+      panel.style.margin = "10px 12px 12px";
+      panel.style.padding = "12px";
+      panel.style.borderRadius = "16px";
+      panel.style.border = "1px solid var(--border)";
+      panel.style.background = "var(--surface)";
+      panel.style.boxShadow = "var(--shadow2)";
       panel.style.display = "none";
-      bar.insertAdjacentElement("afterend", panel);
-    }else{
-      // Si existe bar, garantizamos que está visible
-      try{
-        bar.classList.add("show");
-      }catch(_){}
+
+      panel.innerHTML = `
+        <div class="field" style="margin-top:0;">
+          <label class="label" for="commitFriendSel">Filtrar por amigo</label>
+          <select id="commitFriendSel"></select>
+        </div>
+        <div class="field">
+          <label class="label" for="commitSearchTxt">Buscar</label>
+          <input id="commitSearchTxt" type="text" placeholder="Ej: Ana / PDF / 20€" autocomplete="off"/>
+        </div>
+        <div class="actions" style="margin-top:10px;">
+          <button class="btn" id="commitClearBtn" type="button">🧹 Limpiar</button>
+        </div>
+      `;
+
+      toggle.insertAdjacentElement("afterend", panel);
     }
+
+    const setOpen = (open)=>{
+      commitToolsOpen = !!open;
+      panel.style.display = commitToolsOpen ? "" : "none";
+      toggle.setAttribute("aria-expanded", commitToolsOpen ? "true" : "false");
+    };
+
+    // bind toggle (solo una vez)
+    if(toggle.dataset.bound !== "1"){
+      toggle.dataset.bound = "1";
+      toggle.addEventListener("click", ()=>{
+        setOpen(!commitToolsOpen);
+      });
+    }
+
+    // Mantener el panel como estaba visualmente (abierto por defecto en móvil si ya hay filtro/busqueda)
+    const shouldOpen = !!(commitTextFilter || (commitFriendFilter && commitFriendFilter !== "all"));
+    if(shouldOpen) setOpen(true);
 
     fillCommitFriendSelect();
 
@@ -530,12 +564,15 @@
     }
 
     const txt = $("commitSearchTxt");
-    if(txt && txt.dataset.bound !== "1"){
-      txt.dataset.bound = "1";
-      txt.addEventListener("input", ()=>{
-        commitTextFilter = (txt.value || "").trim();
-        renderCommitments();
-      });
+    if(txt){
+      if(txt.value !== (commitTextFilter || "")) txt.value = commitTextFilter || "";
+      if(txt.dataset.bound !== "1"){
+        txt.dataset.bound = "1";
+        txt.addEventListener("input", ()=>{
+          commitTextFilter = (txt.value || "").trim();
+          renderCommitments();
+        });
+      }
     }
 
     const sel = $("commitFriendSel");
@@ -596,19 +633,21 @@
 
       const bar = document.createElement("div");
       bar.id = "contactsSearchBar";
-      bar.className = "miniPanel show";
+      bar.style.margin = "10px 12px 12px";
+      bar.style.padding = "12px";
+      bar.style.borderRadius = "16px";
+      bar.style.border = "1px solid var(--border)";
+      bar.style.background = "var(--surface)";
+      bar.style.boxShadow = "var(--shadow2)";
+
       bar.innerHTML = `
-        <div class="miniRow">
-          <div class="field">
-            <label class="label" for="contactsSearchTxt">Buscar</label>
-            <input id="contactsSearchTxt" type="text" placeholder="Ej: Ana / Trabajo" autocomplete="off"/>
-          </div>
-          <div class="field" style="flex:0 0 auto; min-width:auto;">
-            <label class="label" style="opacity:0;">.</label>
-            <button class="btn" id="contactsClearBtn" type="button">🧹 Limpiar</button>
-          </div>
+        <div class="field" style="margin-top:0;">
+          <label class="label" for="contactsSearchTxt">Buscar</label>
+          <input id="contactsSearchTxt" type="text" placeholder="Ej: Ana / Trabajo" autocomplete="off"/>
         </div>
-        <div class="miniHint">Busca por nombre o nota del amigo.</div>
+        <div class="actions" style="margin-top:10px;">
+          <button class="btn" id="contactsClearBtn" type="button">🧹 Limpiar</button>
+        </div>
       `;
 
       head.insertAdjacentElement("afterend", bar);
@@ -626,12 +665,15 @@
     }
 
     const txt = $("contactsSearchTxt");
-    if(txt && txt.dataset.bound !== "1"){
-      txt.dataset.bound = "1";
-      txt.addEventListener("input", ()=>{
-        contactsTextFilter = (txt.value || "").trim();
-        renderContacts();
-      });
+    if(txt){
+      if(txt.value !== (contactsTextFilter || "")) txt.value = contactsTextFilter || "";
+      if(txt.dataset.bound !== "1"){
+        txt.dataset.bound = "1";
+        txt.addEventListener("input", ()=>{
+          contactsTextFilter = (txt.value || "").trim();
+          renderContacts();
+        });
+      }
     }
   }
 
@@ -731,7 +773,7 @@
         if(view==="waiting"){
           return new Date(b.updatedAt||b.createdAt||0).getTime() - new Date(a.updatedAt||a.createdAt||0).getTime();
         }
-        return new Date(b.closedAt||b.doneAt||0).getTime() - new Date(a.closedAt||a.doneAt||0).getTime();
+        return new Date(b.closedAt||b.doneAt||0).getTime() - new Date(a.closedAt||a.createdAt||0).getTime();
       });
 
     if(empty) empty.style.display = items.length ? "none" : "block";
@@ -945,7 +987,11 @@
 
   /* =========================
      Modales: Compromisos
-     ✅ Autocompletado visible (lista filtrada mientras escribes)
+     ✅ Autocompletado: datalist NATIVO
+     - Siempre cargamos TODOS los amigos en <datalist>
+     - El navegador filtra mientras escribes
+     - Si coincide exacto: se vincula (modalWhoId)
+     - Si no: al guardar, preguntar si crear amigo
   ========================= */
   let editingCommitId = null;
   let modalWhoId = null;
@@ -994,196 +1040,6 @@
         opt.value = name;
         dl.appendChild(opt);
       });
-  }
-
-  /* ======= Autocomplete UI (lista visible) ======= */
-  let _whoSuggest = { box:null, list:null, items:[], active:-1, open:false };
-
-  function ensureWhoSuggestUi(){
-    const inp = $("fWho");
-    if(!inp) return;
-
-    if(_whoSuggest.box && document.body.contains(_whoSuggest.box)) return;
-
-    // Buscar el contenedor ".field" del input
-    const field = inp.closest(".field") || inp.parentElement;
-    if(!field) return;
-
-    // Crear caja
-    const box = document.createElement("div");
-    box.id = "whoSuggestBox";
-    box.setAttribute("role","listbox");
-    box.style.position = "relative";
-    box.style.marginTop = "8px";
-
-    const list = document.createElement("div");
-    list.id = "whoSuggestList";
-    list.style.border = "1px solid var(--border)";
-    list.style.background = "var(--surface2)";
-    list.style.borderRadius = "12px";
-    list.style.boxShadow = "var(--shadow2)";
-    list.style.overflow = "hidden";
-    list.style.display = "none";
-
-    box.appendChild(list);
-    field.appendChild(box);
-
-    _whoSuggest.box = box;
-    _whoSuggest.list = list;
-  }
-
-  function closeWhoSuggest(){
-    if(!_whoSuggest.list) return;
-    _whoSuggest.list.style.display = "none";
-    _whoSuggest.open = false;
-    _whoSuggest.active = -1;
-    _whoSuggest.items = [];
-  }
-
-  function renderWhoSuggest(query){
-    ensureWhoSuggestUi();
-    const inp = $("fWho");
-    if(!inp || !_whoSuggest.list) return;
-
-    const q = normalizeName(query || "").toLowerCase();
-    const items = contacts
-      .slice()
-      .sort((a,b)=> (a.name||"").localeCompare(b.name||"", "es"))
-      .map(c=> ({ id:c.id, name: normalizeName(c.name||"") }))
-      .filter(x=>!!x.name);
-
-    const filtered = q
-      ? items.filter(x=> x.name.toLowerCase().includes(q))
-      : items;
-
-    _whoSuggest.items = filtered.slice(0, 12);
-    _whoSuggest.active = -1;
-
-    const list = _whoSuggest.list;
-    list.innerHTML = "";
-
-    if(!_whoSuggest.items.length){
-      list.style.display = q ? "block" : "none";
-      _whoSuggest.open = q ? true : false;
-
-      if(q){
-        const row = document.createElement("div");
-        row.style.padding = "10px 12px";
-        row.style.fontSize = "14px";
-        row.style.opacity = "0.9";
-        row.textContent = "No hay coincidencias. Se guardará si quieres al pulsar Guardar.";
-        list.appendChild(row);
-      }
-      return;
-    }
-
-    _whoSuggest.items.forEach((it, idx)=>{
-      const row = document.createElement("button");
-      row.type = "button";
-      row.setAttribute("role","option");
-      row.dataset.idx = String(idx);
-      row.style.width = "100%";
-      row.style.display = "flex";
-      row.style.alignItems = "center";
-      row.style.justifyContent = "space-between";
-      row.style.gap = "10px";
-      row.style.padding = "10px 12px";
-      row.style.border = "0";
-      row.style.background = "transparent";
-      row.style.cursor = "pointer";
-      row.style.textAlign = "left";
-      row.style.color = "inherit";
-
-      const left = document.createElement("div");
-      left.style.minWidth = "0";
-
-      const name = document.createElement("div");
-      name.style.fontWeight = "700";
-      name.style.fontSize = "14px";
-      name.style.whiteSpace = "nowrap";
-      name.style.overflow = "hidden";
-      name.style.textOverflow = "ellipsis";
-      name.textContent = it.name;
-
-      const hint = document.createElement("div");
-      hint.style.fontSize = "12px";
-      hint.style.opacity = "0.75";
-      hint.textContent = "Toca para seleccionar";
-
-      left.appendChild(name);
-      left.appendChild(hint);
-
-      const tag = document.createElement("div");
-      tag.style.fontSize = "12px";
-      tag.style.opacity = "0.85";
-      tag.textContent = "👥";
-
-      row.appendChild(left);
-      row.appendChild(tag);
-
-      row.addEventListener("click", ()=>{
-        inp.value = it.name;
-        modalWhoId = it.id;
-        closeWhoSuggest();
-        try{ inp.focus(); }catch(_){}
-        toast(`👥 Marcado: ${it.name}`);
-      });
-
-      row.addEventListener("mouseenter", ()=>{
-        setActiveSuggest(idx);
-      });
-
-      list.appendChild(row);
-
-      if(idx < _whoSuggest.items.length - 1){
-        const sep = document.createElement("div");
-        sep.style.height = "1px";
-        sep.style.background = "var(--border)";
-        sep.style.opacity = "0.7";
-        list.appendChild(sep);
-      }
-    });
-
-    list.style.display = "block";
-    _whoSuggest.open = true;
-  }
-
-  function setActiveSuggest(idx){
-    if(!_whoSuggest.list) return;
-    _whoSuggest.active = idx;
-
-    // pintar “activo” sin CSS global
-    const children = Array.from(_whoSuggest.list.children);
-    let optIndex = -1;
-    children.forEach((el)=>{
-      if(el.tagName === "BUTTON"){
-        optIndex++;
-        const active = (optIndex === idx);
-        el.style.background = active ? "rgba(107,91,255,0.12)" : "transparent";
-      }
-    });
-  }
-
-  function moveActiveSuggest(delta){
-    if(!_whoSuggest.open || !_whoSuggest.items.length) return;
-    let next = _whoSuggest.active + delta;
-    if(next < 0) next = _whoSuggest.items.length - 1;
-    if(next >= _whoSuggest.items.length) next = 0;
-    setActiveSuggest(next);
-  }
-
-  function pickActiveSuggest(){
-    if(!_whoSuggest.open || !_whoSuggest.items.length) return false;
-    const idx = _whoSuggest.active;
-    if(idx < 0 || idx >= _whoSuggest.items.length) return false;
-    const it = _whoSuggest.items[idx];
-    const inp = $("fWho");
-    if(!inp) return false;
-    inp.value = it.name;
-    modalWhoId = it.id;
-    closeWhoSuggest();
-    toast(`👥 Marcado: ${it.name}`);
-    return true;
   }
 
   function setModalWhoFromNameInput(){
@@ -1243,18 +1099,9 @@
     if(mt) mt.textContent = id ? "Editar compromiso" : "Nuevo compromiso";
 
     openModal($("backdrop"));
-
-    // abrir sugerencias iniciales si está vacío (lista completa)
-    setTimeout(()=>{
-      try{
-        ensureWhoSuggestUi();
-        renderWhoSuggest($("fWho")?.value || "");
-      }catch(_){}
-    }, 0);
   }
 
   function closeCommitModal(){
-    closeWhoSuggest();
     closeModal($("backdrop"));
     editingCommitId = null;
     modalWhoId = null;
@@ -1389,58 +1236,18 @@
     if(who && who.dataset.bound !== "1"){
       who.dataset.bound = "1";
 
-      who.addEventListener("focus", ()=>{
-        renderWhoSuggest(who.value || "");
-      });
-
+      // ✅ datalist: el navegador muestra sugerencias; nosotros solo mantenemos modalWhoId sincronizado
       who.addEventListener("input", ()=>{
         setModalWhoFromNameInput();
-        renderWhoSuggest(who.value || "");
       });
 
       who.addEventListener("change", ()=>{
         setModalWhoFromNameInput();
-        // si coincide exacto, cerramos lista
         if(modalWhoId){
           const c = getContactById(modalWhoId);
-          if(c?.name) toast(`👥 Marcado: ${c.name}`);
-          closeWhoSuggest();
-        }else{
-          renderWhoSuggest(who.value || "");
+          if(c?.name) toast(`👥 Vinculado: ${c.name}`);
         }
       });
-
-      who.addEventListener("keydown", (e)=>{
-        if(e.key === "ArrowDown"){
-          e.preventDefault();
-          if(!_whoSuggest.open) renderWhoSuggest(who.value || "");
-          moveActiveSuggest(+1);
-        }else if(e.key === "ArrowUp"){
-          e.preventDefault();
-          if(!_whoSuggest.open) renderWhoSuggest(who.value || "");
-          moveActiveSuggest(-1);
-        }else if(e.key === "Enter"){
-          // si hay activo, selecciona; si no, deja que guarde normal
-          if(_whoSuggest.open){
-            const ok = pickActiveSuggest();
-            if(ok) e.preventDefault();
-          }
-        }else if(e.key === "Escape"){
-          closeWhoSuggest();
-        }
-      });
-
-      // cerrar al tocar fuera (dentro del modal)
-      document.addEventListener("click", (e)=>{
-        const bb = $("backdrop");
-        if(!bb || !bb.classList.contains("show")) return;
-        const box = _whoSuggest.box;
-        if(!box) return;
-        if(e.target === who || box.contains(e.target)) return;
-        if((e.target.closest && e.target.closest("#backdrop .modal"))){
-          closeWhoSuggest();
-        }
-      }, true);
     }
   }
 
@@ -1953,4 +1760,8 @@
     start();
   }
 
+  /* SIGUIENTE PASO:
+     Pega el archivo `compromisos.html` (el completo, tal cual lo tienes ahora) y dime:
+     1) Si el panel “🔍 Buscar / Filtrar” ya queda como en tu foto (botón + desplegable).
+     2) Si al escribir en “Nombre” (nuevo compromiso) el datalist vuelve a sugerir y filtrar como antes. */
 })();
