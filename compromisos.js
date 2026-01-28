@@ -1,3 +1,595 @@
+function renderCommitments(){
+    ensureCommitFiltersUi();
+    updateCounts();
+
+    const list = $("list");
+    const empty = $("empty");
+    if(!list || !empty) return;
+
+    let items = (data || []).filter(x=>x.status===view);
+    items = items.filter(passesCommitFilters);
+
+    // Orden: vencidos arriba en pendientes; luego por fecha (si hay), y luego por creación
+    items.sort((a,b)=>{
+      if(view==="pending"){
+        const ao = isOverdue(a.when), bo = isOverdue(b.when);
+        if(ao && !bo) return -1;
+        if(!ao && bo) return 1;
+      }
+      const at = a.when ? new Date(a.when).getTime() : Infinity;
+      const bt = b.when ? new Date(b.when).getTime() : Infinity;
+      if(at !== bt) return at - bt;
+
+      const ac = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bc = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bc - ac;
+    });
+
+    list.innerHTML = "";
+
+    if(!items.length){
+      empty.style.display = "block";
+      return;
+    }
+    empty.style.display = "none";
+
+    items.forEach(it=>{
+      const who = normalizedWho(it);
+      const when = it.when ? fmtDate(it.when) : "Sin fecha";
+      const overdue = (it.status==="pending" && isOverdue(it.when));
+
+      const chips = [];
+      chips.push(`<span class="chip status">${esc(statusLabel(it.status))}</span>`);
+      if(it.whoId) chips.push(`<span class="chip">👥 Amigo</span>`);
+      else chips.push(`<span class="chip">✍️ Escrito</span>`);
+
+      // recordatorio simple
+      if(it.remindMin && Number(it.remindMin)>0 && it.when){
+        chips.push(`<span class="chip">🔔 ${esc(String(it.remindMin))} min</span>`);
+      }
+      if(it.afterMin && Number(it.afterMin)>0){
+        chips.push(`<span class="chip">⏱️ ${esc(String(it.afterMin))} min</span>`);
+      }
+
+      const dueClass = overdue ? "due bad" : "due";
+      const dueText = overdue ? `${esc(when)} · Vencido` : esc(when);
+
+      const el = document.createElement("div");
+      el.className = "card";
+      el.innerHTML = `
+        <div class="cardTop">
+          <div class="who">
+            <p class="name">${esc(who)}</p>
+            <p class="meta">${chips.join("")}</p>
+          </div>
+          <div class="${dueClass}">⏰ ${dueText}</div>
+        </div>
+        <div class="desc">${esc(it.what || "")}</div>
+        <div class="actions" data-id="${esc(it.id)}"></div>
+      `;
+
+      const actions = el.querySelector(".actions");
+      if(actions){
+        // ✅ acciones rápidas
+        if(it.status === "pending"){
+          actions.appendChild(btn("✅ Cerrar", "good", ()=> setStatus(it.id, "closed")));
+          actions.appendChild(btn("⏳ Pasar a En espera", "primary", ()=> setStatus(it.id, "waiting")));
+          actions.appendChild(btn("✏️ Editar", "", ()=> openEdit(it.id)));
+          actions.appendChild(btn("🗑️ Eliminar", "danger", ()=> askDelete(it.id)));
+        }else if(it.status === "waiting"){
+          actions.appendChild(btn("✅ Cerrar", "good", ()=> setStatus(it.id, "closed")));
+          actions.appendChild(btn("🟣 Reabrir a Pendiente", "primary", ()=> setStatus(it.id, "pending")));
+          actions.appendChild(btn("✏️ Editar", "", ()=> openEdit(it.id)));
+          actions.appendChild(btn("🗑️ Eliminar", "danger", ()=> askDelete(it.id)));
+        }else{
+          actions.appendChild(btn("🟣 Reabrir a Pendiente", "primary", ()=> setStatus(it.id, "pending")));
+          actions.appendChild(btn("✏️ Editar", "", ()=> openEdit(it.id)));
+          actions.appendChild(btn("🗑️ Eliminar", "danger", ()=> askDelete(it.id)));
+        }
+      }
+
+      list.appendChild(el);
+    });
+  }
+
+  function btn(label, cls, onClick){
+    const b = document.createElement("button");
+    b.className = "btn" + (cls ? " " + cls : "");
+    b.type = "button";
+    b.textContent = label;
+    b.addEventListener("click", onClick);
+    return b;
+  }
+
+  function renderContacts(){
+    updateCounts();
+
+    const list = $("contactsList");
+    const empty = $("contactsEmpty");
+    if(!list || !empty) return;
+
+    let items = (contacts || []).slice().sort((a,b)=> (a.name||"").localeCompare(b.name||"", "es"));
+
+    const q = (contactsTextFilter || "").trim().toLowerCase();
+    if(q){
+      items = items.filter(c=>{
+        const n = (c.name||"").toLowerCase();
+        const note = (c.note||"").toLowerCase();
+        return n.includes(q) || note.includes(q);
+      });
+    }
+
+    list.innerHTML = "";
+    if(!items.length){
+      empty.style.display = "block";
+      return;
+    }
+    empty.style.display = "none";
+
+    items.forEach(c=>{
+      const el = document.createElement("div");
+      el.className = "card";
+      el.innerHTML = `
+        <div class="cardTop">
+          <div class="who">
+            <p class="name">${esc(c.name||"Sin nombre")}</p>
+            <p class="meta">${c.note ? `<span class="chip">📝 ${esc(c.note)}</span>` : `<span class="chip">👥 Amigo</span>`}</p>
+          </div>
+          <div class="due">👤</div>
+        </div>
+        <div class="actions"></div>
+      `;
+      const a = el.querySelector(".actions");
+      if(a){
+        a.appendChild(btn("🗓️ Nuevo compromiso", "primary", ()=>{
+          setPane("commitments");
+          openNewWithContact(c);
+        }));
+        a.appendChild(btn("✏️ Editar", "", ()=> openContactEdit(c.id)));
+        a.appendChild(btn("🗑️ Eliminar", "danger", ()=> askDeleteContact(c.id)));
+      }
+      list.appendChild(el);
+    });
+  }
+
+  function renderSettings(){
+    // switches (PIN / Notif) se actualizan por estado
+    const swPin = $("swPin");
+    const swNotif = $("swNotif");
+    if(swPin){
+      swPin.classList.toggle("on", !!settings.pinEnabled);
+      swPin.setAttribute("aria-checked", settings.pinEnabled ? "true" : "false");
+    }
+    if(swNotif){
+      swNotif.classList.toggle("on", !!settings.notifEnabled);
+      swNotif.setAttribute("aria-checked", settings.notifEnabled ? "true" : "false");
+    }
+    const selAuto = $("selAutoLock");
+    const selRem = $("selRemember");
+    if(selAuto) selAuto.value = String(settings.autoLockMin ?? 0);
+    if(selRem) selRem.value = String(settings.rememberMin ?? 0);
+  }
+
+  function renderAll(){
+    ensureWaitingPill();
+    fixPillsOrder();
+    updateCommitmentsHeading();
+    updateCounts();
+
+    if(pane === "commitments"){
+      renderCommitments();
+    }else if(pane === "contacts"){
+      renderContacts();
+    }else{
+      renderSettings();
+    }
+  }
+
+  /* =========================
+     Datos: CRUD compromisos
+  ========================= */
+  function persist(){
+    save(KEY, data);
+    renderAll();
+  }
+
+  function setStatus(id, status){
+    const it = data.find(x=>x.id===id);
+    if(!it) return;
+    it.status = status;
+    it.done = (status==="closed");
+    if(status==="closed"){
+      it.closedAt = new Date().toISOString();
+      it.doneAt = it.closedAt;
+    }else{
+      it.closedAt = null;
+      it.doneAt = null;
+    }
+    persist();
+  }
+
+  function askDelete(id){
+    confirmModal("Eliminar compromiso", "Se eliminará de tu móvil. ¿Continuar?", ()=>{
+      data = data.filter(x=>x.id!==id);
+      persist();
+    });
+  }
+
+  function openEdit(id){
+    const it = data.find(x=>x.id===id);
+    if(!it) return;
+    openCommitModal(it);
+  }
+
+  function createOrUpdateCommit(payload){
+    if(payload.id){
+      const idx = data.findIndex(x=>x.id===payload.id);
+      if(idx>=0){
+        data[idx] = normalizeStatus({ ...data[idx], ...payload, updatedAt:new Date().toISOString() });
+      }
+    }else{
+      const now = new Date().toISOString();
+      data.unshift(normalizeStatus({
+        id: uid(),
+        createdAt: now,
+        updatedAt: now,
+        status: "pending",
+        done: false,
+        ...payload
+      }));
+    }
+    save(KEY, data);
+  }
+
+  /* =========================
+     Datos: CRUD contactos
+  ========================= */
+  function persistContacts(){
+    save(CONTACTS_KEY, contacts);
+    renderAll();
+  }
+
+  function askDeleteContact(id){
+    confirmModal("Eliminar amigo", "Se eliminará el amigo de tu móvil. Los compromisos que lo usen quedarán como nombre escrito.", ()=>{
+      const c = getContactById(id);
+      contacts = contacts.filter(x=>x.id!==id);
+      // desvincular compromisos
+      data = (data||[]).map(it=>{
+        if(it.whoId === id){
+          return { ...it, whoId:null, whoName: (c?.name || it.whoName || "") };
+        }
+        return it;
+      });
+      save(KEY, data);
+      persistContacts();
+    });
+  }
+
+  function openContactEdit(id){
+    const c = getContactById(id);
+    if(!c) return;
+    openContactModal(c);
+  }
+
+  /* =========================
+     ✅ MODAL genérico confirm
+  ========================= */
+  function confirmModal(title, msg, onYes){
+    const bd = $("confirmBackdrop");
+    if(!bd) return;
+
+    $("confirmTitle").textContent = title || "Confirmar";
+    $("confirmMsg").innerHTML = esc(msg || "");
+
+    const close = ()=>{
+      bd.classList.remove("show");
+      bd.setAttribute("aria-hidden","true");
+      $("confirmNo").onclick = null;
+      $("confirmYes").onclick = null;
+      $("confirmClose").onclick = null;
+    };
+
+    $("confirmNo").onclick = ()=> close();
+    $("confirmClose").onclick = ()=> close();
+    $("confirmYes").onclick = ()=>{
+      close();
+      try{ onYes && onYes(); }catch(e){}
+    };
+
+    bd.classList.add("show");
+    bd.setAttribute("aria-hidden","false");
+  }
+
+  /* =========================
+     MODAL: Nuevo/Editar Compromiso
+     - Campo “Nombre” con autocompletado bonito (sin datalist nativo)
+     - Si no existe y guardas -> pregunta crear amigo (ya lo tenías; lo mantenemos)
+  ========================= */
+  let editingCommitId = null;
+
+  function openCommitModal(existing){
+    editingCommitId = existing?.id || null;
+
+    const bd = $("backdrop");
+    if(!bd) return;
+
+    // refs
+    const title = $("modalTitle");
+    const who = $("fWho");
+    const what = $("fWhat");
+    const when = $("fWhen");
+    const remind = $("fRemind");
+    const after = $("fAfter");
+
+    title.textContent = editingCommitId ? "Editar compromiso" : "Nuevo compromiso";
+
+    // rellenar
+    who.value = existing ? (normalizedWho(existing) || "") : "";
+    what.value = existing ? (existing.what || "") : "";
+    when.value = existing && existing.when ? toLocalInput(existing.when) : "";
+    remind.value = String(existing?.remindMin || 0);
+    after.value = String(existing?.afterMin || 0);
+
+    // ✅ Atar autocompletado “Nombre”
+    bindWhoAutocomplete();
+
+    // abrir
+    bd.classList.add("show");
+    bd.setAttribute("aria-hidden","false");
+
+    // focus
+    setTimeout(()=>{ try{ who.focus(); }catch(e){} }, 0);
+  }
+
+  function toLocalInput(iso){
+    try{
+      if(!iso) return "";
+      const d = new Date(iso);
+      if(isNaN(d.getTime())) return "";
+      const pad = (n)=> String(n).padStart(2,"0");
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }catch(e){ return ""; }
+  }
+
+  function closeCommitModal(){
+    const bd = $("backdrop");
+    if(!bd) return;
+    bd.classList.remove("show");
+    bd.setAttribute("aria-hidden","true");
+    editingCommitId = null;
+    try{ AC.hide(); }catch(_){}
+  }
+
+  function openNewWithContact(contact){
+    openCommitModal({
+      whoId: contact.id,
+      whoName: contact.name || "",
+      what: "",
+      when: null,
+      remindMin: 0,
+      afterMin: 0,
+      status: "pending",
+      done: false
+    });
+  }
+
+  function bindCommitModalButtons(){
+    const bd = $("backdrop");
+    if(!bd) return;
+
+    const close = $("btnClose");
+    const cancel = $("btnCancel");
+    if(close) close.onclick = closeCommitModal;
+    if(cancel) cancel.onclick = closeCommitModal;
+
+    const saveBtn = $("btnSave");
+    if(saveBtn){
+      saveBtn.onclick = ()=>{
+        const whoVal = AC.normalize($("fWho").value);
+        const whatVal = AC.normalize($("fWhat").value);
+        const whenVal = $("fWhen").value ? new Date($("fWhen").value).toISOString() : null;
+
+        const remindMin = Number($("fRemind").value || 0);
+        const afterMin = Number($("fAfter").value || 0);
+
+        if(!whoVal){
+          toast("Escribe un nombre");
+          return;
+        }
+        if(!whatVal){
+          toast("Escribe qué se acordó");
+          return;
+        }
+
+        // ✅ si coincide exacto con amigo -> vincula
+        const c = findContactByName(whoVal);
+        const whoId = c ? c.id : null;
+        const whoName = c ? (c.name || whoVal) : whoVal;
+
+        const payload = {
+          id: editingCommitId || undefined,
+          whoId,
+          whoName,
+          what: whatVal,
+          when: whenVal,
+          remindMin,
+          afterMin
+        };
+
+        // si editaba: mantener status actual
+        if(editingCommitId){
+          const it = data.find(x=>x.id===editingCommitId);
+          if(it) payload.status = it.status;
+        }
+
+        // ✅ si no coincide con amigo -> preguntar si guardar nuevo amigo (ya funcionaba; lo mantenemos)
+        if(!c){
+          confirmModal(
+            "¿Guardar nuevo amigo?",
+            `No existe “${whoVal}” en tus amigos. ¿Quieres guardarlo para que aparezca en la lista?`,
+            ()=>{
+              addContactFromName(whoVal);
+              const cc = findContactByName(whoVal);
+              if(cc) payload.whoId = cc.id;
+              createOrUpdateCommit(payload);
+              closeCommitModal();
+              openShare(payload);
+            }
+          );
+        }else{
+          createOrUpdateCommit(payload);
+          closeCommitModal();
+          openShare(payload);
+        }
+      };
+    }
+  }
+
+  function addContactFromName(name){
+    const n = AC.normalize(name);
+    if(!n) return;
+    if(findContactByName(n)) return;
+    contacts.unshift({ id: uid(), name: n, note: "" });
+    persistContacts();
+  }
+
+  /* =========================
+     ✅ Autocompletado para “Nombre” (fWho)
+     - Sin flechitas raras
+     - Lista solo cuando escribes
+     - Letra más grande + “uno debajo de otro”
+  ========================= */
+  function buildWhoSuggestions(query){
+    const q = AC.normalize(query).toLowerCase();
+    if(!q) return [];
+    const out = [];
+    const seen = new Set();
+
+    // Prioridad: amigos guardados
+    contacts
+      .slice()
+      .sort((a,b)=> (a.name||"").localeCompare(b.name||"", "es"))
+      .forEach(c=>{
+        const n = c?.name || "";
+        if(!n) return;
+        if(n.toLowerCase().includes(q)){
+          const k = n.toLowerCase();
+          if(seen.has(k)) return;
+          seen.add(k);
+          out.push({ value:n, icon:"👤", kind:"friend", id:c.id });
+        }
+      });
+
+    // También sugerimos nombres ya usados como texto (por si no están guardados)
+    (data||[]).forEach(it=>{
+      if(it.whoId) return;
+      const n = AC.normalize(it.whoName);
+      if(!n) return;
+      if(n.toLowerCase().includes(q)){
+        const k = n.toLowerCase();
+        if(seen.has(k)) return;
+        seen.add(k);
+        out.push({ value:n, icon:"✍️", kind:"typed" });
+      }
+    });
+
+    return out.slice(0, 8);
+  }
+
+  function bindWhoAutocomplete(){
+    const inp = $("fWho");
+    if(!inp) return;
+    if(inp.dataset.acWho === "1") return;
+    inp.dataset.acWho = "1";
+
+    // ✅ IMPORTANTE: quitamos el datalist nativo para evitar iconitos/flechas raras
+    try{
+      inp.removeAttribute("list");
+      const dl = $("friendsDatalist");
+      if(dl) dl.innerHTML = "";
+    }catch(e){}
+
+    AC.attach(
+      inp,
+      (q)=> buildWhoSuggestions(q),
+      (picked)=>{
+        // ✅ al elegir, solo rellenamos el input; la vinculación se hace al guardar (como ya tienes)
+      }
+    );
+  }
+
+  /* =========================
+     MODAL: Contactos (Nuevo/Editar)
+  ========================= */
+  let editingContactId = null;
+
+  function openContactModal(existing){
+    editingContactId = existing?.id || null;
+    const bd = $("cBackdrop");
+    if(!bd) return;
+
+    $("cModalTitle").textContent = editingContactId ? "Editar amigo" : "Nuevo amigo";
+    $("cName").value = existing?.name || "";
+    $("cNote").value = existing?.note || "";
+
+    bd.classList.add("show");
+    bd.setAttribute("aria-hidden","false");
+    setTimeout(()=>{ try{ $("cName").focus(); }catch(e){} }, 0);
+  }
+
+  function closeContactModal(){
+    const bd = $("cBackdrop");
+    if(!bd) return;
+    bd.classList.remove("show");
+    bd.setAttribute("aria-hidden","true");
+    editingContactId = null;
+  }
+
+  function bindContactModalButtons(){
+    const bd = $("cBackdrop");
+    if(!bd) return;
+
+    const close = $("cBtnClose");
+    const cancel = $("cBtnCancel");
+    if(close) close.onclick = closeContactModal;
+    if(cancel) cancel.onclick = closeContactModal;
+
+    const saveBtn = $("cBtnSave");
+    if(saveBtn){
+      saveBtn.onclick = ()=>{
+        const name = AC.normalize($("cName").value);
+        const note = AC.normalize($("cNote").value);
+
+        if(!name){
+          toast("Escribe un nombre");
+          return;
+        }
+
+        const existingByName = findContactByName(name);
+        if(existingByName && existingByName.id !== editingContactId){
+          toast("Ya existe un amigo con ese nombre");
+          return;
+        }
+
+        if(editingContactId){
+          const idx = contacts.findIndex(x=>x.id===editingContactId);
+          if(idx>=0){
+            contacts[idx] = { ...contacts[idx], name, note };
+          }
+        }else{
+          contacts.unshift({ id: uid(), name, note });
+        }
+        persistContacts();
+        closeContactModal();
+      };
+    }
+  }
+
+  /* =========================
+     Share (paquete por enlace)
+     (continúa en PARTE 3/3)
+  ========================= */
+
 /* =========================
      Share (paquete por enlace)
   ========================= */
