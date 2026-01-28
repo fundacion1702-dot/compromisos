@@ -447,4 +447,95 @@
     </div>
   </div>
 
+<div class="backdrop" id="shareBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal">
+      <div class="modalHead">
+        <h3>Compartir paquete</h3>
+        <button class="iconBtn" id="shareClose" type="button" aria-label="Cerrar">✕</button>
+      </div>
 
+      <div class="modalBody">
+        <div class="hint" id="shareTitle" style="margin-top:0"></div>
+
+        <div class="seg" role="tablist" aria-label="Formato">
+          <button id="shareShort" class="active" type="button">Corto</button>
+          <button id="shareLong" type="button">Detallado</button>
+        </div>
+
+        <div class="mono" id="shareTextBox" style="margin-top:10px;"></div>
+
+        <div class="hint" style="margin-top:10px;">Enlace (puedes copiarlo directo):</div>
+        <div class="mono" id="shareUrlBox" style="margin-top:8px;"></div>
+
+        <div class="hint">Pulsa <b>Compartir</b> para enviarlo por WhatsApp/Telegram. Si no aparece, usa copiar.</div>
+      </div>
+
+      <div class="modalFoot">
+        <button class="btn" id="shareCopyUrl" type="button">🔗 Copiar enlace</button>
+        <button class="btn" id="shareCopyAll" type="button">📋 Copiar texto+enlace</button>
+        <button class="btn primary" id="shareSend" type="button">📤 Compartir</button>
+        <button class="btn danger" id="shareCancel" type="button">Hecho</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="backdrop" id="lockOverlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modalHead">
+        <h3>🔒 App bloqueada</h3>
+        <button class="iconBtn" id="lockClose" type="button" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modalBody">
+        <p class="hint" style="margin-top:0">Introduce tu PIN para continuar.</p>
+        <div class="pinDots" aria-label="PIN">
+          <div class="dot" id="d1"></div>
+          <div class="dot" id="d2"></div>
+          <div class="dot" id="d3"></div>
+          <div class="dot" id="d4"></div>
+        </div>
+
+        <div class="keypad" id="keypad">
+          <button class="key" data-k="1" type="button">1</button>
+          <button class="key" data-k="2" type="button">2</button>
+          <button class="key" data-k="3" type="button">3</button>
+          <button class="key" data-k="4" type="button">4</button>
+          <button class="key" data-k="5" type="button">5</button>
+          <button class="key" data-k="6" type="button">6</button>
+          <button class="key" data-k="7" type="button">7</button>
+          <button class="key" data-k="8" type="button">8</button>
+          <button class="key" data-k="9" type="button">9</button>
+          <button class="key danger" data-k="del" type="button">⌫</button>
+          <button class="key" data-k="0" type="button">0</button>
+          <button class="key primary" data-k="ok" type="button">OK</button>
+        </div>
+
+        <div class="actions" style="margin-top:12px;">
+          <button class="btn" id="btnLockCopyLink" type="button">🔗 Copiar enlace actual</button>
+          <button class="btn danger" id="btnLockReset" type="button">🧹 Borrar todo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="backdrop" id="confirmBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal">
+      <div class="modalHead">
+        <h3 id="confirmTitle">Confirmar</h3>
+        <button class="iconBtn" id="confirmClose" type="button" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modalBody">
+        <div id="confirmMsg" class="hint" style="margin-top:0; color:#111827;"></div>
+      </div>
+      <div class="modalFoot">
+        <button class="btn" id="confirmNo" type="button">Cancelar</button>
+        <button class="btn danger" id="confirmYes" type="button">Sí, continuar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- JS separado -->
+  <script src="compromisos.js?v=1"></script>
+</body>
+</html>
