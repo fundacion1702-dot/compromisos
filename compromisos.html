@@ -1,541 +1,965 @@
 <!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Compromisos</title>
 
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#F2F3F5"/>
-
-  <!-- iOS -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Compromisos">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-
-  <!-- CSS separado -->
-  <link rel="stylesheet" href="compromisos.css?v=1">
-
-  <!-- ✅ Evitar que el título/subtítulo “desaparezcan” con texto grande -->
-  <style>
+<html lang="es"><head>  <meta charset="utf-8"/>  <meta name="viewport" content="width=device-width, initial-scale=1"/>  <title>Compromisos</title>  <!-- PWA -->  <link rel="manifest" href="manifest.webmanifest">  <meta name="theme-color" content="#F2F3F5"/>  <!-- iOS -->  <meta name="apple-mobile-web-app-capable" content="yes">  <meta name="apple-mobile-web-app-title" content="Compromisos">  <meta name="apple-mobile-web-app-status-bar-style" content="default">  <!-- CSS separado -->  <link rel="stylesheet" href="compromisos.css?v=1">  <!-- ✅ Evitar que el título/subtítulo “desaparezcan” con texto grande -->  <style>
+  
     @media (max-width:520px){
+  
       .title, .subtitle{
+  
         white-space: normal !important;
+  
         overflow: hidden !important;
+  
         text-overflow: clip !important;
+  
         display: -webkit-box !important;
+  
         -webkit-box-orient: vertical !important;
+  
         -webkit-line-clamp: 2 !important;
+  
       }
+  
     }
+  
     body.bigText .title,
+  
     body.bigText .subtitle{
+  
       white-space: normal !important;
+  
       overflow: hidden !important;
+  
       text-overflow: clip !important;
+  
       display: -webkit-box !important;
+  
       -webkit-box-orient: vertical !important;
+  
       -webkit-line-clamp: 2 !important;
+  
     }
+  
 
+  
     /* ✅ Ajustes: icono pequeño (rueda) */
+  
     .gearBtn{
+  
       width:38px;
+  
       height:38px;
+  
       border-radius:999px;
+  
       border:1px solid var(--border);
+  
       background:var(--surface2);
+  
       box-shadow:var(--shadow2);
+  
       display:grid;
+  
       place-items:center;
+  
       cursor:pointer;
+  
       -webkit-tap-highlight-color:transparent;
+  
       font-size:18px;
+  
       line-height:1;
+  
     }
+  
     .gearBtn:active{ transform:translateY(1px); }
-  </style>
-</head>
+  
+  </style></head><body>  <!-- Topbar -->  <div class="topbar"><div class="topbarInner">
 
-<body>
-  <!-- Topbar -->
-  <div class="topbar">
-    <div class="topbarInner">
-      <div class="brand" role="banner" aria-label="Compromisos">
-        <div class="logo" aria-hidden="true"><span>🗓️</span></div>
-        <div class="titleBox">
-          <p class="title">Compromisos</p>
-          <p class="subtitle" id="statsKicker">Todo en tarjetas, más visual.</p>
-        </div>
-      </div>
+  <div class="brand" role="banner" aria-label="Compromisos">
 
-      <!-- Accesibilidad arriba derecha + pills + ⚙️ ajustes pequeño -->
-      <div class="topActions">
-        <button class="a11yBtn" id="btnA11yTop" type="button" title="Cambiar tamaño de letra">🔎 Texto grande</button>
+    <div class="logo" aria-hidden="true"><span>🗓️</span></div>
 
-        <!-- ✅ Ajustes pasa a un icono pequeño -->
-        <button class="gearBtn" id="btnSettingsGear" type="button" title="Ajustes" aria-label="Ajustes">⚙️</button>
+    <div class="titleBox">
 
-        <div class="pills" aria-label="Indicadores">
-          <!-- ✅ Orden pedido: Recibidos a la izquierda, Vencidos a la derecha -->
-          <button class="pillBtn good" id="btnReceived" type="button" title="Recibidos">
-            <span class="pillDot" aria-hidden="true"></span>
-            <span>Recibidos</span>
-            <span class="pillCount" id="bReceived">0</span>
-          </button>
+      <p class="title">Compromisos</p>
 
-          <button class="pillBtn danger" id="btnOverdue" type="button" title="Vencidos">
-            <span class="pillDot" aria-hidden="true"></span>
-            <span>Vencidos</span>
-            <span class="pillCount" id="bOverdue">0</span>
-          </button>
-        </div>
-      </div>
+      <p class="subtitle" id="statsKicker">Todo en tarjetas, más visual.</p>
+
     </div>
+
   </div>
 
-  <div class="wrap">
-    <!-- Menú visual -->
-    <div class="menuGrid" aria-label="Menú">
-      <div class="tile" id="tilePending" role="button" tabindex="0">
-        <div class="tileIcon"><span>📝</span></div>
-        <div class="tileText">
-          <p class="tileTitle">Pendientes</p>
-          <p class="tileMeta">
-            <span class="badge primary" id="tilePendingCount">0</span>
-            <span>compromisos</span>
+
+
+  <!-- Accesibilidad arriba derecha + pills + ⚙️ ajustes pequeño -->
+
+  <div class="topActions">
+
+    <button class="a11yBtn" id="btnA11yTop" type="button" title="Cambiar tamaño de letra">🔎 Texto grande</button>
+
+
+
+    <!-- ✅ Ajustes pasa a un icono pequeño -->
+
+    <button class="gearBtn" id="btnSettingsGear" type="button" title="Ajustes" aria-label="Ajustes">⚙️</button>
+
+
+
+    <div class="pills" aria-label="Indicadores">
+
+      <!-- ✅ Orden pedido: Recibidos a la izquierda, Vencidos a la derecha -->
+
+      <button class="pillBtn good" id="btnReceived" type="button" title="Recibidos">
+
+        <span class="pillDot" aria-hidden="true"></span>
+
+        <span>Recibidos</span>
+
+        <span class="pillCount" id="bReceived">0</span>
+
+      </button>
+
+
+
+      <button class="pillBtn danger" id="btnOverdue" type="button" title="Vencidos">
+
+        <span class="pillDot" aria-hidden="true"></span>
+
+        <span>Vencidos</span>
+
+        <span class="pillCount" id="bOverdue">0</span>
+
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+  </div>  <div class="wrap"><!-- Menú visual -->
+
+<div class="menuGrid" aria-label="Menú">
+
+  <div class="tile" id="tilePending" role="button" tabindex="0">
+
+    <div class="tileIcon"><span>📝</span></div>
+
+    <div class="tileText">
+
+      <p class="tileTitle">Pendientes</p>
+
+      <p class="tileMeta">
+
+        <span class="badge primary" id="tilePendingCount">0</span>
+
+        <span>compromisos</span>
+
+      </p>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- ✅ NUEVO: En espera (sustituye al tile de Ajustes) -->
+
+  <div class="tile" id="tileWaiting" role="button" tabindex="0">
+
+    <div class="tileIcon"><span>⏳</span></div>
+
+    <div class="tileText">
+
+      <p class="tileTitle">En espera</p>
+
+      <p class="tileMeta">
+
+        <span class="badge" id="tileWaitingCount">0</span>
+
+        <span>pend. respuesta</span>
+
+      </p>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="tile" id="tileDone" role="button" tabindex="0">
+
+    <div class="tileIcon"><span>✅</span></div>
+
+    <div class="tileText">
+
+      <p class="tileTitle">Cerrados</p>
+
+      <p class="tileMeta">
+
+        <span class="badge good" id="tileDoneCount">0</span>
+
+        <span>finalizados</span>
+
+      </p>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="tile" id="tileContacts" role="button" tabindex="0">
+
+    <div class="tileIcon"><span>👥</span></div>
+
+    <div class="tileText">
+
+      <p class="tileTitle">Amigos</p>
+
+      <p class="tileMeta">
+
+        <span class="badge" id="tileContactsCount">0</span>
+
+        <span>guardados</span>
+
+      </p>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+
+<!-- PANE: COMPROMISOS -->
+
+<div id="commitmentsPane" class="section" style="margin-top:14px;">
+
+  <div class="sectionHead">
+
+    <div>
+
+      <h2>Compromisos</h2>
+
+      <p>Todo ordenado y fácil de ver.</p>
+
+    </div>
+
+
+
+    <!-- ✅ Ahora 3 estados -->
+
+    <div class="segTabs" role="tablist" aria-label="Pendientes, En espera o Cerrados">
+
+      <button class="segBtn active" id="tabPending" type="button">Pendientes</button>
+
+      <button class="segBtn" id="tabWaiting" type="button">En espera</button>
+
+      <button class="segBtn" id="tabDone" type="button">Cerrados</button>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="list" id="list"></div>
+
+  <div class="empty" id="empty">No hay compromisos aquí todavía.</div>
+
+</div>
+
+
+
+<!-- PANE: CONTACTOS -->
+
+<div id="contactsPane" class="section" style="display:none;">
+
+  <div class="sectionHead">
+
+    <div>
+
+      <h2>Amigos</h2>
+
+      <p>Toca una tarjeta para crear un compromiso con ese amigo.</p>
+
+    </div>
+
+    <div class="segTabs">
+
+      <span class="badge" id="bContacts">0</span>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="list" id="contactsList"></div>
+
+  <div class="empty" id="contactsEmpty">Aún no has creado amigos.</div>
+
+</div>
+
+
+
+<!-- PANE: SETTINGS -->
+
+<div id="settingsPane" class="section" style="display:none;">
+
+  <div class="sectionHead">
+
+    <div>
+
+      <h2>Ajustes</h2>
+
+      <p>Bloqueo, notificaciones y accesibilidad.</p>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="list" style="gap:12px;">
+
+    <!-- Accesibilidad -->
+
+    <div class="card">
+
+      <div class="cardTop">
+
+        <div class="who">
+
+          <p class="name">Accesibilidad</p>
+
+          <p class="meta"><span class="chip">👁️ Texto grande</span></p>
+
+        </div>
+
+        <div class="due">Ajuste</div>
+
+      </div>
+
+      <div class="actions">
+
+        <button class="btn primary" id="btnA11y" type="button">🔎 Texto grande</button>
+
+      </div>
+
+    </div>
+
+
+
+    <!-- PIN -->
+
+    <div class="card">
+
+      <div class="cardTop">
+
+        <div class="who">
+
+          <p class="name">Bloqueo con PIN</p>
+
+          <p class="meta">
+
+            <span class="chip">🔒 Seguridad</span>
+
+            <span class="chip">Auto-bloqueo</span>
+
           </p>
+
         </div>
+
+        <div class="switch" id="swPin" role="switch" aria-checked="false" tabindex="0" aria-label="Activar PIN">
+
+          <span class="knob"></span>
+
+        </div>
+
       </div>
 
-      <!-- ✅ NUEVO: En espera (sustituye al tile de Ajustes) -->
-      <div class="tile" id="tileWaiting" role="button" tabindex="0">
-        <div class="tileIcon"><span>⏳</span></div>
-        <div class="tileText">
-          <p class="tileTitle">En espera</p>
-          <p class="tileMeta">
-            <span class="badge" id="tileWaitingCount">0</span>
-            <span>pend. respuesta</span>
-          </p>
-        </div>
+
+
+      <div class="actions">
+
+        <button class="btn" id="btnChangePin" type="button">🔁 Cambiar PIN</button>
+
+        <button class="btn danger" id="btnLockNow" type="button">🔒 Bloquear ahora</button>
+
       </div>
 
-      <div class="tile" id="tileDone" role="button" tabindex="0">
-        <div class="tileIcon"><span>✅</span></div>
-        <div class="tileText">
-          <p class="tileTitle">Cerrados</p>
-          <p class="tileMeta">
-            <span class="badge good" id="tileDoneCount">0</span>
-            <span>finalizados</span>
-          </p>
-        </div>
+
+
+      <div class="field" style="margin-top:10px;">
+
+        <label class="label" for="selAutoLock">Auto-bloqueo al salir</label>
+
+        <select id="selAutoLock">
+
+          <option value="0">Inmediato</option>
+
+          <option value="1">1 min</option>
+
+          <option value="2">2 min</option>
+
+          <option value="5">5 min</option>
+
+          <option value="10">10 min</option>
+
+        </select>
+
+        <div class="hint">Se aplica cuando sales de la app o la minimizas.</div>
+
       </div>
 
-      <div class="tile" id="tileContacts" role="button" tabindex="0">
-        <div class="tileIcon"><span>👥</span></div>
-        <div class="tileText">
-          <p class="tileTitle">Amigos</p>
-          <p class="tileMeta">
-            <span class="badge" id="tileContactsCount">0</span>
-            <span>guardados</span>
-          </p>
-        </div>
+
+
+      <div class="field">
+
+        <label class="label" for="selRemember">Recordar desbloqueo</label>
+
+        <select id="selRemember">
+
+          <option value="0">No recordar</option>
+
+          <option value="5">5 min</option>
+
+          <option value="10">10 min</option>
+
+          <option value="30">30 min</option>
+
+          <option value="60">1 hora</option>
+
+        </select>
+
+        <div class="hint">Si lo activas, no te pedirá el PIN durante ese tiempo.</div>
+
       </div>
+
     </div>
 
-    <!-- PANE: COMPROMISOS -->
-    <div id="commitmentsPane" class="section" style="margin-top:14px;">
-      <div class="sectionHead">
-        <div>
-          <h2>Compromisos</h2>
-          <p>Todo ordenado y fácil de ver.</p>
+
+
+    <!-- Notificaciones -->
+
+    <div class="card">
+
+      <div class="cardTop">
+
+        <div class="who">
+
+          <p class="name">Notificaciones</p>
+
+          <p class="meta"><span class="chip">🔔 Recordatorios</span></p>
+
         </div>
 
-        <!-- ✅ Ahora 3 estados -->
-        <div class="segTabs" role="tablist" aria-label="Pendientes, En espera o Cerrados">
-          <button class="segBtn active" id="tabPending" type="button">Pendientes</button>
-          <button class="segBtn" id="tabWaiting" type="button">En espera</button>
-          <button class="segBtn" id="tabDone" type="button">Cerrados</button>
+        <div class="switch" id="swNotif" role="switch" aria-checked="false" tabindex="0" aria-label="Activar notificaciones">
+
+          <span class="knob"></span>
+
         </div>
+
       </div>
 
-      <div class="list" id="list"></div>
-      <div class="empty" id="empty">No hay compromisos aquí todavía.</div>
+
+
+      <div class="desc" id="notifHint">ℹ️ Pulsa “Permitir” para recibir recordatorios.</div>
+
+
+
+      <div class="actions">
+
+        <button class="btn primary" id="btnNotifPerm" type="button">✅ Permitir</button>
+
+      </div>
+
     </div>
 
-    <!-- PANE: CONTACTOS -->
-    <div id="contactsPane" class="section" style="display:none;">
-      <div class="sectionHead">
-        <div>
-          <h2>Amigos</h2>
-          <p>Toca una tarjeta para crear un compromiso con ese amigo.</p>
+
+
+    <!-- Borrar todo -->
+
+    <div class="card">
+
+      <div class="cardTop">
+
+        <div class="who">
+
+          <p class="name">Mantenimiento</p>
+
+          <p class="meta"><span class="chip">🧹 Reinicio</span></p>
+
         </div>
-        <div class="segTabs">
-          <span class="badge" id="bContacts">0</span>
-        </div>
+
+        <div class="due">⚠️</div>
+
       </div>
 
-      <div class="list" id="contactsList"></div>
-      <div class="empty" id="contactsEmpty">Aún no has creado amigos.</div>
+      <div class="actions">
+
+        <button class="btn danger" id="btnResetAll" type="button">🧹 Borrar todo</button>
+
+      </div>
+
+      <div class="hint">Borra compromisos, amigos y ajustes del móvil.</div>
+
     </div>
 
-    <!-- PANE: SETTINGS -->
-    <div id="settingsPane" class="section" style="display:none;">
-      <div class="sectionHead">
-        <div>
-          <h2>Ajustes</h2>
-          <p>Bloqueo, notificaciones y accesibilidad.</p>
-        </div>
-      </div>
-
-      <div class="list" style="gap:12px;">
-        <!-- Accesibilidad -->
-        <div class="card">
-          <div class="cardTop">
-            <div class="who">
-              <p class="name">Accesibilidad</p>
-              <p class="meta"><span class="chip">👁️ Texto grande</span></p>
-            </div>
-            <div class="due">Ajuste</div>
-          </div>
-          <div class="actions">
-            <button class="btn primary" id="btnA11y" type="button">🔎 Texto grande</button>
-          </div>
-        </div>
-
-        <!-- PIN -->
-        <div class="card">
-          <div class="cardTop">
-            <div class="who">
-              <p class="name">Bloqueo con PIN</p>
-              <p class="meta">
-                <span class="chip">🔒 Seguridad</span>
-                <span class="chip">Auto-bloqueo</span>
-              </p>
-            </div>
-            <div class="switch" id="swPin" role="switch" aria-checked="false" tabindex="0" aria-label="Activar PIN">
-              <span class="knob"></span>
-            </div>
-          </div>
-
-          <div class="actions">
-            <button class="btn" id="btnChangePin" type="button">🔁 Cambiar PIN</button>
-            <button class="btn danger" id="btnLockNow" type="button">🔒 Bloquear ahora</button>
-          </div>
-
-          <div class="field" style="margin-top:10px;">
-            <label class="label" for="selAutoLock">Auto-bloqueo al salir</label>
-            <select id="selAutoLock">
-              <option value="0">Inmediato</option>
-              <option value="1">1 min</option>
-              <option value="2">2 min</option>
-              <option value="5">5 min</option>
-              <option value="10">10 min</option>
-            </select>
-            <div class="hint">Se aplica cuando sales de la app o la minimizas.</div>
-          </div>
-
-          <div class="field">
-            <label class="label" for="selRemember">Recordar desbloqueo</label>
-            <select id="selRemember">
-              <option value="0">No recordar</option>
-              <option value="5">5 min</option>
-              <option value="10">10 min</option>
-              <option value="30">30 min</option>
-              <option value="60">1 hora</option>
-            </select>
-            <div class="hint">Si lo activas, no te pedirá el PIN durante ese tiempo.</div>
-          </div>
-        </div>
-
-
-<!-- Notificaciones -->
-        <div class="card">
-          <div class="cardTop">
-            <div class="who">
-              <p class="name">Notificaciones</p>
-              <p class="meta"><span class="chip">🔔 Recordatorios</span></p>
-            </div>
-            <div class="switch" id="swNotif" role="switch" aria-checked="false" tabindex="0" aria-label="Activar notificaciones">
-              <span class="knob"></span>
-            </div>
-          </div>
-
-          <div class="desc" id="notifHint">ℹ️ Pulsa “Permitir” para recibir recordatorios.</div>
-
-          <div class="actions">
-            <button class="btn primary" id="btnNotifPerm" type="button">✅ Permitir</button>
-          </div>
-        </div>
-
-        <!-- Borrar todo -->
-        <div class="card">
-          <div class="cardTop">
-            <div class="who">
-              <p class="name">Mantenimiento</p>
-              <p class="meta"><span class="chip">🧹 Reinicio</span></p>
-            </div>
-            <div class="due">⚠️</div>
-          </div>
-          <div class="actions">
-            <button class="btn danger" id="btnResetAll" type="button">🧹 Borrar todo</button>
-          </div>
-          <div class="hint">Borra compromisos, amigos y ajustes del móvil.</div>
-        </div>
-      </div>
-    </div>
   </div>
 
-  <!-- Bottom nav -->
-  <div class="bottomBar">
-    <div class="bottomInner">
-      <button class="navBtn active" id="tabCommitments" type="button"><span>🗓️ Compromisos</span></button>
-      <button class="fab" id="fab" type="button" aria-label="Nuevo">＋</button>
-      <button class="navBtn" id="tabContacts" type="button"><span>👥 Amigos</span></button>
+</div>
 
-      <!-- compat / no layout -->
-      <button class="navBtn" id="btnInstall" type="button" style="display:none;">⬇️ Instalar</button>
+  </div>  <!-- Bottom nav -->  <div class="bottomBar"><div class="bottomInner">
+
+  <button class="navBtn active" id="tabCommitments" type="button"><span>🗓️ Compromisos</span></button>
+
+  <button class="fab" id="fab" type="button" aria-label="Nuevo">＋</button>
+
+  <button class="navBtn" id="tabContacts" type="button"><span>👥 Amigos</span></button>
+
+
+
+  <!-- compat / no layout -->
+
+  <button class="navBtn" id="btnInstall" type="button" style="display:none;">⬇️ Instalar</button>
+
+</div>
+
+  </div>  <!-- Banner instalación -->  <div class="installBanner" id="installBanner" aria-hidden="true"><div class="installCard">
+
+  <div class="installRow">
+
+    <div>
+
+      <!-- ✅ Para evitar “texto suelto” si algo falla, por defecto van vacíos -->
+
+      <p class="installTitle" id="installTitle"></p>
+
+      <p class="installText" id="installText"></p>
+
     </div>
+
+    <button class="iconBtn" id="btnHideBanner" type="button" aria-label="Cerrar">✕</button>
+
   </div>
 
-  <!-- Banner instalación -->
-  <div class="installBanner" id="installBanner" aria-hidden="true">
-    <div class="installCard">
-      <div class="installRow">
-        <div>
-          <!-- ✅ Para evitar “texto suelto” si algo falla, por defecto van vacíos -->
-          <p class="installTitle" id="installTitle"></p>
-          <p class="installText" id="installText"></p>
-        </div>
-        <button class="iconBtn" id="btnHideBanner" type="button" aria-label="Cerrar">✕</button>
-      </div>
-      <div class="actions" style="margin-top:10px;">
-        <button class="btn primary" id="btnInstallBanner" type="button" style="display:none;">⬇️ Instalar</button>
-        <button class="btn" id="btnOpenChrome" type="button" style="display:none;">🌐 Abrir en Chrome</button>
-        <button class="btn" id="btnCopyLink" type="button" style="display:none;">🔗 Copiar enlace</button>
-      </div>
-    </div>
+  <div class="actions" style="margin-top:10px;">
+
+    <button class="btn primary" id="btnInstallBanner" type="button" style="display:none;">⬇️ Instalar</button>
+
+    <button class="btn" id="btnOpenChrome" type="button" style="display:none;">🌐 Abrir en Chrome</button>
+
+    <button class="btn" id="btnCopyLink" type="button" style="display:none;">🔗 Copiar enlace</button>
+
   </div>
 
-  <!-- MODALES -->
-  <div class="backdrop" id="backdrop" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="modal">
-      <div class="modalHead">
-        <h3 id="modalTitle">Nuevo compromiso</h3>
-        <button class="iconBtn" id="btnClose" type="button" aria-label="Cerrar">✕</button>
-      </div>
+</div>
 
-      <div class="modalBody">
-        <!-- ✅ NUEVO: campo único Nombre (sin datalist nativo para evitar flecha) -->
-        <div class="field">
-          <label class="label" for="fWho">Nombre</label>
-          <input id="fWho"
-                 type="text"
-                 placeholder="Ej: Laura / Mamá / Juan (del trabajo)"
-                 autocomplete="off"/>
-          <!-- (el JS genera el desplegable bonito; esto ya NO usa <datalist>) -->
-          <div class="hint" id="contactHint">Si coincide exacto con un amigo, se vincula automáticamente. Si no, te preguntará si quieres guardarlo.</div>
-        </div>
+  </div>  <!-- MODALES -->  <div class="backdrop" id="backdrop" role="dialog" aria-modal="true" aria-hidden="true"><div class="modal">
 
-        <div class="field">
-          <label class="label" for="fWhat">¿Qué se acordó?</label>
-          <textarea id="fWhat" placeholder="Ej: Te paso el PDF / Te devuelvo 20€ / Quedamos el jueves…"></textarea>
-        </div>
+  <div class="modalHead">
 
-        <div class="twoCol">
-          <div class="field">
-            <label class="label" for="fWhen">¿Para cuándo?</label>
-            <input id="fWhen" type="datetime-local"/>
-            <div class="hint">Puedes dejarlo sin fecha.</div>
-          </div>
+    <h3 id="modalTitle">Nuevo compromiso</h3>
 
-          <div class="field">
-            <label class="label" for="fRemind">Recordatorio (por fecha)</label>
-            <select id="fRemind">
-              <option value="0">Ninguno</option>
-              <option value="5">5 min antes</option>
-              <option value="15">15 min antes</option>
-              <option value="60">1 hora antes</option>
-              <option value="1440">1 día antes</option>
-            </select>
-            <div class="hint">Requiere fecha.</div>
-          </div>
-        </div>
+    <button class="iconBtn" id="btnClose" type="button" aria-label="Cerrar">✕</button>
 
-        <div class="field">
-          <label class="label" for="fAfter">Avisar “desde ahora” (viaja en el enlace)</label>
-          <select id="fAfter">
-            <option value="0">No</option>
-            <option value="5">En 5 minutos</option>
-            <option value="15">En 15 minutos</option>
-            <option value="60">En 1 hora</option>
-            <option value="180">En 3 horas</option>
-            <option value="1440">Mañana (24h)</option>
-          </select>
-          <div class="hint">El receptor debe abrir el enlace para que se programe en su móvil.</div>
-        </div>
-
-        <div class="hint">Al guardar, se abrirá el modal de <b>Compartir</b>.</div>
-      </div>
-
-      <div class="modalFoot">
-        <button class="btn danger" id="btnCancel" type="button">Cancelar</button>
-        <button class="btn good" id="btnSave" type="button">Guardar</button>
-      </div>
-    </div>
   </div>
 
-  <div class="backdrop" id="cBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="modal">
-      <div class="modalHead">
-        <h3 id="cModalTitle">Nuevo amigo</h3>
-        <button class="iconBtn" id="cBtnClose" type="button" aria-label="Cerrar">✕</button>
-      </div>
 
-      <div class="modalBody">
-        <div class="field">
-          <label class="label" for="cName">Nombre</label>
-          <input id="cName" type="text" placeholder="Ej: Laura" autocomplete="off"/>
-        </div>
-        <div class="field">
-          <label class="label" for="cNote">Nota (opcional)</label>
-          <input id="cNote" type="text" placeholder="Ej: Trabajo / Vecina / Familia" autocomplete="off"/>
-        </div>
-        <div class="hint">Esto solo se guarda en tu móvil.</div>
-      </div>
 
-      <div class="modalFoot">
-        <button class="btn danger" id="cBtnCancel" type="button">Cancelar</button>
-        <button class="btn good" id="cBtnSave" type="button">Guardar</button>
-      </div>
+  <div class="modalBody">
+
+    <!-- ✅ NUEVO: campo único Nombre + datalist -->
+
+    <div class="field">
+
+      <label class="label" for="fWho">Nombre</label>
+
+      <input id="fWho"
+
+             type="text"
+
+             list="friendsDatalist"
+
+             placeholder="Ej: Laura / Mamá / Juan (del trabajo)"
+
+             autocomplete="off"/>
+
+      <datalist id="friendsDatalist"></datalist>
+
+      <div class="hint" id="contactHint">Si coincide exacto con un amigo, se vincula automáticamente. Si no, te preguntará si quieres guardarlo.</div>
+
     </div>
+
+
+
+    <div class="field">
+
+      <label class="label" for="fWhat">¿Qué se acordó?</label>
+
+      <textarea id="fWhat" placeholder="Ej: Te paso el PDF / Te devuelvo 20€ / Quedamos el jueves…"></textarea>
+
+    </div>
+
+
+
+    <div class="twoCol">
+
+      <div class="field">
+
+        <label class="label" for="fWhen">¿Para cuándo?</label>
+
+        <input id="fWhen" type="datetime-local"/>
+
+        <div class="hint">Puedes dejarlo sin fecha.</div>
+
+      </div>
+
+
+
+      <div class="field">
+
+        <label class="label" for="fRemind">Recordatorio (por fecha)</label>
+
+        <select id="fRemind">
+
+          <option value="0">Ninguno</option>
+
+          <option value="5">5 min antes</option>
+
+          <option value="15">15 min antes</option>
+
+          <option value="60">1 hora antes</option>
+
+          <option value="1440">1 día antes</option>
+
+        </select>
+
+        <div class="hint">Requiere fecha.</div>
+
+      </div>
+
+    </div>
+
+
+
+    <div class="field">
+
+      <label class="label" for="fAfter">Avisar “desde ahora” (viaja en el enlace)</label>
+
+      <select id="fAfter">
+
+        <option value="0">No</option>
+
+        <option value="5">En 5 minutos</option>
+
+        <option value="15">En 15 minutos</option>
+
+        <option value="60">En 1 hora</option>
+
+        <option value="180">En 3 horas</option>
+
+        <option value="1440">Mañana (24h)</option>
+
+      </select>
+
+      <div class="hint">El receptor debe abrir el enlace para que se programe en su móvil.</div>
+
+    </div>
+
+
+
+    <div class="hint">Al guardar, se abrirá el modal de <b>Compartir</b>.</div>
+
   </div>
 
-  <div class="backdrop" id="pinBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="modal">
-      <div class="modalHead">
-        <h3 id="pinTitle">Configurar PIN</h3>
-        <button class="iconBtn" id="pinClose" type="button" aria-label="Cerrar">✕</button>
-      </div>
 
-      <div class="modalBody">
-        <div class="hint" id="pinHint" style="margin-top:0"></div>
 
-        <div class="field" id="pinOldWrap" style="display:none">
-          <label class="label" for="pinOld">PIN actual</label>
-          <input id="pinOld" inputmode="numeric" autocomplete="off" pattern="[0-9]*" maxlength="4" placeholder="••••"/>
-        </div>
+  <div class="modalFoot">
 
-        <div class="field" id="pinNewWrap">
-          <label class="label" for="pinNew">Nuevo PIN (4 dígitos)</label>
-          <input id="pinNew" inputmode="numeric" autocomplete="off" pattern="[0-9]*" maxlength="4" placeholder="••••"/>
-        </div>
+    <button class="btn danger" id="btnCancel" type="button">Cancelar</button>
 
-        <div class="field" id="pinNew2Wrap">
-          <label class="label" for="pinNew2">Repite el PIN</label>
-          <input id="pinNew2" inputmode="numeric" autocomplete="off" pattern="[0-9]*" maxlength="4" placeholder="••••"/>
-        </div>
+    <button class="btn good" id="btnSave" type="button">Guardar</button>
 
-        <div class="hint" id="pinHelp">Consejo: usa un PIN que solo tú sepas.</div>
-      </div>
-
-      <div class="modalFoot">
-        <button class="btn danger" id="pinCancel" type="button">Cancelar</button>
-        <button class="btn good" id="pinOk" type="button">Guardar</button>
-      </div>
-    </div>
   </div>
 
-<div class="backdrop" id="shareBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="modal">
-      <div class="modalHead">
-        <h3>Compartir paquete</h3>
-        <button class="iconBtn" id="shareClose" type="button" aria-label="Cerrar">✕</button>
-      </div>
+</div>
 
-      <div class="modalBody">
-        <div class="hint" id="shareTitle" style="margin-top:0"></div>
+  </div>  <div class="backdrop" id="cBackdrop" role="dialog" aria-modal="true" aria-hidden="true"><div class="modal">
 
-        <div class="seg" role="tablist" aria-label="Formato">
-          <button id="shareShort" class="active" type="button">Corto</button>
-          <button id="shareLong" type="button">Detallado</button>
-        </div>
+  <div class="modalHead">
 
-        <div class="mono" id="shareTextBox" style="margin-top:10px;"></div>
+    <h3 id="cModalTitle">Nuevo amigo</h3>
 
-        <div class="hint" style="margin-top:10px;">Enlace (puedes copiarlo directo):</div>
-        <div class="mono" id="shareUrlBox" style="margin-top:8px;"></div>
+    <button class="iconBtn" id="cBtnClose" type="button" aria-label="Cerrar">✕</button>
 
-        <div class="hint">Pulsa <b>Compartir</b> para enviarlo por WhatsApp/Telegram. Si no aparece, usa copiar.</div>
-      </div>
-
-      <div class="modalFoot">
-        <button class="btn" id="shareCopyUrl" type="button">🔗 Copiar enlace</button>
-        <button class="btn" id="shareCopyAll" type="button">📋 Copiar texto+enlace</button>
-        <button class="btn primary" id="shareSend" type="button">📤 Compartir</button>
-        <button class="btn danger" id="shareCancel" type="button">Hecho</button>
-      </div>
-    </div>
   </div>
 
-  <div class="backdrop" id="lockOverlay" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true">
-      <div class="modalHead">
-        <h3>🔒 App bloqueada</h3>
-        <button class="iconBtn" id="lockClose" type="button" aria-label="Cerrar">✕</button>
-      </div>
-      <div class="modalBody">
-        <p class="hint" style="margin-top:0">Introduce tu PIN para continuar.</p>
-        <div class="pinDots" aria-label="PIN">
-          <div class="dot" id="d1"></div>
-          <div class="dot" id="d2"></div>
-          <div class="dot" id="d3"></div>
-          <div class="dot" id="d4"></div>
-        </div>
 
-        <div class="keypad" id="keypad">
-          <button class="key" data-k="1" type="button">1</button>
-          <button class="key" data-k="2" type="button">2</button>
-          <button class="key" data-k="3" type="button">3</button>
-          <button class="key" data-k="4" type="button">4</button>
-          <button class="key" data-k="5" type="button">5</button>
-          <button class="key" data-k="6" type="button">6</button>
-          <button class="key" data-k="7" type="button">7</button>
-          <button class="key" data-k="8" type="button">8</button>
-          <button class="key" data-k="9" type="button">9</button>
-          <button class="key danger" data-k="del" type="button">⌫</button>
-          <button class="key" data-k="0" type="button">0</button>
-          <button class="key primary" data-k="ok" type="button">OK</button>
-        </div>
 
-        <div class="actions" style="margin-top:12px;">
-          <button class="btn" id="btnLockCopyLink" type="button">🔗 Copiar enlace actual</button>
-          <button class="btn danger" id="btnLockReset" type="button">🧹 Borrar todo</button>
-        </div>
-      </div>
+  <div class="modalBody">
+
+    <div class="field">
+
+      <label class="label" for="cName">Nombre</label>
+
+      <input id="cName" type="text" placeholder="Ej: Laura" autocomplete="off"/>
+
     </div>
+
+    <div class="field">
+
+      <label class="label" for="cNote">Nota (opcional)</label>
+
+      <input id="cNote" type="text" placeholder="Ej: Trabajo / Vecina / Familia" autocomplete="off"/>
+
+    </div>
+
+    <div class="hint">Esto solo se guarda en tu móvil.</div>
+
   </div>
 
-  <div class="backdrop" id="confirmBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="modal">
-      <div class="modalHead">
-        <h3 id="confirmTitle">Confirmar</h3>
-        <button class="iconBtn" id="confirmClose" type="button" aria-label="Cerrar">✕</button>
-      </div>
-      <div class="modalBody">
-        <div id="confirmMsg" class="hint" style="margin-top:0; color:#111827;"></div>
-      </div>
-      <div class="modalFoot">
-        <button class="btn" id="confirmNo" type="button">Cancelar</button>
-        <button class="btn danger" id="confirmYes" type="button">Sí, continuar</button>
-      </div>
-    </div>
+
+
+  <div class="modalFoot">
+
+    <button class="btn danger" id="cBtnCancel" type="button">Cancelar</button>
+
+    <button class="btn good" id="cBtnSave" type="button">Guardar</button>
+
   </div>
 
-  <div class="toast" id="toast"></div>
+</div>
 
-  <!-- JS separado -->
-  <script src="compromisos.js?v=1"></script>
-</body>
-</html>
+  </div>  <div class="backdrop" id="pinBackdrop" role="dialog" aria-modal="true" aria-hidden="true"><div class="modal">
+
+  <div class="modalHead">
+
+    <h3 id="pinTitle">Configurar PIN</h3>
+
+    <button class="iconBtn" id="pinClose" type="button" aria-label="Cerrar">✕</button>
+
+  </div>
+
+
+
+  <div class="modalBody">
+
+    <div class="hint" id="pinHint" style="margin-top:0"></div>
+
+
+
+    <div class="field" id="pinOldWrap" style="display:none">
+
+      <label class="label" for="pinOld">PIN actual</label>
+
+      <input id="pinOld" inputmode="numeric" autocomplete="off" pattern="[0-9]*" maxlength="4" placeholder="••••"/>
+
+    </div>
+
+
+
+    <div class="field" id="pinNewWrap">
+
+      <label class="label" for="pinNew">Nuevo PIN (4 dígitos)</label>
+
+      <input id="pinNew" inputmode="numeric" autocomplete="off" pattern="[0-9]*" maxlength="4" placeholder="••••"/>
+
+    </div>
+
+
+
+    <div class="field" id="pinNew2Wrap">
+
+      <label class="label" for="pinNew2">Repite el PIN</label>
+
+      <input id="pinNew2" inputmode="numeric" autocomplete="off" pattern="[0-9]*" maxlength="4" placeholder="••••"/>
+
+    </div>
+
+
+
+    <div class="hint" id="pinHelp">Consejo: usa un PIN que solo tú sepas.</div>
+
+  </div>
+
+
+
+  <div class="modalFoot">
+
+    <button class="btn danger" id="pinCancel" type="button">Cancelar</button>
+
+    <button class="btn good" id="pinOk" type="button">Guardar</button>
+
+  </div>
+
+</div>
+
+  </div>  <div class="backdrop" id="shareBackdrop" role="dialog" aria-modal="true" aria-hidden="true"><div class="modal">
+
+  <div class="modalHead">
+
+    <h3>Compartir paquete</h3>
+
+    <button class="iconBtn" id="shareClose" type="button" aria-label="Cerrar">✕</button>
+
+  </div>
+
+
+
+  <div class="modalBody">
+
+    <div class="hint" id="shareTitle" style="margin-top:0"></div>
+
+
+
+    <div class="seg" role="tablist" aria-label="Formato">
+
+      <button id="shareShort" class="active" type="button">Corto</button>
+
+      <button id="shareLong" type="button">Detallado</button>
+
+    </div>
+
+
+
+    <div class="mono" id="shareTextBox" style="margin-top:10px;"></div>
+
+
+
+    <div class="hint" style="margin-top:10px;">Enlace (puedes copiarlo directo):</div>
+
+    <div class="mono" id="shareUrlBox" style="margin-top:8px;"></div>
+
+
+
+    <div class="hint">Pulsa <b>Compartir</b> para enviarlo por WhatsApp/Telegram. Si no aparece, usa copiar.</div>
+
+  </div>
+
+
+
+  <div class="modalFoot">
+
+    <button class="btn" id="shareCopyUrl" type="button">🔗 Copiar enlace</button>
+
+    <button class="btn" id="shareCopyAll" type="button">📋 Copiar texto+enlace</button>
+
+    <button class="btn primary" id="shareSend" type="button">📤 Compartir</button>
+
+    <button class="btn danger" id="shareCancel" type="button">Hecho</button>
+
+  </div>
+
+</div>
+
+  </div>  <div class="backdrop" id="lockOverlay" aria-hidden="true"><div class="modal" role="dialog" aria-modal="true">
+
+  <div class="modalHead">
+
+    <h3>🔒 App bloqueada</h3>
+
+    <button class="iconBtn" id="lockClose" type="button" aria-label="Cerrar">✕</button>
+
+  </div>
+
+  <div class="modalBody">
+
+    <p class="hint" style="margin-top:0">Introduce tu PIN para continuar.</p>
+
+    <div class="pinDots" aria-label="PIN">
+
+      <div class="dot" id="d1"></div>
+
+      <div class="dot" id="d2"></div>
+
+      <div class="dot" id="d3"></div>
+
+      <div class="dot" id="d4"></div>
+
+    </div>
+
+
+
+    <div class="keypad" id="keypad">
+
+      <button class="key" data-k="1" type="button">1</button>
+
+      <button class="key" data-k="2" type="button">2</button>
+
+      <button class="key" data-k="3" type="button">3</button>
+
+      <button class="key" data-k="4" type="button">4</button>
+
+      <button class="key" data-k="5" type="button">5</button>
+
+      <button class="key" data-k="6" type="button">6</button>
+
+      <button class="key" data-k="7" type="button">7</button>
+
+      <button class="key" data-k="8" type="button">8</button>
+
+      <button class="key" data-k="9" type="button">9</button>
+
+      <button class="key danger" data-k="del" type="button">⌫</button>
+
+      <button class="key" data-k="0" type="button">0</button>
+
+      <button class="key primary" data-k="ok" type="button">OK</button>
+
+    </div>
+
+
+
+    <div class="actions" style="margin-top:12px;">
+
+      <button class="btn" id="btnLockCopyLink" type="button">🔗 Copiar enlace actual</button>
+
+      <button class="btn danger" id="btnLockReset" type="button">🧹 Borrar todo</button>
+
+    </div>
+
+  </div>
+
+</div>
+
+  </div>  <div class="backdrop" id="confirmBackdrop" role="dialog" aria-modal="true" aria-hidden="true"><div class="modal">
+
+  <div class="modalHead">
+
+    <h3 id="confirmTitle">Confirmar</h3>
+
+    <button class="iconBtn" id="confirmClose" type="button" aria-label="Cerrar">✕</button>
+
+  </div>
+
+  <div class="modalBody">
+
+    <div id="confirmMsg" class="hint" style="margin-top:0; color:#111827;"></div>
+
+  </div>
+
+  <div class="modalFoot">
+
+    <button class="btn" id="confirmNo" type="button">Cancelar</button>
+
+    <button class="btn danger" id="confirmYes" type="button">Sí, continuar</button>
+
+  </div>
+
+</div>
+
+  </div>  <div class="toast" id="toast"></div>  <!-- JS separado -->  <script src="compromisos.js?v=1"></script></body></html>
+
+
+
+
+
+
+
+
