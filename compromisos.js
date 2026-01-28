@@ -367,10 +367,13 @@
     try{
       const paneEl = $("commitmentsPane");
       if(!paneEl) return;
-      const h2 = paneEl.querySelector(".sectionHead h2");
+      const head = paneEl.querySelector(".sectionHead");
+      if(!head) return;
+
+      const h2 = head.querySelector("h2");
       if(h2) h2.textContent = titleForView(view);
 
-      const p = paneEl.querySelector(".sectionHead p");
+      const p = head.querySelector("p");
       if(p){
         if(view==="pending") p.textContent = "Por hacer (lo tengo yo pendiente).";
         else if(view==="waiting") p.textContent = "Yo ya respondí; queda pendiente la otra persona.";
@@ -455,14 +458,84 @@
   }
 
   /* =========================
+     ✅ Layout exacto del header (como la foto buena)
+     - Título/descripcion a la izquierda (sin “amontonarse”)
+     - Tabs a la derecha (sin cortar “Cerrados”)
+     - Botón Buscar/Filtrar alineado a la derecha debajo
+  ========================= */
+  function ensureCommitHeaderLayout(){
+    const paneEl = $("commitmentsPane");
+    if(!paneEl) return;
+
+    const head = paneEl.querySelector(".sectionHead");
+    if(!head) return;
+
+    // 1) Envolver H2+P en un bloque izquierdo (si no existe)
+    let left = head.querySelector("#commitHeadLeft");
+    if(!left){
+      const h2 = head.querySelector("h2");
+      const p = head.querySelector("p");
+      if(h2 || p){
+        left = document.createElement("div");
+        left.id = "commitHeadLeft";
+        left.style.display = "flex";
+        left.style.flexDirection = "column";
+        left.style.gap = "4px";
+        left.style.minWidth = "0";
+
+        if(h2) left.appendChild(h2);
+        if(p) left.appendChild(p);
+
+        // Insertar left al principio del head
+        head.insertBefore(left, head.firstChild);
+      }
+    }
+
+    // 2) Ajustar estilos del head para que no “amontone”
+    try{
+      head.style.alignItems = "center";
+      head.style.flexWrap = "wrap";
+      head.style.rowGap = "10px";
+      head.style.columnGap = "10px";
+    }catch(_){}
+
+    // 3) Dar espacio al bloque izquierdo
+    if(left){
+      left.style.flex = "1 1 220px";
+      left.style.minWidth = "160px";
+      left.style.maxWidth = "100%";
+      const p = left.querySelector("p");
+      if(p){
+        p.style.whiteSpace = "normal";
+        p.style.lineHeight = "1.25";
+        p.style.marginTop = "0";
+      }
+    }
+
+    // 4) Tabs a la derecha (y que no se corten)
+    const tabs = head.querySelector(".segTabs");
+    if(tabs){
+      tabs.style.marginLeft = "auto";
+      tabs.style.display = "flex";
+      tabs.style.flex = "0 0 auto";
+      tabs.style.alignItems = "center";
+      tabs.style.gap = "8px";
+      tabs.style.flexWrap = "nowrap";
+      tabs.style.whiteSpace = "nowrap";
+      tabs.style.overflow = "visible";
+    }
+  }
+
+  /* =========================
      ✅ Búsqueda/Filtros (DESPLEGABLE como la foto)
-     - Botón “🔍 Buscar / Filtrar”
-     - Panel con: Filtrar por amigo + Buscar + Limpiar
-     - Filtra en tiempo real
+     - Botón “🔍 Buscar / Filtrar” alineado a la derecha
+     - Panel se despliega al pulsar
   ========================= */
   function ensureCommitFiltersUi(){
     const paneEl = $("commitmentsPane");
     if(!paneEl) return;
+
+    ensureCommitHeaderLayout();
 
     // limpiar restos de versiones anteriores
     try{
@@ -475,6 +548,18 @@
     const head = paneEl.querySelector(".sectionHead");
     if(!head) return;
 
+    // Fila para el botón (full width, botón a la derecha)
+    let toggleRow = $("commitToolsToggleRow");
+    if(!toggleRow){
+      toggleRow = document.createElement("div");
+      toggleRow.id = "commitToolsToggleRow";
+      toggleRow.style.display = "flex";
+      toggleRow.style.justifyContent = "flex-end";
+      toggleRow.style.alignItems = "center";
+      toggleRow.style.padding = "10px 12px 0";
+      head.insertAdjacentElement("afterend", toggleRow);
+    }
+
     // Botón toggle
     let toggle = $("commitToolsToggle");
     if(!toggle){
@@ -483,21 +568,27 @@
       toggle.type = "button";
       toggle.setAttribute("aria-expanded","false");
       toggle.innerHTML = "🔍&nbsp; Buscar / Filtrar";
-      toggle.style.margin = "10px 12px 0";
-      toggle.style.height = "34px";
-      toggle.style.padding = "0 12px";
-      toggle.style.borderRadius = "12px";
+
+      toggle.style.height = "36px";
+      toggle.style.padding = "0 14px";
+      toggle.style.borderRadius = "999px";
       toggle.style.border = "1px solid var(--border)";
       toggle.style.background = "var(--surface)";
       toggle.style.boxShadow = "var(--shadow2)";
-      toggle.style.fontWeight = "900";
+      toggle.style.fontWeight = "950";
       toggle.style.cursor = "pointer";
       toggle.style.display = "inline-flex";
       toggle.style.alignItems = "center";
       toggle.style.gap = "8px";
       toggle.style.webkitTapHighlightColor = "transparent";
+      toggle.style.whiteSpace = "nowrap";
 
-      head.insertAdjacentElement("afterend", toggle);
+      toggleRow.appendChild(toggle);
+    }else{
+      // si existe, aseguramos que está en la fila correcta
+      if(toggle.parentElement !== toggleRow){
+        toggleRow.appendChild(toggle);
+      }
     }
 
     // Panel
@@ -527,7 +618,7 @@
         </div>
       `;
 
-      toggle.insertAdjacentElement("afterend", panel);
+      toggleRow.insertAdjacentElement("afterend", panel);
     }
 
     const setOpen = (open)=>{
@@ -544,9 +635,10 @@
       });
     }
 
-    // Mantener el panel como estaba visualmente (abierto por defecto en móvil si ya hay filtro/busqueda)
+    // Si ya hay filtros activos, lo abrimos; si no, cerrado (como la foto)
     const shouldOpen = !!(commitTextFilter || (commitFriendFilter && commitFriendFilter !== "all"));
     if(shouldOpen) setOpen(true);
+    else setOpen(false);
 
     fillCommitFriendSelect();
 
@@ -988,10 +1080,6 @@
   /* =========================
      Modales: Compromisos
      ✅ Autocompletado: datalist NATIVO
-     - Siempre cargamos TODOS los amigos en <datalist>
-     - El navegador filtra mientras escribes
-     - Si coincide exacto: se vincula (modalWhoId)
-     - Si no: al guardar, preguntar si crear amigo
   ========================= */
   let editingCommitId = null;
   let modalWhoId = null;
@@ -1759,9 +1847,4 @@
   }else{
     start();
   }
-
-  /* SIGUIENTE PASO:
-     Pega el archivo `compromisos.html` (el completo, tal cual lo tienes ahora) y dime:
-     1) Si el panel “🔍 Buscar / Filtrar” ya queda como en tu foto (botón + desplegable).
-     2) Si al escribir en “Nombre” (nuevo compromiso) el datalist vuelve a sugerir y filtrar como antes. */
 })();
