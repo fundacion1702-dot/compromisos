@@ -1,3 +1,4 @@
+
 /* compromisos.js (COMPLETO) — PARTE 1/3 */
 (function(){
   "use strict";
@@ -1093,6 +1094,7 @@
   }
 
 /* ===== FIN PARTE 1/3 ===== */
+
 
 /* compromisos.js (COMPLETO) — PARTE 2/3 */
 
