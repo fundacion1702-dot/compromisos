@@ -1,4 +1,6 @@
-/* compromisos.js (COMPLETO) — vFix Autocomplete + sin duplicados ni funciones inexistentes */
+/* compromisos.js — COMPLETO (DIVIDIDO) — PARTE 1/3
+   Fix: Autocomplete en "Nombre" + Guardar funcionando + sin duplicados
+*/
 (function(){
   "use strict";
 
@@ -7,11 +9,11 @@
   ========================= */
   const $ = (id) => document.getElementById(id);
 
-  const KEY = "compromisos.data.v1";
+  const KEY          = "compromisos.data.v1";
   const CONTACTS_KEY = "compromisos.contacts.v1";
   const SETTINGS_KEY = "compromisos.settings.v1";
   const RECEIVED_KEY = "compromisos.received.v1";
-  const A11Y_KEY = "compromisos.a11y.v1";
+  const A11Y_KEY     = "compromisos.a11y.v1";
 
   function safeJsonParse(s, fallback){
     try{ return JSON.parse(s); }catch(e){ return fallback; }
@@ -34,6 +36,9 @@
       .replaceAll(">","&gt;")
       .replaceAll('"',"&quot;")
       .replaceAll("'","&#039;");
+  }
+  function normalizeName(s){
+    return String(s||"").trim().replace(/\s+/g," ");
   }
   function toast(msg){
     const t = $("toast");
@@ -66,12 +71,9 @@
     u.search = "";
     return u.toString();
   }
-  function normalizeName(s){
-    return String(s||"").trim().replace(/\s+/g," ");
-  }
 
   /* =========================
-     ✅ CSS de soporte (layout + fixes + autocomplete)
+     ✅ CSS inyectado (miniTools + autocomplete)
   ========================= */
   (function injectMiniToolsCss(){
     try{
@@ -79,11 +81,11 @@
       const st = document.createElement("style");
       st.id = "miniToolsInjectedCss";
       st.textContent = `
-        /* ✅ Topbar NO fija (que se mueva con scroll) */
+        /* Topbar NO fija */
         .topbar{ position: static !important; top:auto !important; }
         .topbarInner{ position: static !important; }
 
-        /* ✅ Recolocar topActions: Texto grande arriba derecha, pills centradas al eje, ⚙️ debajo */
+        /* topActions: a11y arriba dcha, pills centradas, gear debajo */
         .topActions{
           display:grid !important;
           grid-template-columns: 1fr auto;
@@ -92,7 +94,7 @@
           row-gap: 6px;
           align-items: center;
         }
-        #btnA11yTop{ grid-column: 2; grid-row: 1; justify-self:end; }
+        #btnA11yTop{ grid-column:2; grid-row:1; justify-self:end; }
 
         .pills{
           grid-column: 1 / -1 !important;
@@ -100,25 +102,26 @@
           justify-self: center !important;
           width: 100% !important;
           margin-top: 0 !important;
-          display: flex !important;
-          flex-wrap: wrap !important;
-          justify-content: center !important;
-          align-items: center !important;
-          gap: 12px !important;
+          display:flex !important;
+          flex-wrap:wrap !important;
+          justify-content:center !important;
+          align-items:center !important;
+          gap:12px !important;
         }
 
         #btnSettingsGear{
-          grid-column: 2 !important;
-          grid-row: 3 !important;
-          justify-self: end !important;
-          align-self: end !important;
+          grid-column:2 !important;
+          grid-row:3 !important;
+          justify-self:end !important;
+          align-self:end !important;
         }
 
+        /* tabs */
         .sectionHead{ flex-wrap: wrap !important; gap: 10px !important; }
         .segTabs{ flex-wrap: wrap !important; gap: 8px !important; justify-content:flex-end !important; }
         .segBtn{ white-space: nowrap !important; }
 
-        /* ✅ Botón buscar/filtrar */
+        /* Botón Buscar/Filtrar */
         .miniTools{
           padding:10px 14px 0;
           display:flex;
@@ -160,12 +163,7 @@
           line-height:1.35;
         }
 
-        /* =========================
-           ✅ AUTOCOMPLETADO PROPIO (sin datalist nativo)
-           - Sin flechitas raras
-           - Pegado al input
-           - Letra más grande
-        ========================= */
+        /* ✅ Autocomplete propio (panel) */
         .acPanel{
           display:none;
           margin-top:6px;
@@ -176,6 +174,8 @@
           overflow:hidden;
           max-height:220px;
           overflow:auto;
+          position: relative;
+          z-index: 50;
         }
         .acPanel.show{ display:block; }
         .acItem{
@@ -198,7 +198,7 @@
   /* =========================
      Estado / datos
   ========================= */
-  let data = load(KEY, []);
+  let data     = load(KEY, []);
   let contacts = load(CONTACTS_KEY, []);
   let settings = load(SETTINGS_KEY, {
     pinEnabled:false,
@@ -213,22 +213,23 @@
   let lastCommitView = "pending";
 
   // filtros/búsquedas
-  let uiCommitFiltersOpen = false;
+  let uiCommitFiltersOpen  = false;
   let uiContactsSearchOpen = false;
+
   let commitFriendFilter = "all"; // all | __none__ | <contactId>
-  let commitTextFilter = "";
+  let commitTextFilter   = "";
   let contactsTextFilter = "";
 
   /* =========================
-     ✅ Migración: done -> status
+     Migración status (compat)
+     status: pending | waiting | closed
   ========================= */
   function normalizeStatus(it){
     const nowIso = new Date().toISOString();
 
     let status = it.status;
     if(status !== "pending" && status !== "waiting" && status !== "closed"){
-      if(it.done === true) status = "closed";
-      else status = "pending";
+      status = (it.done === true) ? "closed" : "pending";
     }
 
     const done = (status === "closed");
@@ -255,6 +256,9 @@
     if(changed) save(KEY, data);
   }
 
+  /* =========================
+     Lookups
+  ========================= */
   function findContactByName(name){
     const n = normalizeName(name).toLowerCase();
     if(!n) return null;
@@ -264,15 +268,15 @@
     return contacts.find(x=>x.id===id) || null;
   }
   function normalizedWho(item){
-    if(item.whoId){
+    if(item?.whoId){
       const c = contacts.find(x=>x.id===item.whoId);
       if(c && c.name) return c.name;
     }
-    return item.whoName || "Sin nombre";
+    return item?.whoName || "Sin nombre";
   }
 
   /* =========================
-     ✅ Texto grande
+     Texto grande
   ========================= */
   function applyTextScale(big){
     document.documentElement.style.setProperty("--fs", big ? "18px" : "16px");
@@ -436,7 +440,6 @@
     try{
       const ban = document.querySelector("#installBanner, .installBanner");
       if(ban) ban.remove();
-
       const candidates = document.querySelectorAll("a,button,div,span,p,li");
       candidates.forEach(el=>{
         if(!el || el.children.length) return;
@@ -449,7 +452,7 @@
   }
 
   /* =========================
-     Navegación panes
+     Navegación panes / vistas
   ========================= */
   function safeShow(el, show){
     if(!el) return;
@@ -577,7 +580,7 @@
   }
 
   /* =========================
-     ✅ UI desplegable: Buscar / Filtrar
+     UI desplegable: Buscar / Filtrar (Compromisos)
   ========================= */
   function ensureCommitFiltersUi(){
     const paneEl = $("commitmentsPane");
@@ -628,6 +631,7 @@
 
     const btn = $("btnCommitTools");
     const pnl = $("commitToolsPanel");
+
     if(btn && pnl && btn.dataset.bound !== "1"){
       btn.dataset.bound = "1";
 
@@ -642,26 +646,32 @@
       });
 
       const clearBtn = $("commitClearBtn");
-      clearBtn && clearBtn.addEventListener("click", ()=>{
-        commitFriendFilter = "all";
-        commitTextFilter = "";
-        fillCommitFriendSelect();
-        const inp = $("commitSearchTxt");
-        if(inp) inp.value = "";
-        renderCommitments();
-      });
+      if(clearBtn){
+        clearBtn.addEventListener("click", ()=>{
+          commitFriendFilter = "all";
+          commitTextFilter = "";
+          fillCommitFriendSelect();
+          const inp = $("commitSearchTxt");
+          if(inp) inp.value = "";
+          renderCommitments();
+        });
+      }
 
       const txt = $("commitSearchTxt");
-      txt && txt.addEventListener("input", ()=>{
-        commitTextFilter = (txt.value || "").trim();
-        renderCommitments();
-      });
+      if(txt){
+        txt.addEventListener("input", ()=>{
+          commitTextFilter = (txt.value || "").trim();
+          renderCommitments();
+        });
+      }
 
       const sel = $("commitFriendSel");
-      sel && sel.addEventListener("change", ()=>{
-        commitFriendFilter = sel.value || "all";
-        renderCommitments();
-      });
+      if(sel){
+        sel.addEventListener("change", ()=>{
+          commitFriendFilter = sel.value || "all";
+          renderCommitments();
+        });
+      }
     }
 
     if(btn) btn.setAttribute("aria-expanded", uiCommitFiltersOpen ? "true" : "false");
@@ -715,6 +725,9 @@
     return true;
   }
 
+  /* =========================
+     UI Buscar amigos (Contactos)
+  ========================= */
   function ensureContactsSearchUi(){
     const paneEl = $("contactsPane");
     if(!paneEl) return;
@@ -755,6 +768,7 @@
 
     const btn = $("btnContactsTools");
     const panel = $("contactsToolsPanel");
+
     if(btn && panel && btn.dataset.bound !== "1"){
       btn.dataset.bound = "1";
 
@@ -767,17 +781,23 @@
         }
       });
 
-      $("contactsClearBtn")?.addEventListener("click", ()=>{
-        contactsTextFilter = "";
-        const inp = $("contactsSearchTxt");
-        if(inp) inp.value = "";
-        renderContacts();
-      });
+      const clear = $("contactsClearBtn");
+      if(clear){
+        clear.addEventListener("click", ()=>{
+          contactsTextFilter = "";
+          const inp = $("contactsSearchTxt");
+          if(inp) inp.value = "";
+          renderContacts();
+        });
+      }
 
-      $("contactsSearchTxt")?.addEventListener("input", ()=>{
-        contactsTextFilter = ($("contactsSearchTxt").value || "").trim();
-        renderContacts();
-      });
+      const inp = $("contactsSearchTxt");
+      if(inp){
+        inp.addEventListener("input", ()=>{
+          contactsTextFilter = (inp.value || "").trim();
+          renderContacts();
+        });
+      }
     }
 
     if(btn) btn.setAttribute("aria-expanded", uiContactsSearchOpen ? "true" : "false");
@@ -792,12 +812,11 @@
     const waiting = data.filter(x=>x.status==="waiting");
     const closed  = data.filter(x=>x.status==="closed");
 
-    if($("tilePendingCount")) $("tilePendingCount").textContent = String(pending.length);
-    if($("tileWaitingCount")) $("tileWaitingCount").textContent = String(waiting.length);
-    if($("tileDoneCount")) $("tileDoneCount").textContent = String(closed.length);
-
+    if($("tilePendingCount"))  $("tilePendingCount").textContent  = String(pending.length);
+    if($("tileWaitingCount"))  $("tileWaitingCount").textContent  = String(waiting.length);
+    if($("tileDoneCount"))     $("tileDoneCount").textContent     = String(closed.length);
     if($("tileContactsCount")) $("tileContactsCount").textContent = String(contacts.length);
-    if($("bContacts")) $("bContacts").textContent = String(contacts.length);
+    if($("bContacts"))         $("bContacts").textContent         = String(contacts.length);
 
     const overdue = pending.filter(x=>isOverdue(x.when)).length;
     if($("bOverdue")) $("bOverdue").textContent = String(overdue);
@@ -808,9 +827,14 @@
     if($("bWaiting")) $("bWaiting").textContent = String(waiting.length);
   }
 
-  /* ===== FIN PARTE 1/3 ===== */
-
+  /* =========================
+     (Seguimos en PARTE 2/3)
+  ========================= */
 /* =========================
+   PARTE 2/3 — Modales + CRUD + Autocomplete + Guardar (FIX)
+========================= */
+
+  /* =========================
      Modales base (abrir/cerrar)
   ========================= */
   function showBackdrop(id){
@@ -825,7 +849,6 @@
     b.classList.remove("show");
     b.setAttribute("aria-hidden","true");
   }
-
   function closeAllModals(){
     hideBackdrop("backdrop");
     hideBackdrop("cBackdrop");
@@ -878,8 +901,10 @@
   function askConfirm({ title="Confirmar", msg="¿Seguro?", yes="Sí, continuar", no="Cancelar" }){
     return new Promise((resolve)=>{
       confirmResolve = resolve;
+
       if($("confirmTitle")) $("confirmTitle").textContent = title;
-      if($("confirmMsg")) $("confirmMsg").innerHTML = msg; // msg puede traer <b>
+      // msg puede traer <b> (lo usamos nosotros), así que lo aceptamos tal cual
+      if($("confirmMsg")) $("confirmMsg").innerHTML = msg;
       if($("confirmYes")) $("confirmYes").textContent = yes;
       if($("confirmNo")) $("confirmNo").textContent = no;
 
@@ -914,8 +939,8 @@
   function openContactModal(contactId){
     const isEdit = !!contactId;
     const mTitle = $("cModalTitle");
-    const fName = $("cName");
-    const fNote = $("cNote");
+    const fName  = $("cName");
+    const fNote  = $("cNote");
 
     if(mTitle) mTitle.textContent = isEdit ? "Editar amigo" : "Nuevo amigo";
 
@@ -926,8 +951,8 @@
     const btnSave = $("cBtnSave");
     if(btnSave){
       btnSave.onclick = ()=>{
-        const name = normalizeName(fName.value);
-        const note = normalizeName(fNote.value);
+        const name = normalizeName(fName?.value || "");
+        const note = normalizeName(fNote?.value || "");
 
         if(!name){
           toast("Escribe un nombre.");
@@ -952,6 +977,8 @@
         }
 
         save(CONTACTS_KEY, contacts);
+
+        // refrescar
         fillCommitFriendSelect();
         renderContacts();
         renderCommitments();
@@ -997,7 +1024,7 @@
   }
 
   /* =========================
-     Compromisos: CRUD + share
+     Compromisos: CRUD + Share
   ========================= */
   let editingCommitId = null;
   let preselectedFriendId = null;
@@ -1009,7 +1036,7 @@
     const whoInput = $("fWho");
     if(!whoInput) return;
 
-    // Quitamos datalist nativo para evitar flechas del navegador
+    // IMPORTANT: si el HTML tiene datalist, lo quitamos para evitar flecha del navegador
     if(whoInput.hasAttribute("list")){
       whoInput.removeAttribute("list");
     }
@@ -1019,6 +1046,7 @@
       const panel = document.createElement("div");
       panel.className = "acPanel";
       panel.id = "whoAcPanel";
+      // justo después del input
       whoInput.insertAdjacentElement("afterend", panel);
     }
     acPanel = $("whoAcPanel");
@@ -1065,6 +1093,7 @@
 
     acPanel.classList.add("show");
 
+    // click => seleccionar
     acPanel.querySelectorAll(".acItem").forEach(el=>{
       el.addEventListener("click", ()=>{
         const id = el.getAttribute("data-id");
@@ -1076,7 +1105,6 @@
         preselectedFriendId = c.id;
 
         hideSuggestions();
-
         setTimeout(()=>{ try{ $("fWhat").focus(); }catch(_){} }, 0);
       });
     });
@@ -1088,6 +1116,7 @@
 
     ensureAutoCompletePanel();
 
+    // 🔧 IMPORTANTE: si el input está dentro del modal, puede reciclarse; rebind con guard
     if(whoInput.dataset.acBound === "1") return;
     whoInput.dataset.acBound = "1";
 
@@ -1095,7 +1124,6 @@
       const val = whoInput.value || "";
       const match = findContactByName(val);
       preselectedFriendId = match ? match.id : null;
-
       showSuggestionsFor(val);
     });
 
@@ -1104,12 +1132,12 @@
       showSuggestionsFor(val);
     });
 
-    // cerrar con un pelín de delay para permitir click
+    // cerrar con delay para permitir click en el panel
     whoInput.addEventListener("blur", ()=>{
       setTimeout(()=> hideSuggestions(), 140);
     });
 
-    // Enter: si hay panel abierto, elegir el primero
+    // Enter: si hay panel abierto, elige el primero
     whoInput.addEventListener("keydown", (e)=>{
       if(e.key !== "Enter") return;
       if(!acPanel || !acPanel.classList.contains("show")) return;
@@ -1132,11 +1160,11 @@
 
     const it = isEdit ? data.find(x=>x.id===editingCommitId) : null;
 
-    const fWho = $("fWho");
-    const fWhat = $("fWhat");
-    const fWhen = $("fWhen");
+    const fWho    = $("fWho");
+    const fWhat   = $("fWhat");
+    const fWhen   = $("fWhen");
     const fRemind = $("fRemind");
-    const fAfter = $("fAfter");
+    const fAfter  = $("fAfter");
 
     // rellenar
     if(fWho){
@@ -1148,18 +1176,22 @@
       }
     }
     if(fWhat) fWhat.value = isEdit ? (it?.what || "") : "";
+
     if(fWhen){
       if(isEdit && it?.when){
         const d = new Date(it.when);
         if(!isNaN(d.getTime())){
           const pad=(n)=> String(n).padStart(2,"0");
-          const v = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-          fWhen.value = v;
-        }else fWhen.value = "";
-      }else fWhen.value = "";
+          fWhen.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }else{
+          fWhen.value = "";
+        }
+      }else{
+        fWhen.value = "";
+      }
     }
     if(fRemind) fRemind.value = isEdit ? String(it?.remindMin || 0) : "0";
-    if(fAfter) fAfter.value = isEdit ? String(it?.afterMin || 0) : "0";
+    if(fAfter)  fAfter.value  = isEdit ? String(it?.afterMin  || 0) : "0";
 
     // ✅ Autocomplete
     bindWhoAutocomplete();
@@ -1167,12 +1199,18 @@
 
     const btnSave = $("btnSave");
     if(btnSave){
-      btnSave.onclick = async ()=>{
-        const whoRaw = normalizeName(fWho.value);
-        const what = normalizeName(fWhat.value);
-        const whenLocal = (fWhen.value || "").trim();
-        const remindMin = Number(fRemind.value || 0);
-        const afterMin = Number(fAfter.value || 0);
+      // 🔧 FIX CRÍTICO: evitar que el botón actúe como submit y recargue / rompa
+      btnSave.type = "button";
+
+      btnSave.onclick = async (ev)=>{
+        try{ ev && ev.preventDefault && ev.preventDefault(); }catch(_){}
+        try{ ev && ev.stopPropagation && ev.stopPropagation(); }catch(_){}
+
+        const whoRaw = normalizeName(fWho?.value || "");
+        const what   = normalizeName(fWhat?.value || "");
+        const whenLocal = (fWhen?.value || "").trim();
+        const remindMin = Number((fRemind?.value || 0));
+        const afterMin  = Number((fAfter?.value  || 0));
 
         if(!whoRaw){
           toast("Escribe un nombre.");
@@ -1192,12 +1230,12 @@
           if(!isNaN(d.getTime())) whenIso = d.toISOString();
         }
 
-        // vínculo exacto si coincide
+        // vínculo exacto
         let link = null;
         const exact = findContactByName(whoRaw);
         if(exact) link = exact;
 
-        // si se eligió por sugerencia, también vale
+        // o por selección previa del panel
         if(!link && preselectedFriendId){
           const c = getContactById(preselectedFriendId);
           if(c && normalizeName(c.name).toLowerCase() === normalizeName(whoRaw).toLowerCase()){
@@ -1213,7 +1251,7 @@
           it.what = what;
           it.when = whenIso;
           it.remindMin = remindMin;
-          it.afterMin = afterMin;
+          it.afterMin  = afterMin;
           it.updatedAt = now;
         }else{
           data.push(normalizeStatus({
@@ -1232,7 +1270,7 @@
 
         save(KEY, data);
 
-        // si NO existe amigo exacto, preguntar si guardar
+        // si NO existe amigo exacto, preguntar si guardar nuevo amigo
         if(!link){
           const ok = await askConfirm({
             title:"Guardar nuevo amigo",
@@ -1249,12 +1287,13 @@
           }
         }
 
+        // refrescar
         fillCommitFriendSelect();
         renderAll();
 
         hideBackdrop("backdrop");
 
-        // abrir modal compartir
+        // abrir modal compartir (si existe)
         const last = isEdit ? it : data[data.length-1];
         openShareModalForLast(last);
       };
@@ -1296,33 +1335,44 @@
     const renderShare = ()=>{
       const t = (mode==="short") ? shortTxt : longTxt;
       if($("shareTextBox")) $("shareTextBox").textContent = t;
-      if($("shareUrlBox")) $("shareUrlBox").textContent = url;
-      if($("shareShort")) $("shareShort").classList.toggle("active", mode==="short");
-      if($("shareLong")) $("shareLong").classList.toggle("active", mode==="long");
+      if($("shareUrlBox"))  $("shareUrlBox").textContent  = url;
+      if($("shareShort"))   $("shareShort").classList.toggle("active", mode==="short");
+      if($("shareLong"))    $("shareLong").classList.toggle("active", mode==="long");
     };
 
-    $("shareShort").onclick = ()=>{ mode="short"; renderShare(); };
-    $("shareLong").onclick  = ()=>{ mode="long";  renderShare(); };
+    const bShort = $("shareShort");
+    const bLong  = $("shareLong");
+    if(bShort) bShort.onclick = ()=>{ mode="short"; renderShare(); };
+    if(bLong)  bLong.onclick  = ()=>{ mode="long";  renderShare(); };
 
-    $("shareCopyUrl").onclick = async ()=>{
-      try{ await navigator.clipboard.writeText(url); toast("Enlace copiado ✅"); }
-      catch(e){ toast("No se pudo copiar."); }
-    };
-
-    $("shareCopyAll").onclick = async ()=>{
-      try{ await navigator.clipboard.writeText((mode==="short")?shortTxt:longTxt); toast("Texto copiado ✅"); }
-      catch(e){ toast("No se pudo copiar."); }
-    };
-
-    $("shareSend").onclick = async ()=>{
-      const txt = (mode==="short")?shortTxt:longTxt;
-      if(navigator.share){
-        try{ await navigator.share({ text: txt }); toast("Compartido ✅"); }catch(e){}
-      }else{
-        try{ await navigator.clipboard.writeText(txt); toast("Copiado ✅ (no hay compartir)"); }
+    const bCopyUrl = $("shareCopyUrl");
+    if(bCopyUrl){
+      bCopyUrl.onclick = async ()=>{
+        try{ await navigator.clipboard.writeText(url); toast("Enlace copiado ✅"); }
         catch(e){ toast("No se pudo copiar."); }
-      }
-    };
+      };
+    }
+
+    const bCopyAll = $("shareCopyAll");
+    if(bCopyAll){
+      bCopyAll.onclick = async ()=>{
+        try{ await navigator.clipboard.writeText((mode==="short")?shortTxt:longTxt); toast("Texto copiado ✅"); }
+        catch(e){ toast("No se pudo copiar."); }
+      };
+    }
+
+    const bSend = $("shareSend");
+    if(bSend){
+      bSend.onclick = async ()=>{
+        const txt = (mode==="short")?shortTxt:longTxt;
+        if(navigator.share){
+          try{ await navigator.share({ text: txt }); toast("Compartido ✅"); }catch(e){}
+        }else{
+          try{ await navigator.clipboard.writeText(txt); toast("Copiado ✅ (no hay compartir)"); }
+          catch(e){ toast("No se pudo copiar."); }
+        }
+      };
+    }
 
     renderShare();
     showBackdrop("shareBackdrop");
@@ -1409,14 +1459,216 @@
     });
   }
 
-  /* ===== FIN PARTE 2/3 ===== */
-
-
-/* =========================
-     ✅ Ajustes / PIN / Notificaciones / PWA (mínimo estable)
-     (para que NO se rompa nada aunque algún bloque no lo uses aún)
+  /* =========================
+     (Seguimos en PARTE 3/3)
   ========================= */
+/* =========================
+   PARTE 3/3 — Render + Ajustes (stables) + Boot
+========================= */
 
+  /* =========================
+     Render: compromisos
+  ========================= */
+  function statusLabel(s){
+    if(s==="waiting") return "⏳ En espera";
+    if(s==="closed")  return "✅ Cerrado";
+    return "🟣 Pendiente";
+  }
+
+  function renderCommitments(){
+    const paneEl = $("commitmentsPane");
+    if(!paneEl) return;
+
+    ensureCommitFiltersUi();
+    updateCommitmentsHeading();
+    updateCounts();
+
+    const list = $("list");
+    const empty = $("empty");
+    if(!list) return;
+
+    list.innerHTML = "";
+
+    const items = data
+      .filter(x => x.status === view)
+      .filter(passesCommitFilters)
+      .slice()
+      .sort((a,b)=>{
+        if(view==="pending"){
+          const ao = isOverdue(a.when)?1:0, bo=isOverdue(b.when)?1:0;
+          if(ao!==bo) return bo-ao;
+          const ta = a.when ? new Date(a.when).getTime() : Number.POSITIVE_INFINITY;
+          const tb = b.when ? new Date(b.when).getTime() : Number.POSITIVE_INFINITY;
+          if(ta!==tb) return ta-tb;
+          return new Date(b.updatedAt||b.createdAt||0).getTime() - new Date(a.updatedAt||a.createdAt||0).getTime();
+        }
+        if(view==="waiting"){
+          return new Date(b.updatedAt||b.createdAt||0).getTime() - new Date(a.updatedAt||a.createdAt||0).getTime();
+        }
+        return new Date(b.closedAt||b.doneAt||0).getTime() - new Date(a.closedAt||a.doneAt||0).getTime();
+      });
+
+    if(empty) empty.style.display = items.length ? "none" : "block";
+
+    items.forEach((it)=>{
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const who = normalizedWho(it);
+      const dueText = it.when ? fmtDate(it.when) : "Sin fecha";
+      const overdue = (it.status==="pending" && isOverdue(it.when));
+
+      const stChip = `<span class="chip status">${esc(statusLabel(it.status))}</span>`;
+
+      const primaryLabel = it.status==="closed" ? "↩️ Reabrir" : "✅ Cerrar";
+      const secondaryLabel =
+        it.status==="pending" ? "⏳ En espera" :
+        it.status==="waiting" ? "🟣 Pendiente" :
+        "⏳ En espera";
+
+      card.innerHTML = `
+        <div class="cardTop" style="align-items:flex-start;">
+          <div class="who" style="min-width:0;">
+            <p class="name" title="${esc(who)}">${esc(who)}</p>
+            <p class="meta">
+              ${stChip}
+              <span class="chip">📝 ${esc(fmtDate(it.createdAt))}</span>
+              ${it.updatedAt ? `<span class="chip">✍️ ${esc(fmtDate(it.updatedAt))}</span>` : ``}
+              ${it.status==="closed" ? `<span class="chip">✅ ${esc(fmtDate(it.closedAt||it.doneAt))}</span>` : ``}
+            </p>
+          </div>
+          <div class="due ${overdue ? "bad" : ""}">
+            ⏰ ${esc(dueText)}${overdue ? " · Vencido" : ""}
+          </div>
+        </div>
+
+        <div class="desc">${esc(it.what || "—")}</div>
+
+        <div class="actions">
+          <button class="btn good" type="button" data-act="primary">${primaryLabel}</button>
+          <button class="btn" type="button" data-act="secondary">${secondaryLabel}</button>
+          <button class="btn" type="button" data-act="edit">✍️ Editar</button>
+          <button class="btn danger" type="button" data-act="del">🗑️ Eliminar</button>
+        </div>
+      `;
+
+      const now = ()=> new Date().toISOString();
+
+      card.querySelector('[data-act="primary"]').addEventListener("click", ()=>{
+        if(it.status==="closed"){
+          it.status = "pending";
+          it.closedAt = null;
+          it.done = false; it.doneAt = null;
+          it.updatedAt = now();
+        }else{
+          it.status = "closed";
+          it.closedAt = now();
+          it.done = true; it.doneAt = it.closedAt;
+          it.updatedAt = now();
+        }
+        save(KEY, data);
+        renderCommitments();
+      });
+
+      card.querySelector('[data-act="secondary"]').addEventListener("click", ()=>{
+        if(it.status==="pending"){
+          it.status = "waiting";
+          it.updatedAt = now();
+        }else if(it.status==="waiting"){
+          it.status = "pending";
+          it.updatedAt = now();
+        }else{
+          it.status = "waiting";
+          it.closedAt = null;
+          it.done = false; it.doneAt = null;
+          it.updatedAt = now();
+        }
+        save(KEY, data);
+        renderCommitments();
+      });
+
+      card.querySelector('[data-act="edit"]').addEventListener("click", ()=> openCommitModal(it.id, null));
+      card.querySelector('[data-act="del"]').addEventListener("click", ()=> deleteCommit(it.id));
+
+      list.appendChild(card);
+    });
+
+    fixPillsOrder();
+    removeBottomInstallText();
+  }
+
+  /* =========================
+     Render: contactos
+  ========================= */
+  function renderContacts(){
+    ensureContactsSearchUi();
+    updateCounts();
+
+    const list = $("contactsList");
+    const empty = $("contactsEmpty");
+    if(!list) return;
+
+    list.innerHTML = "";
+
+    const q = (contactsTextFilter || "").trim().toLowerCase();
+    const items = contacts
+      .slice()
+      .sort((a,b)=> (a.name||"").localeCompare(b.name||"", "es"))
+      .filter(c=>{
+        if(!q) return true;
+        const n = String(c.name||"").toLowerCase();
+        const note = String(c.note||"").toLowerCase();
+        return n.includes(q) || note.includes(q);
+      });
+
+    if(empty) empty.style.display = items.length ? "none" : "block";
+
+    items.forEach((c)=>{
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const desc = (c.note || "").trim();
+
+      card.innerHTML = `
+        <div class="cardTop">
+          <div class="who" style="min-width:0;">
+            <p class="name">${esc(c.name || "Sin nombre")}</p>
+            <p class="meta">
+              <span class="chip">👥 Amigo</span>
+              ${c.note ? `<span class="chip">🛈 ${esc(c.note)}</span>` : ``}
+            </p>
+          </div>
+          <button class="btn primary" type="button" data-act="new" style="flex:0 0 auto;">➕ Compromiso</button>
+        </div>
+        ${desc ? `<div class="desc">${esc(desc)}</div>` : ``}
+        <div class="actions">
+          <button class="btn" type="button" data-act="edit">✍️ Editar</button>
+          <button class="btn danger" type="button" data-act="del">🗑️ Eliminar</button>
+        </div>
+      `;
+
+      card.querySelector('[data-act="new"]').addEventListener("click", ()=> openCommitModal(null, c.id));
+      card.querySelector('[data-act="edit"]').addEventListener("click", ()=> openContactModal(c.id));
+      card.querySelector('[data-act="del"]').addEventListener("click", ()=> deleteContact(c.id));
+
+      list.appendChild(card);
+    });
+
+    fixPillsOrder();
+    removeBottomInstallText();
+  }
+
+  function renderAll(){
+    renderCommitments();
+    renderContacts();
+    updateCounts();
+    fixPillsOrder();
+    removeBottomInstallText();
+  }
+
+  /* =========================
+     ✅ Ajustes / PIN / Notificaciones / PWA (mínimo estable)
+  ========================= */
   function setSwitchVisual(swEl, on){
     if(!swEl) return;
     swEl.setAttribute("aria-checked", on ? "true" : "false");
@@ -1424,7 +1676,6 @@
   }
 
   function bindSettings(){
-    // Switch PIN
     const swPin = $("swPin");
     if(swPin && swPin.dataset.bound !== "1"){
       swPin.dataset.bound = "1";
@@ -1441,27 +1692,18 @@
     }
     setSwitchVisual(swPin, !!settings.pinEnabled);
 
-    // Cambiar PIN / Bloquear ahora (si más adelante metes lógica real, aquí ya está el enganche)
     const btnChangePin = $("btnChangePin");
     if(btnChangePin && btnChangePin.dataset.bound !== "1"){
       btnChangePin.dataset.bound = "1";
-      btnChangePin.addEventListener("click", ()=>{
-        toast("🔁 Cambiar PIN (pendiente de lógica)");
-        // Si quieres, aquí abrimos pinBackdrop en el futuro
-        // showBackdrop("pinBackdrop");
-      });
+      btnChangePin.addEventListener("click", ()=> toast("🔁 Cambiar PIN (pendiente de lógica)"));
     }
 
     const btnLockNow = $("btnLockNow");
     if(btnLockNow && btnLockNow.dataset.bound !== "1"){
       btnLockNow.dataset.bound = "1";
-      btnLockNow.addEventListener("click", ()=>{
-        toast("🔒 Bloqueo (pendiente de lógica)");
-        // showBackdrop("lockOverlay"); // si lo activas más adelante
-      });
+      btnLockNow.addEventListener("click", ()=> toast("🔒 Bloqueo (pendiente de lógica)"));
     }
 
-    // Autolock / recordar (guardado sin romper)
     const selAuto = $("selAutoLock");
     if(selAuto && selAuto.dataset.bound !== "1"){
       selAuto.dataset.bound = "1";
@@ -1471,7 +1713,7 @@
         save(SETTINGS_KEY, settings);
         toast("✅ Ajuste guardado");
       });
-    } else if(selAuto){
+    }else if(selAuto){
       selAuto.value = String(settings.autoLockMin || 0);
     }
 
@@ -1484,11 +1726,10 @@
         save(SETTINGS_KEY, settings);
         toast("✅ Ajuste guardado");
       });
-    } else if(selRemember){
+    }else if(selRemember){
       selRemember.value = String(settings.rememberMin || 0);
     }
 
-    // Switch notificaciones (solo guardado)
     const swNotif = $("swNotif");
     if(swNotif && swNotif.dataset.bound !== "1"){
       swNotif.dataset.bound = "1";
@@ -1509,7 +1750,6 @@
     if(btnNotifPerm && btnNotifPerm.dataset.bound !== "1"){
       btnNotifPerm.dataset.bound = "1";
       btnNotifPerm.addEventListener("click", async ()=>{
-        // Pedir permiso si existe Notification API (sin romper si no)
         if(!("Notification" in window)){
           toast("Tu navegador no soporta notificaciones.");
           return;
@@ -1524,7 +1764,6 @@
       });
     }
 
-    // Reset
     const btnResetAll = $("btnResetAll");
     if(btnResetAll && btnResetAll.dataset.bound !== "1"){
       btnResetAll.dataset.bound = "1";
@@ -1544,12 +1783,7 @@
 
         data = [];
         contacts = [];
-        settings = {
-          pinEnabled:false,
-          autoLockMin:0,
-          rememberMin:0,
-          notifEnabled:false
-        };
+        settings = { pinEnabled:false, autoLockMin:0, rememberMin:0, notifEnabled:false };
         received = { c:0, lastAt:null };
 
         save(SETTINGS_KEY, settings);
@@ -1564,12 +1798,12 @@
     }
   }
 
-  // Stubs “seguros” para que NO pete si no están implementados todavía
-  function bindCommitModal(){ /* ya lo controlamos desde openCommitModal + botones */ }
-  function bindContactModal(){ /* idem */ }
-  function bindShare(){ /* openShareModalForLast lo hace */ }
+  // Stubs seguros (si tu HTML no tiene algo, NO rompe)
+  function bindCommitModal(){ /* controlado desde openCommitModal */ }
+  function bindContactModal(){ /* controlado desde openContactModal */ }
+  function bindShare(){ /* openShareModalForLast */ }
+
   function bindInstall(){
-    // Si hay algo de instalación, lo dejamos sin romper:
     const btnInstall = $("btnInstall");
     const btnInstallBanner = $("btnInstallBanner");
     const btnHideBanner = $("btnHideBanner");
@@ -1582,7 +1816,6 @@
       });
     }
 
-    // ocultamos botones si no se usan
     if(btnInstall) btnInstall.style.display = "none";
     if(btnInstallBanner) btnInstallBanner.style.display = "none";
   }
@@ -1616,10 +1849,10 @@
     bindFab();
     bindModalClosers();
 
-    // ✅ Autocompletado propio (SIN datalist nativo y SIN flechitas)
+    // ✅ Autocomplete
     bindWhoAutocomplete();
 
-    // Ajustes / etc (en modo estable)
+    // Ajustes / etc
     bindCommitModal();
     bindContactModal();
     bindShare();
@@ -1639,4 +1872,4 @@
     start();
   }
 
-})();
+})(); // FIN
